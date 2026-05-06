@@ -110,13 +110,18 @@ if st.session_state.step == 'input':
         total_daily_kwh = hh * avg_kwh
         st.success(f"총 일일 수요: {total_daily_kwh:,.1f} kWh")
         
-        st.write("📈 **에너지 부하 특성 조합 (Load Mix)**")
-        col_res, col_com = st.columns([1, 1])
-        with col_res: st.markdown("<small>🏠 주거 중심 (Residential)</small>", unsafe_allow_html=True)
-        with col_com: st.markdown("<div style='text-align: right;'><small>🏢 상업 중심 (Commercial)</small></div>", unsafe_allow_html=True)
+        st.write("📈 **에너지 부하 특성 조합 (Load Mix Ratio)**")
         
-        # Slider value 0 = 100% Residential, 100 = 100% Commercial
-        mix_val = st.slider("부하 패턴 혼합 비율 선택", 0, 100, 50, label_visibility="collapsed")
+        # Calculate percentages
+        # mix_val 0 (Left) -> 100% Residential, 100 (Right) -> 100% Commercial
+        res_pct = 100 - st.session_state.get('mix_slider', 50)
+        com_pct = st.session_state.get('mix_slider', 50)
+        
+        c_p1, c_p2 = st.columns(2)
+        c_p1.markdown(f"<div style='background: #1a1a1a; padding: 10px; border-radius: 5px; border-left: 5px solid #ff4b4b;'>🏠 주거 중심: <b style='color: #ff4b4b; font-size: 18px;'>{res_pct}%</b></div>", unsafe_allow_html=True)
+        c_p2.markdown(f"<div style='background: #1a1a1a; padding: 10px; border-radius: 5px; border-right: 5px solid #00d4ff; text-align: right;'>🏢 상업 중심: <b style='color: #00d4ff; font-size: 18px;'>{com_pct}%</b></div>", unsafe_allow_html=True)
+        
+        mix_val = st.slider("부하 패턴 혼합 비율", 0, 100, 50, key='mix_slider', label_visibility="collapsed")
         
         ratio_b = mix_val / 100.0  # Commercial ratio
         ratio_a = 1.0 - ratio_b    # Residential ratio
