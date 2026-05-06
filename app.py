@@ -110,8 +110,18 @@ if st.session_state.step == 'input':
         total_daily_kwh = hh * avg_kwh
         st.success(f"총 일일 수요: {total_daily_kwh:,.1f} kWh")
         
-        mix_ratio = st.slider("부하 패턴 혼합 (Pattern A:주거 vs Pattern B:상업)", 0, 100, 70) / 100
-        combined_pattern = [(PATTERN_A[i]*mix_ratio + PATTERN_B[i]*(1-mix_ratio)) for i in range(24)]
+        st.write("📈 **에너지 부하 특성 조합 (Load Mix)**")
+        col_res, col_com = st.columns([1, 1])
+        with col_res: st.markdown("<small>🏠 주거 중심 (Residential)</small>", unsafe_allow_html=True)
+        with col_com: st.markdown("<div style='text-align: right;'><small>🏢 상업 중심 (Commercial)</small></div>", unsafe_allow_html=True)
+        
+        # Slider value 0 = 100% Residential, 100 = 100% Commercial
+        mix_val = st.slider("부하 패턴 혼합 비율 선택", 0, 100, 50, label_visibility="collapsed")
+        
+        ratio_b = mix_val / 100.0  # Commercial ratio
+        ratio_a = 1.0 - ratio_b    # Residential ratio
+        
+        combined_pattern = [(PATTERN_A[i]*ratio_a + PATTERN_B[i]*ratio_b) for i in range(24)]
         norm_factor = sum(combined_pattern) / 24
         final_pattern = [p / norm_factor for p in combined_pattern]
         
