@@ -283,44 +283,71 @@ elif st.session_state.step == 'result':
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("### 🏗️ 2. 시스템 아키텍처 비교 (Simplified 2D Architecture)")
-        c1, c2 = st.columns(2)
+        st.markdown("### 🏗️ 2. 시스템 아키텍처 비교 (System Architecture & Design Logic)")
+        c1, c2, c3 = st.columns([1, 1, 0.8])
+        
         with c1:
             st.markdown(f"""
-            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #ff4b4b; min-height: 430px; color: #eee;'>
-                <h4 style='color: #ff4b4b; text-align: center; font-size: 20px; margin-bottom: 15px;'>Scenario A: Giant BESS Only</h4>
-                <div style='text-align: center; font-size: 45px; margin: 15px 0;'>☀️ ➡ 🔋 ➡ 🏠</div>
-                <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>거대 배터리 뱅크를 통해 계절적 불균형을 해소하는 단순 구조입니다.</p>
+            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #ff4b4b; min-height: 520px; color: #eee;'>
+                <h4 style='color: #ff4b4b; text-align: center; font-size: 18px; margin-bottom: 15px;'>Scenario A: Giant BESS Only</h4>
+                <div style='text-align: center; font-size: 40px; margin: 10px 0;'>☀️ ➡ 🔋 ➡ 🏠</div>
+                <p style='font-size: 14px; color: #ccc; line-height: 1.5;'>거대 배터리 뱅크를 통해 계절적 불균형을 해소하는 단순 구조입니다.</p>
                 <hr style='border-color: #444;'>
-                <ul style='list-style: none; padding: 0; font-size: 16px;'>
+                <ul style='list-style: none; padding: 0; font-size: 15px;'>
                     <li style='margin-bottom: 12px;'>🔆 <span style='color: #aaa;'>PV 규모:</span> <b style='color: #fff;'>{pv_ideal:,.1f} kWp</b></li>
                     <li style='margin-bottom: 12px;'>🔋 <span style='color: #aaa;'>BESS 용량:</span> <b style='color: #fff;'>{bess_a:,.1f} kWh</b></li>
                     <li style='margin-bottom: 12px;'>📅 <span style='color: #aaa;'>저장 필요 일수:</span> <b style='color: #ff4b4b;'>{bess_a/total_d:.1f} 일분</b></li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
+
         with c2:
             h2_days = (max(h2_stock) * 33.33 * H2_FC_EFF) / total_d
             st.markdown(f"""
-            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; min-height: 430px; color: #eee;'>
-                <h4 style='color: #00d4ff; text-align: center; font-size: 20px; margin-bottom: 15px;'>Scenario B: BESS-HESS Hybrid</h4>
-                <div style='text-align: center; font-size: 45px; margin: 15px 0;'>☀️ ➡ 🔋 + 💧(H2) ➡ 🏠</div>
-                <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>배터리와 수소가 단기/장기 변동을 나누어 담당하여 효율을 극대화합니다.</p>
+            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; min-height: 520px; color: #eee;'>
+                <h4 style='color: #00d4ff; text-align: center; font-size: 18px; margin-bottom: 15px;'>Scenario B: BESS-HESS Hybrid</h4>
+                <div style='text-align: center; font-size: 40px; margin: 10px 0;'>☀️ ➡ 🔋 + 💧(H2) ➡ 🏠</div>
+                <p style='font-size: 14px; color: #ccc; line-height: 1.5;'>배터리와 수소가 단기/장기 변동을 나누어 담당하여 효율을 극대화합니다.</p>
                 <hr style='border-color: #444;'>
-                <ul style='list-style: none; padding: 0; font-size: 15px;'>
-                    <li style='margin-bottom: 10px;'>🔆 <span style='color: #aaa;'>PV 규모:</span> <b style='color: #fff;'>{pv_hybrid:,.1f} kWp</b> <span style='font-size: 13px; color: #00d4ff;'>({pv_hybrid/pv_ideal:.2f}배)</span></li>
-                    <li style='margin-bottom: 10px;'>🔋 <span style='color: #aaa;'>BESS 용량:</span> <b style='color: #fff;'>{bess_b:,.1f} kWh</b> <span style='font-size: 13px; color: #00d4ff;'>(1.5일분)</span></li>
+                <ul style='list-style: none; padding: 0; font-size: 14px;'>
+                    <li style='margin-bottom: 10px;'>🔆 <span style='color: #aaa;'>PV 규모:</span> <b style='color: #fff;'>{pv_hybrid:,.1f} kWp</b> <span style='font-size: 12px; color: #00d4ff;'>({pv_hybrid/pv_ideal:.2f}배)</span></li>
+                    <li style='margin-bottom: 10px;'>🔋 <span style='color: #aaa;'>BESS 용량:</span> <b style='color: #fff;'>{bess_b:,.1f} kWh</b> <span style='font-size: 12px; color: #00d4ff;'>(1.5일분)</span></li>
                     <li style='margin-bottom: 10px;'>💧 <span style='color: #aaa;'>수소 시스템 (HESS):</span>
-                        <ul style='font-size: 14px; color: #ccc; margin-top: 5px;'>
+                        <ul style='font-size: 13px; color: #ccc; margin-top: 5px;'>
                             <li>수전해기(EL): <b style='color: #fff;'>{el_kw:,.1f} kW</b></li>
                             <li>연료전지(FC): <b style='color: #fff;'>{fc_kw:,.1f} kW</b></li>
                             <li>최대 수소 저장: <b style='color: #00ff88;'>{max(h2_stock):,.1f} kg</b> <span style='color: #00ff88;'>({h2_days:.1f}일분)</span></li>
-                            <p style='font-size: 11px; color: #aaa; margin-top: 5px; line-height: 1.4;'>
-                                * 수소는 계절 간 에너지 불균형(Seasonal Shifting)을 해소하며, 일조량이 가장 적은 시기를 안전하게 통과하기 위한 최대 잔량 기준으로 설계되었습니다.
+                            <p style='font-size: 11px; color: #aaa; margin-top: 5px; line-height: 1.3;'>
+                                * 수소는 계절 간 에너지 불균형을 해소하며, 일조량이 가장 적은 시기를 대비한 최대치 기준 설계입니다.
                             </p>
                         </ul>
                     </li>
                 </ul>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with c3:
+            st.markdown(f"""
+            <div style='background-color: #0f172a; padding: 25px; border-radius: 12px; border: 1px solid #64748b; min-height: 520px; color: #e2e8f0;'>
+                <h4 style='color: #94a3b8; text-align: center; font-size: 18px; margin-bottom: 20px;'>💡 설계 산출 로직 (Design Rationale)</h4>
+                <div style='font-size: 14px; line-height: 1.7;'>
+                    <div style='margin-bottom: 15px;'>
+                        <b style='color: #38bdf8;'>1. 데이터 분석</b><br>
+                        NASA 기상 데이터와 마을의 24시간 전력 사용 패턴을 결합하여 1시간 단위의 에너지 수지를 시뮬레이션합니다.
+                    </div>
+                    <div style='margin-bottom: 15px;'>
+                        <b style='color: #38bdf8;'>2. 시나리오 A 도출</b><br>
+                        일조량이 가장 적은 기간에도 정전이 발생하지 않도록 오직 <b>배터리 용량만</b>을 늘려 설계합니다. (거대한 배터리 뱅크 필요)
+                    </div>
+                    <div style='margin-bottom: 15px;'>
+                        <b style='color: #38bdf8;'>3. 시나리오 B 도출</b><br>
+                        배터리는 하루 단위의 변동만 잡고, 남는 여름 에너지를 <b>수소로 저장</b>해 겨울에 꺼내 쓰는 '계절 이동' 원리를 적용합니다.
+                    </div>
+                    <div style='margin-bottom: 15px;'>
+                        <b style='color: #38bdf8;'>4. 경제성 최적화</b><br>
+                        두 시나리오 중 전체 투자비(CAPEX)와 운영 비용을 고려하여 가장 낮은 발전단가(LCOE)를 만드는 설비 조합을 선정합니다.
+                    </div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
 
