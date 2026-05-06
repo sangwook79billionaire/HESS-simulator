@@ -476,6 +476,7 @@ elif st.session_state.step == 'result':
         </table>
         """
         st.markdown(breakdown_html, unsafe_allow_html=True)
+        st.caption("※ 이 수치는 단순 비교를 위한 시뮬레이션 결과이며, 실제 사이트 여건 및 인프라 구성에 따른 투자비 검토 결과와 다를 수 있습니다.")
         st.info(f"💡 **분석 결과:** Scenario B(하이브리드)가 시나리오 A 대비 **${(capex_a - capex_b)/1e6:.2f}M ({ (1 - capex_b/capex_a)*100:.1f}%)**의 비용 절감 효과가 있는 것으로 나타났습니다.")
 
         # 5. EDCF 기반 LCOE 비교 (Moved to main tab)
