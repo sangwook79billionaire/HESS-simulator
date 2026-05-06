@@ -4,3 +4,5 @@ plotly
 numpy
 requests
 geopy
+folium
+streamlit-folium
