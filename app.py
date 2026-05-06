@@ -516,7 +516,7 @@ elif st.session_state.step == 'result':
         from plotly.subplots import make_subplots
         st.subheader("🔍 상세 시계열 데이터 분석 (Time-Span Analysis)")
         span = st.radio("분석 주기 선택", ["1H", "1D", "1W", "1M"], horizontal=True)
-        span_map = {"1H": "H", "1D": "D", "1W": "W", "1M": "M"}
+        span_map = {"1H": "h", "1D": "d", "1W": "W", "1M": "ME"}
         df_resampled = df_h.set_index('Timestamp').resample(span_map[span]).agg({
             'SOC_B': 'mean', 'H2_Stock': 'last', 'Gen_B': 'sum', 'Load_B': 'sum'
         }).reset_index()
