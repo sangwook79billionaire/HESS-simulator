@@ -386,29 +386,40 @@ elif st.session_state.step == 'result':
         # 3. 주요 운영 지표 시각화
         st.markdown("### 📊 3. 시나리오별 주요 지표 비교 (Operational Indicators)")
         
-        # Monthly Net Balance Data
+        # Monthly Net Balance & Solar Data
         df_h['Month'] = df_h['Timestamp'].dt.month
         monthly_net_a = df_a.groupby(df_a['Timestamp'].dt.month)['Net'].sum()
         monthly_net_b = df_h.groupby('Month').apply(lambda x: (x['Gen_B'] - x['Load_B']).sum())
+        monthly_ghi = df_h.groupby('Month')['ALLSKY_SFC_SW_DWN'].mean()
         
         # Unified Y-axis range for comparison
-        y_min = min(monthly_net_a.min(), monthly_net_b.min()) * 1.1
-        y_max = max(monthly_net_a.max(), monthly_net_b.max()) * 1.1
-        
-        # Color Coding: Blue for +, Red for -
-        colors_a = ['#00d4ff' if x > 0 else '#ff4b4b' for x in monthly_net_a.values]
-        colors_b = ['#00d4ff' if x > 0 else '#ff4b4b' for x in monthly_net_b.values]
+        y_min = min(monthly_net_a.min(), monthly_net_b.min()) * 1.2
+        y_max = max(monthly_net_a.max(), monthly_net_b.max()) * 1.2
         
         c_net1, c_net2 = st.columns(2)
+        
+        def create_net_chart(net_data, ghi_data, title):
+            fig = make_subplots(specs=[[{"secondary_y": True}]])
+            colors = ['#00d4ff' if x > 0 else '#ff4b4b' for x in net_data.values]
+            
+            # Add Net Balance Bar
+            fig.add_trace(go.Bar(x=net_data.index, y=net_data.values, name="Net Balance", marker_color=colors), secondary_y=False)
+            
+            # Add Solar Irradiation Line
+            fig.add_trace(go.Scatter(x=ghi_data.index, y=ghi_data.values, name="Avg GHI", line=dict(color="#FFD700", width=3, dash='dot'), mode='lines+markers'), secondary_y=True)
+            
+            fig.update_layout(title=title, template="plotly_dark", height=400, showlegend=True,
+                              legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+            fig.update_yaxes(title_text="Net Balance (kWh)", range=[y_min, y_max], secondary_y=False)
+            fig.update_yaxes(title_text="Avg GHI (kWh/m²/d)", secondary_y=True)
+            fig.update_xaxes(title_text="Month", tickmode='linear', tick0=1, dtick=1)
+            return fig
+
         with c_net1:
-            fig_ma = go.Figure(go.Bar(x=monthly_net_a.index, y=monthly_net_a.values, name="Scenario A Net", marker_color=colors_a))
-            fig_ma.update_layout(title="Scenario A: 월간 순 수지", template="plotly_dark", yaxis=dict(range=[y_min, y_max], title="kWh"), xaxis=dict(title="Month"))
-            st.plotly_chart(fig_ma, use_container_width=True)
+            st.plotly_chart(create_net_chart(monthly_net_a, monthly_ghi, "Scenario A: 월간 순 수지 & 일사량"), use_container_width=True)
             
         with c_net2:
-            fig_mb = go.Figure(go.Bar(x=monthly_net_b.index, y=monthly_net_b.values, name="Scenario B Net", marker_color=colors_b))
-            fig_mb.update_layout(title="Scenario B: 월간 순 수지", template="plotly_dark", yaxis=dict(range=[y_min, y_max]), xaxis=dict(title="Month"))
-            st.plotly_chart(fig_mb, use_container_width=True)
+            st.plotly_chart(create_net_chart(monthly_net_b, monthly_ghi, "Scenario B: 월간 순 수지 & 일사량"), use_container_width=True)
 
         col_a, col_b = st.columns(2)
         with col_a:
