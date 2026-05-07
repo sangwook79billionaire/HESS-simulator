@@ -741,28 +741,32 @@ elif st.session_state.step == 'result':
         fig_break.add_trace(go.Bar(name='H2 Tank', x=['Scenario B'], y=[cost_h2_tank], marker_color='#00BCD4', text=[f"${cost_h2_tank/1e6:.2f}M"], textposition='auto'))
         fig_break.add_trace(go.Bar(name='Distribution', x=['Scenario B'], y=[cost_dist], marker_color='#9E9E9E', showlegend=False, text=[f"${cost_dist/1e6:.2f}M"], textposition='auto'))
         
+        # Scenario Totals for Annotations
+        total_a = cost_pv_a + cost_bess_a + cost_dist
+        total_b = cost_pv_b + cost_bess_b + cost_el + cost_fc + cost_h2_tank + cost_dist
+
         # Scenario A Total Annotation
         fig_break.add_annotation(
-            x='Scenario A', y=capex_a,
-            text=f"Total: ${capex_a:,.0f}",
-            showarrow=False, yshift=20,
-            font=dict(size=20, color='white', family="Arial Black")
+            x='Scenario A', y=total_a,
+            text=f"Total: ${total_a:,.0f}",
+            showarrow=False, yshift=30,
+            font=dict(size=22, color='white', family="Arial Black")
         )
         
         # Scenario B Total Annotation
         fig_break.add_annotation(
-            x='Scenario B', y=capex_b,
-            text=f"Total: ${capex_b:,.0f}",
-            showarrow=False, yshift=20,
-            font=dict(size=20, color="#00d4ff", family="Arial Black")
+            x='Scenario B', y=total_b,
+            text=f"Total: ${total_b:,.0f}",
+            showarrow=False, yshift=30,
+            font=dict(size=22, color="#00d4ff", family="Arial Black")
         )
         
         # Highlight Annotation for Feasibility (Scenario B winner)
-        if capex_b < capex_a:
+        if total_b < total_a:
             fig_break.add_annotation(
-                x='Scenario B', y=capex_b,
+                x='Scenario B', y=total_b,
                 text="🚀 사업성 있음 (Feasible)",
-                showarrow=False, yshift=55,
+                showarrow=False, yshift=70,
                 font=dict(size=14, color="#00ff88", family="Arial Black"),
                 bgcolor="rgba(0,0,0,0.8)",
                 bordercolor="#00ff88",
@@ -774,9 +778,9 @@ elif st.session_state.step == 'result':
             title="투자 비용 구성 항목 비교 (Cost Breakdown)", 
             barmode='stack', 
             template="plotly_dark", 
-            height=580, 
-            margin=dict(t=100), 
-            yaxis=dict(range=[0, max(capex_a, capex_b)*1.4])
+            height=600, 
+            margin=dict(t=120), 
+            yaxis=dict(range=[0, max(total_a, total_b)*1.5])
         )
         st.plotly_chart(fig_break, use_container_width=True)
 
