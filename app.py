@@ -180,55 +180,109 @@ if st.session_state.step == 'input':
             st.rerun()
 
     with main_tabs[1]:
-        st.subheader("🚀 대량 위치 배치 시뮬레이션 (Batch Processing)")
+        st.subheader("🚀 지도 기반 대량 배치 시뮬레이션 (Spatial Batch)")
         st.markdown("""
-        여러 지역의 데이터를 한꺼번에 분석하고 싶을 때 사용하세요. 
-        아래 형식의 CSV 파일을 업로드하면 모든 지역에 대해 시뮬레이션을 자동 수행합니다.
-        
-        **CSV 형식 (헤더 포함):** `Name, Lat, Lon, HH, Demand`
+        지도 위를 클릭하여 분석하고 싶은 지점들을 선택하세요. 
+        선택된 모든 지점에 대해 NASA 기상 데이터를 기반으로 최적화 시뮬레이션을 수행합니다.
         """)
         
-        uploaded_file = st.file_uploader("위치 리스트 CSV 파일 업로드", type="csv")
+        if 'batch_list' not in st.session_state:
+            st.session_state.batch_list = []
+            
+        b_col1, b_col2 = st.columns([2, 1])
         
-        if uploaded_file is not None:
-            batch_df = pd.read_csv(uploaded_file)
-            if st.button("배치 시뮬레이션 시작"):
-                batch_results = []
-                progress_bar = st.progress(0)
-                status_text = st.empty()
+        with b_col1:
+            # Main Batch Map
+            bm = folium.Map(location=[0, 0], zoom_start=2)
+            for i, loc in enumerate(st.session_state.batch_list):
+                folium.Marker([loc['lat'], loc['lon']], popup=f"지점 {i+1}: {loc['name']}").add_to(bm)
+            
+            map_batch = st_folium(bm, height=450, use_container_width=True, key="batch_map_selector")
+            
+            if map_batch and map_batch.get("last_clicked"):
+                b_new_lat = map_batch["last_clicked"]["lat"]
+                b_new_lng = map_batch["last_clicked"]["lng"]
                 
-                for idx, row in batch_df.iterrows():
-                    status_text.text(f"⏳ 처리 중 ({idx+1}/{len(batch_df)}): {row['Name']}...")
+                # Check if this click is already added (simple debounce)
+                is_duplicate = False
+                if st.session_state.batch_list:
+                    last_loc = st.session_state.batch_list[-1]
+                    if abs(last_loc['lat'] - b_new_lat) < 0.0001 and abs(last_loc['lon'] - b_new_lng) < 0.0001:
+                        is_duplicate = True
+                
+                if not is_duplicate:
                     try:
-                        b_lat, b_lon = row['Lat'], row['Lon']
-                        b_total_d = row['HH'] * row['Demand']
-                        b_df_h = get_nasa_data(b_lat, b_lon)
-                        if b_df_h is not None:
-                            b_df_h['Gen_1kW'] = (b_df_h['Insolation'] * (0.85 * (1 - 0.004 * (b_df_h['Temp'] - 25))) * INV_EFF) / 1000
-                            b_yield = b_df_h['Gen_1kW'].sum()
-                            b_pv_ideal = (b_total_d * 365) / (b_yield * 0.98)
-                            
-                            b_bess_a = b_total_d * 15 
-                            b_capex_a = (b_pv_ideal * PRICE_PV) + (b_bess_a * PRICE_BESS) + (row['HH'] * 1500)
-                            
-                            b_pv_hybrid = b_pv_ideal * 1.3
-                            b_bess_b = b_total_d * 1.5
-                            b_capex_b = (b_pv_hybrid * PRICE_PV) + (b_bess_b * PRICE_BESS) + (b_total_d/6 * PRICE_EL) + (b_total_d/10 * PRICE_FC) + (row['HH'] * 1500)
-                            
-                            batch_results.append({
-                                'Name': row['Name'], 'Lat': b_lat, 'Lon': b_lon,
-                                'PV_kWp': b_pv_hybrid, 'BESS_kWh': b_bess_b,
-                                'CAPEX_A($)': b_capex_a, 'CAPEX_B($)': b_capex_b,
-                                'Saving(%)': (1 - b_capex_b/b_capex_a) * 100
-                            })
-                    except: pass
-                    progress_bar.progress((idx + 1) / len(batch_df))
+                        from geopy.geocoders import ArcGIS
+                        geolocator = ArcGIS(user_agent="net_zero_batch_v1")
+                        rev = geolocator.reverse(f"{b_new_lat}, {b_new_lng}", timeout=3)
+                        b_name = rev.address.split(',')[0] if rev else f"Point_{len(st.session_state.batch_list)+1}"
+                    except:
+                        b_name = f"Point_{len(st.session_state.batch_list)+1}"
+                    
+                    st.session_state.batch_list.append({
+                        'name': b_name, 'lat': b_new_lat, 'lon': b_new_lng, 
+                        'hh': 500, 'demand': 3.0
+                    })
+                    st.rerun()
+
+        with b_col2:
+            st.markdown("### 📍 선택된 지점")
+            if not st.session_state.batch_list:
+                st.info("지도를 클릭하여 지점을 추가하세요.")
+            else:
+                batch_df_view = pd.DataFrame(st.session_state.batch_list)
+                st.dataframe(batch_df_view[['name', 'lat', 'lon']], use_container_width=True, height=300)
                 
-                status_text.text("✅ 모든 배치가 완료되었습니다!")
-                res_df = pd.DataFrame(batch_results)
-                st.dataframe(res_df.style.format(precision=1), use_container_width=True)
-                res_csv = res_df.to_csv(index=False).encode('utf-8-sig')
-                st.download_button("📥 배치 결과 CSV 다운로드", data=res_csv, file_name="batch_results.csv", mime='text/csv')
+                if st.button("🔄 지점 초기화", use_container_width=True):
+                    st.session_state.batch_list = []
+                    st.rerun()
+                
+                if st.button("🔥 시뮬레이션 시작", type="primary", use_container_width=True):
+                    batch_results = []
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    
+                    for idx, loc in enumerate(st.session_state.batch_list):
+                        status_text.text(f"📡 분석 중 ({idx+1}/{len(st.session_state.batch_list)}): {loc['name']}...")
+                        try:
+                            b_total_d = loc['hh'] * loc['demand']
+                            b_df_h = get_nasa_data(loc['lat'], loc['lon'])
+                            if b_df_h is not None:
+                                b_df_h['Gen_1kW'] = (b_df_h['Insolation'] * (0.85 * (1 - 0.004 * (b_df_h['Temp'] - 25))) * INV_EFF) / 1000
+                                b_yield = b_df_h['Gen_1kW'].sum()
+                                b_pv_ideal = (b_total_d * 365) / (b_yield * 0.98)
+                                b_bess_a = b_total_d * 15 
+                                b_capex_a = (b_pv_ideal * PRICE_PV) + (b_bess_a * PRICE_BESS) + (loc['hh'] * 1500)
+                                b_pv_hybrid = b_pv_ideal * 1.3
+                                b_bess_b = b_total_d * 1.5
+                                b_capex_b = (b_pv_hybrid * PRICE_PV) + (b_bess_b * PRICE_BESS) + (b_total_d/6 * PRICE_EL) + (b_total_d/10 * PRICE_FC) + (loc['hh'] * 1500)
+                                batch_results.append({
+                                    'Location': loc['name'], 'Lat': loc['lat'], 'Lon': loc['lon'],
+                                    'PV(kWp)': b_pv_hybrid, 'BESS(kWh)': b_bess_b,
+                                    'CAPEX_A($)': b_capex_a, 'CAPEX_B($)': b_capex_b,
+                                    'Saving(%)': (1 - b_capex_b/b_capex_a) * 100
+                                })
+                        except: pass
+                        progress_bar.progress((idx + 1) / len(st.session_state.batch_list))
+                    
+                    status_text.text("✅ 완료!")
+                    res_df = pd.DataFrame(batch_results)
+                    st.dataframe(res_df.style.format(precision=1), use_container_width=True)
+                    res_csv = res_df.to_csv(index=False).encode('utf-8-sig')
+                    st.download_button("📥 결과 CSV 다운로드", data=res_csv, file_name="batch_results.csv", mime='text/csv')
+
+        st.divider()
+        st.markdown("### 📥 CSV 파일 업로드 (Bulk Import)")
+        uploaded_file = st.file_uploader("Name, Lat, Lon, HH, Demand 형식", type="csv")
+        if uploaded_file:
+            import_df = pd.read_csv(uploaded_file)
+            if st.button("CSV 데이터를 지도에 추가"):
+                for _, row in import_df.iterrows():
+                    st.session_state.batch_list.append({
+                        'name': row['Name'], 'lat': row['Lat'], 'lon': row['Lon'],
+                        'hh': row.get('HH', 500), 'demand': row.get('Demand', 3.0)
+                    })
+                st.rerun()
 
 # --- UI: Result Step ---
 elif st.session_state.step == 'result':
