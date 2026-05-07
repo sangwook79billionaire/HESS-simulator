@@ -903,9 +903,9 @@ elif st.session_state.step == 'result':
             diesel_ref = c_f3.number_input("에너지 벤치마크 원가 ($/kWh)", 0.0, 1.0, 0.62)
             
             # Calculations
-            rev_vals = edited_rev["설정값"].values
+            rev_vals = edited_rev["금액 ($)"].values
             p_rate, p_subsidy, p_other = rev_vals[0], rev_vals[1], rev_vals[2]
-            p_opex_total = rev_vals[3] + rev_vals[4]
+            p_opex_total = rev_vals[3] + rev_vals[4] + rev_vals[5] + rev_vals[6]
             
             npv, irr, payback, lcoe_fs = calculate_fs_metrics(total_capex_fs, annual_demand, p_rate, p_subsidy, p_other, p_opex_total, p_life, p_disc)
             
