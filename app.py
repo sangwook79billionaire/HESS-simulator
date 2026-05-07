@@ -864,24 +864,24 @@ elif st.session_state.step == 'result':
             rev_opex_items = {
                 "구분": ["Revenue", "Revenue", "Revenue", "OPEX", "OPEX", "OPEX", "OPEX"],
                 "상세 항목": [
-                    "전기 판매 요금 (PPA)", "보조금 (MTOP/Subsidy)", "담수 판매 수익", 
+                    "전기 판매 요금 (PPA)", "정부 운영 보조금 (Operational Subsidy)", "탄소권/담수 판매 수익", 
                     "일반 유지보수비 (O&M)", "현지 운영비 (Personnel)", 
                     "BESS 교체 적립금 (10yr cycle)", "H2 스택 교체 적립금 (8yr cycle)"
                 ],
-                "설정값": [
+                "금액 ($)": [
                     ref_rate, 50000.0, 15000.0 if inc_desal else 0.0, 
                     float(total_capex_fs * 0.012), 30000.0, 
                     float(bess_replace_annual), float(stack_replace_annual)
                 ],
                 "산출 및 수익 근거": [
-                    "전력 구매 계약 단가", "정부 지원금 연간 추정", "용수 판매 수익",
-                    "연간 CAPEX의 1.2%", "기술자 상주비", "배터리 수명 기반 적립", "스택 수명 기반 적립"
+                    "전력 구매 계약 단가 ($/kWh)", "연간 정부 지원금 (FiT 등)", "탄소 배출권 또는 용수 판매",
+                    "연간 CAPEX의 1.2%", "기술자 상주 및 관리비", "배터리 수명 기반 연간 적립액", "H2 스택 수명 기반 연간 적립액"
                 ]
             }
             df_rev = pd.DataFrame(rev_opex_items)
             edited_rev = st.data_editor(
-                df_rev, use_container_width=True, num_rows="fixed", key="rev_editor_v2",
-                column_config={"설정값": st.column_config.NumberColumn("설정값", format="%.2f")}
+                df_rev, use_container_width=True, num_rows="fixed", key="rev_editor_v3",
+                column_config={"금액 ($)": st.column_config.NumberColumn("금액 ($)", format="$%.2f")}
             )
             
             # 3. Financial Terms
