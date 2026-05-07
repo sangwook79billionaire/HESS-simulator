@@ -400,38 +400,34 @@ elif st.session_state.step == 'result':
         def create_net_chart(net_data, ghi_data, title):
             fig = make_subplots(specs=[[{"secondary_y": True}]])
             colors = ['#00d4ff' if x > 0 else '#ff4b4b' for x in net_data.values]
-            
-            # Add Net Balance Bar
             fig.add_trace(go.Bar(x=net_data.index, y=net_data.values, name="Net Balance", marker_color=colors), secondary_y=False)
-            
-            # Add Solar Irradiation Line
             fig.add_trace(go.Scatter(x=ghi_data.index, y=ghi_data.values, name="평균 일사량", line=dict(color="#FFD700", width=3, dash='dot'), mode='lines+markers'), secondary_y=True)
             
-            fig.update_layout(title=title, template="plotly_dark", height=400, showlegend=True,
+            fig.update_layout(title=dict(text=title, font=dict(size=18)), template="plotly_dark", height=350, 
+                              margin=dict(l=60, r=60, t=60, b=50), showlegend=True,
                               legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
-            fig.update_yaxes(title_text="순 수지 (Net Balance, kWh)", range=[y_min, y_max], secondary_y=False)
-            fig.update_yaxes(title_text="평균 일사량 (kWh/m²/d)", secondary_y=True)
+            fig.update_yaxes(title_text="순 수지 (kWh)", range=[y_min, y_max], secondary_y=False)
+            fig.update_yaxes(title_text="일사량 (kWh/m²/d)", secondary_y=True)
             fig.update_xaxes(title_text="월 (Month)", tickmode='linear', tick0=1, dtick=1)
             return fig
 
         with c_net1:
-            st.plotly_chart(create_net_chart(monthly_net_a, monthly_ghi, "Scenario A: 월간 순 수지 & 일사량"), use_container_width=True)
+            st.plotly_chart(create_net_chart(monthly_net_a, monthly_ghi, "Scenario A: 월간 수지 & 일사량"), use_container_width=True)
+            # Scenario A SOC
+            fig_soc_a = go.Figure()
+            fig_soc_a.add_trace(go.Scatter(x=df_h['Timestamp'], y=net_trace, name="BESS SOC", line=dict(color='#ff4b4b', width=1)))
+            fig_soc_a.update_layout(title=dict(text="Scenario A: Battery SOC (%)", font=dict(size=18)), 
+                                    template="plotly_dark", height=350, margin=dict(l=60, r=60, t=60, b=50))
+            st.plotly_chart(fig_soc_a, use_container_width=True)
             
         with c_net2:
-            st.plotly_chart(create_net_chart(monthly_net_b, monthly_ghi, "Scenario B: 월간 순 수지 & 일사량"), use_container_width=True)
-
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.subheader("Scenario A: BESS SOC Trend")
-            fig_soc_a = px.line(x=df_h['Timestamp'], y=net_trace, title="Scenario A: Battery SOC (%)", color_discrete_sequence=['#ff4b4b'])
-            fig_soc_a.update_layout(template="plotly_dark", height=300, margin=dict(l=0,r=0,t=30,b=0))
-            st.plotly_chart(fig_soc_a, use_container_width=True)
-        with col_b:
-            st.subheader("Scenario B: BESS & H2 Status")
+            st.plotly_chart(create_net_chart(monthly_net_b, monthly_ghi, "Scenario B: 월간 수지 & 일사량"), use_container_width=True)
+            # Scenario B Hybrid Status
             fig_hybrid = make_subplots(specs=[[{"secondary_y": True}]])
             fig_hybrid.add_trace(go.Scatter(x=df_h['Timestamp'], y=df_h['SOC_B'], name="BESS SOC (%)", line=dict(color="#00d4ff", width=1)), secondary_y=False)
-            fig_hybrid.add_trace(go.Scatter(x=df_h['Timestamp'], y=df_h['H2_Stock'], name="H2 Stock (kg)", fill='tozeroy', line=dict(color="#00ff88", width=2)), secondary_y=True)
-            fig_hybrid.update_layout(template="plotly_dark", height=300, margin=dict(l=0,r=0,t=30,b=0), showlegend=False)
+            fig_hybrid.add_trace(go.Scatter(x=df_h['Timestamp'], y=df_h['H2_Stock'], name="H2 Stock (kg)", fill='tozeroy', line=dict(color="#00ff88", width=1)), secondary_y=True)
+            fig_hybrid.update_layout(title=dict(text="Scenario B: BESS & H2 Status", font=dict(size=18)), 
+                                    template="plotly_dark", height=350, margin=dict(l=60, r=60, t=60, b=50), showlegend=False)
             st.plotly_chart(fig_hybrid, use_container_width=True)
 
         # 4. CAPEX 상세 내역 및 비교
