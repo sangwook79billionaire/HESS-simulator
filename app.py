@@ -944,101 +944,71 @@ elif st.session_state.step == 'result':
             fig_lcoe.update_layout(title="LCOE 발전 원가 비교 ($/kWh)", template="plotly_dark", height=300, margin=dict(l=0,r=0,t=40,b=0))
             st.plotly_chart(fig_lcoe, use_container_width=True)
             
-            # 4. Yearly Cash Flow Table (New)
+            # 4. Yearly Cash Flow Table (Timed Replacements)
             st.markdown("#### 📅 연도별 현금 흐름 (Yearly Cash Flow)")
             years = list(range(int(p_life) + 1))
-            capex_list = [total_capex_fs] + [0] * int(p_life)
+            
+            # Base OPEX (Excluding replacement funds from the sum to avoid double counting)
+            # rev_vals[3]: O&M, rev_vals[4]: Personnel
+            fixed_opex_annual = rev_vals[3] + rev_vals[4]
             rev_annual = (annual_demand * p_rate) + p_subsidy + p_other
-            rev_list = [0] + [rev_annual] * int(p_life)
-            opex_list = [0] + [p_opex_total] * int(p_life)
-            net_list = [-total_capex_fs] + [(rev_annual - p_opex_total)] * int(p_life)
-            cum_list = np.cumsum(net_list)
+            
+            # Replacement Costs
+            bess_replace_cost = bess_b * 300 * 0.7 # 70% of initial
+            stack_replace_cost = (el_kw * 550 + fc_kw * 700) * 0.5 # 50% of initial
+            
+            capex_out = [total_capex_fs] + [0] * int(p_life)
+            rev_in = [0] + [rev_annual] * int(p_life)
+            opex_base = [0] + [fixed_opex_annual] * int(p_life)
+            replace_out = [0] * (int(p_life) + 1)
+            
+            for y in range(1, int(p_life) + 1):
+                if y % 10 == 0: replace_out[y] += bess_replace_cost
+                if y % 8 == 0: replace_out[y] += stack_replace_cost
+            
+            net_flow = [-total_capex_fs] + [(rev_annual - fixed_opex_annual - replace_out[y]) for y in range(1, int(p_life) + 1)]
+            cum_flow = np.cumsum(net_flow)
             
             df_cf = pd.DataFrame({
                 "Year": years,
-                "CAPEX ($)": capex_list,
-                "Revenue ($)": rev_list,
-                "OPEX ($)": opex_list,
-                "Net Cash Flow ($)": net_list,
-                "Cumulative ($)": cum_list
+                "Initial CAPEX ($)": capex_out,
+                "Revenue ($)": rev_in,
+                "Base OPEX ($)": opex_base,
+                "Replacement ($)": replace_out,
+                "Net Flow ($)": net_flow,
+                "Cumulative ($)": cum_flow
             })
             
             st.dataframe(
                 df_cf.style.format({
-                    "CAPEX ($)": "${:,.0f}",
-                    "Revenue ($)": "${:,.0f}",
-                    "OPEX ($)": "${:,.0f}",
-                    "Net Cash Flow ($)": "${:,.0f}",
-                    "Cumulative ($)": "${:,.0f}"
+                    "Initial CAPEX ($)": "${:,.0f}", "Revenue ($)": "${:,.0f}",
+                    "Base OPEX ($)": "${:,.0f}", "Replacement ($)": "${:,.0f}",
+                    "Net Flow ($)": "${:,.0f}", "Cumulative ($)": "${:,.0f}"
                 }),
                 use_container_width=True, height=250
             )
             
-            # 5. Stacked Cash Flow Chart (Granular)
+            # 5. Stacked Cash Flow Chart (Timed Scale)
             from plotly.subplots import make_subplots
             fig_cf = make_subplots(specs=[[{"secondary_y": True}]])
             
-            # Data components
-            rev_ppa = annual_demand * p_rate
-            rev_sub = p_subsidy
-            rev_oth = p_other
+            # Inflow components (Year 1+)
+            yr_idx = df_cf['Year'][1:]
+            fig_cf.add_trace(go.Bar(x=yr_idx, y=[rev_annual * (annual_demand*p_rate/rev_annual)]*int(p_life), name='PPA Sales', marker_color='#00d4ff'), secondary_y=False)
+            fig_cf.add_trace(go.Bar(x=yr_idx, y=[p_subsidy]*int(p_life), name='Subsidy', marker_color='#ffd700'), secondary_y=False)
+            fig_cf.add_trace(go.Bar(x=yr_idx, y=[p_other]*int(p_life), name='Other Income', marker_color='#00ff88'), secondary_y=False)
             
-            # 1. PPA Revenue (Primary Y)
-            fig_cf.add_trace(go.Bar(
-                x=df_cf['Year'][1:], y=[rev_ppa]*int(p_life),
-                name='PPA Sales', marker_color='#00d4ff'
-            ), secondary_y=False)
+            # Outflow components
+            fig_cf.add_trace(go.Bar(x=yr_idx, y=[-fixed_opex_annual]*int(p_life), name='Base OPEX', marker_color='#555'), secondary_y=False)
+            fig_cf.add_trace(go.Bar(x=years, y=[-v for v in replace_out], name='Asset Replacement', marker_color='#ff8800'), secondary_y=False)
+            fig_cf.add_trace(go.Bar(x=[0], y=[-total_capex_fs], name='Initial CAPEX', marker_color='#ff4b4b'), secondary_y=False)
             
-            # 2. Subsidy (Primary Y)
-            fig_cf.add_trace(go.Bar(
-                x=df_cf['Year'][1:], y=[rev_sub]*int(p_life),
-                name='Subsidy (MTOP)', marker_color='#ffd700'
-            ), secondary_y=False)
+            # Cumulative Flow
+            fig_cf.add_trace(go.Scatter(x=years, y=cum_flow, name='Cumulative Balance', line=dict(color='#ffffff', width=3, dash='dot'), mode='lines+markers'), secondary_y=True)
             
-            # 3. Other Rev (Primary Y)
-            fig_cf.add_trace(go.Bar(
-                x=df_cf['Year'][1:], y=[rev_oth]*int(p_life),
-                name='Other Income', marker_color='#00ff88'
-            ), secondary_y=False)
-            
-            # 4. OPEX (Primary Y - Negative)
-            fig_cf.add_trace(go.Bar(
-                x=df_cf['Year'][1:], y=[-p_opex_total]*int(p_life),
-                name='OPEX', marker_color='#555'
-            ), secondary_y=False)
-            
-            # 5. Initial CAPEX (Primary Y - Year 0 only)
-            fig_cf.add_trace(go.Bar(
-                x=[0], y=[-total_capex_fs],
-                name='Initial CAPEX', marker_color='#ff4b4b'
-            ), secondary_y=False)
-            
-            # 6. Cumulative Flow (Secondary Y)
-            fig_cf.add_trace(go.Scatter(
-                x=df_cf['Year'], y=df_cf['Cumulative ($)'],
-                name='Cumulative Balance',
-                line=dict(color='#ffffff', width=3, dash='dot'),
-                mode='lines+markers'
-            ), secondary_y=True)
-            
-            # Scale Optimization
-            max_inflow = rev_ppa + rev_sub + rev_oth
-            fig_cf.update_yaxes(
-                title_text="Annual Flow ($)", 
-                range=[-max_inflow * 1.5, max_inflow * 2.0],
-                secondary_y=False
-            )
+            fig_cf.update_yaxes(title_text="Annual Flow ($)", range=[-rev_annual * 2, rev_annual * 3], secondary_y=False)
             fig_cf.update_yaxes(title_text="Cumulative Balance ($)", secondary_y=True)
-            
-            fig_cf.add_hline(y=0, line_dash="solid", line_color="white", opacity=0.3)
-            fig_cf.update_layout(
-                title="상세 현금 흐름 분석 (Stacked Cash Flow Analysis)",
-                barmode='relative', # Stack positive and negative
-                template="plotly_dark", height=500,
-                xaxis_title="Year",
-                margin=dict(l=0, r=0, t=50, b=0),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
-            )
+            fig_cf.update_layout(title="연도별 현금 흐름 분석 (Timed Asset Replacement Model)", barmode='relative', template="plotly_dark", height=500, xaxis_title="Year", legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
             st.plotly_chart(fig_cf, use_container_width=True)
             
             st.info(f"💡 **종합 평가:** 본 프로젝트는 벤치마크 원가(${diesel_ref}) 대비 **{abs((lcoe_fs - diesel_ref)/diesel_ref*100):.1f}%**의 높은 원가 경쟁력을 확보하고 있습니다.")
