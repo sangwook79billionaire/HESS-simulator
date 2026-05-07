@@ -607,8 +607,8 @@ elif st.session_state.step == 'result':
                     <li style='margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;'>
                         <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span><br>
                         <b style='color: #fff; font-size: 20px;'>{area_a:,.0f} m²</b> <small style='color: #888;'>(약 {area_a/3.3058:,.1f}평)</small>
-                        <div style='font-size: 13px; color: #888; margin-top: 8px; line-height: 1.4;'>
-                            • PV: {pv_ideal * 10:,.0f}m² | • BESS: {bess_a * 0.1:,.0f}m² | • HESS: 0m²
+                        <div style='font-size: 11px; color: #888; margin-top: 8px; line-height: 1.4;'>
+                            • PV: {pv_ideal * 10:,.0f}m²(10m²/kWp) | • BESS: {bess_a * 0.1:,.0f}m²(0.1m²/kWh) | • HESS: 0m²(1.5m²/kg)
                         </div>
                     </li>
                 </ul>
@@ -635,8 +635,8 @@ elif st.session_state.step == 'result':
                     <li style='margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;'>
                         <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span><br>
                         <b style='color: #fff; font-size: 20px;'>{area_b:,.0f} m²</b> <small style='color: #888;'>(약 {area_b/3.3058:,.1f}평)</small>
-                        <div style='font-size: 13px; color: #888; margin-top: 8px; line-height: 1.4;'>
-                            • PV: {pv_hybrid * 10:,.0f}m² | • BESS: {bess_b * 0.1:,.0f}m² | • HESS: {max(h2_stock) * 1.5 + 50:,.0f}m²
+                        <div style='font-size: 11px; color: #888; margin-top: 8px; line-height: 1.4;'>
+                            • PV: {pv_hybrid * 10:,.0f}m²(10m²/kWp) | • BESS: {bess_b * 0.1:,.0f}m²(0.1m²/kWh) | • HESS: {max(h2_stock) * 1.5 + 50:,.0f}m²(1.5m²/kg)
                         </div>
                     </li>
                 </ul>
