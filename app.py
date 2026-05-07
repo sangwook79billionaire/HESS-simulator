@@ -974,24 +974,47 @@ elif st.session_state.step == 'result':
                 use_container_width=True, height=250
             )
             
-            # 5. Cash Flow Chart (New)
-            fig_cf = go.Figure()
+            # 5. Cash Flow Chart (Optimized Scale)
+            from plotly.subplots import make_subplots
+            fig_cf = make_subplots(specs=[[{"secondary_y": True}]])
+            
+            # 1. Yearly Net Flow (Primary Y)
             fig_cf.add_trace(go.Bar(
                 x=df_cf['Year'], y=df_cf['Net Cash Flow ($)'],
-                name='Net Cash Flow',
+                name='Yearly Net Flow',
                 marker_color=['#ff4b4b' if x < 0 else '#00d4ff' for x in df_cf['Net Cash Flow ($)']]
-            ))
+            ), secondary_y=False)
+            
+            # 2. Cumulative Flow (Secondary Y)
             fig_cf.add_trace(go.Scatter(
                 x=df_cf['Year'], y=df_cf['Cumulative ($)'],
-                name='Cumulative Cash Flow',
+                name='Cumulative Flow',
                 line=dict(color='#00ff88', width=3),
                 mode='lines+markers'
-            ))
+            ), secondary_y=True)
+            
+            # Formatting and Capping the Primary Axis for Visibility
+            max_annual_flow = max(net_list[1:]) if len(net_list) > 1 else total_capex_fs
+            fig_cf.update_yaxes(
+                title_text="Yearly Flow ($)", 
+                range=[-max_annual_flow * 0.5, max_annual_flow * 1.5], # Focus on recurring flow
+                secondary_y=False
+            )
+            fig_cf.update_yaxes(title_text="Cumulative Balance ($)", secondary_y=True)
+            
+            # Annotation for the deep CAPEX bar
+            fig_cf.add_annotation(
+                x=0, y=0, text=f"Initial CAPEX: -${total_capex_fs:,.0f}",
+                showarrow=True, arrowhead=2, ay=50, ax=0,
+                font=dict(color="#ff4b4b", size=11),
+                secondary_y=False
+            )
+            
             fig_cf.add_hline(y=0, line_dash="dash", line_color="white", opacity=0.5)
             fig_cf.update_layout(
-                title="현금 흐름 프로젝션 (Cash Flow Projection)",
-                template="plotly_dark", height=400,
-                xaxis_title="Year", yaxis_title="Amount ($)",
+                title="현금 흐름 프로젝션 (Scale Optimized for Inflow)",
+                template="plotly_dark", height=450,
+                xaxis_title="Year",
                 margin=dict(l=0, r=0, t=50, b=0),
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
             )
