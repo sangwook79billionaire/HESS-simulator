@@ -776,7 +776,7 @@ elif st.session_state.step == 'result':
             capex_items = {
                 "구성 항목": ["Solar PV System", "BESS (Battery)", "Hydrogen System (EL/FC/Tank)", "Infrastructure (Grid/Misc)"],
                 "단위": ["USD", "USD", "USD", "USD"],
-                "설정 금액": [float(pv_hybrid * PRICE_PV), float(bess_b * PRICE_BESS), float((el_kw * PRICE_EL) + (fc_kw * PRICE_FC) + (max(h2_stock) * PRICE_TANK)), float(hh * 1500)],
+                "설정 금액": [int(pv_hybrid * PRICE_PV), int(bess_b * PRICE_BESS), int((el_kw * PRICE_EL) + (fc_kw * PRICE_FC) + (max(h2_stock) * PRICE_TANK)), int(hh * 1500)],
                 "산출 근거 (Basis)": [
                     f"{pv_hybrid:,.1f} kWp * ${PRICE_PV}/kWp",
                     f"{bess_b:,.1f} kWh * ${PRICE_BESS}/kWh",
@@ -785,7 +785,15 @@ elif st.session_state.step == 'result':
                 ]
             }
             df_capex = pd.DataFrame(capex_items)
-            edited_capex = st.data_editor(df_capex, use_container_width=True, num_rows="fixed", key="capex_editor")
+            edited_capex = st.data_editor(
+                df_capex, 
+                use_container_width=True, 
+                num_rows="fixed", 
+                key="capex_editor",
+                column_config={
+                    "설정 금액": st.column_config.NumberColumn("설정 금액", format="%d")
+                }
+            )
             total_capex_fs = edited_capex["설정 금액"].sum()
             
             st.divider()
@@ -796,10 +804,18 @@ elif st.session_state.step == 'result':
                 "구분": ["Revenue", "Revenue", "OPEX", "OPEX"],
                 "상세 항목": ["전기 판매 요금 (Elec. Rate)", "정부 보조금 (Annual Subsidy)", "유지보수비 (Maintenance)", "인건비 및 보험료 (Labor/Ins.)"],
                 "단위": ["USD/kWh", "USD/year", "USD/year", "USD/year"],
-                "설정값": [ref_rate, 0.0, float(total_capex_fs * 0.015), 50000.0]
+                "설정값": [ref_rate, 0, int(total_capex_fs * 0.015), 50000]
             }
             df_rev = pd.DataFrame(rev_opex_items)
-            edited_rev = st.data_editor(df_rev, use_container_width=True, num_rows="fixed", key="rev_editor")
+            edited_rev = st.data_editor(
+                df_rev, 
+                use_container_width=True, 
+                num_rows="fixed", 
+                key="rev_editor",
+                column_config={
+                    "설정값": st.column_config.NumberColumn("설정값", format="%.2f") # Keep decimals for rate, but users can enter ints for others
+                }
+            )
             
             # 3. Financial Terms
             st.markdown("##### 📉 C. 금융 및 운영 조건 (Financial Terms)")
