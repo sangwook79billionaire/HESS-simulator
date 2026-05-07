@@ -74,7 +74,6 @@ def calc_edcf_payment(amount, years=40, grace=15, rate=0.0001):
     annuity_pay = amount * (rate * (1+rate)**n) / ((1+rate)**n - 1)
     return (grace_pay * grace + annuity_pay * n) / years
 
-# --- UI: Input Step ---
 if st.session_state.step == 'input':
     st.title("🌍 Universal Net-Zero Microgrid Optimizer")
     st.markdown("전 세계 격오지 재생에너지 전환을 위한 하이브리드 시스템 설계 솔루션")
@@ -84,102 +83,152 @@ if st.session_state.step == 'input':
         <span style='color: #ccc; margin-left: 10px;'>1. 위치 선정 ➜ 2. 수요 설정 ➜ 3. 에너지 부하 패턴 지정</span>
     </div>
     """, unsafe_allow_html=True)
+
+    main_tabs = st.tabs(["📍 단일 지점 분석", "🚀 대량 배치 시뮬레이션"])
     
-    col1, col2 = st.columns([1, 1.2])
-    with col1:
-        st.subheader("📍 1. 위치 및 수요 설정")
-        st.markdown("<small style='color: #888;'>지명을 검색하거나 지도 위의 포인트를 클릭하여 위치를 선정하세요.</small>", unsafe_allow_html=True)
-        
-        address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country)
-        if st.button("위치 확인"):
-            try:
-                from geopy.geocoders import ArcGIS
-                geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v1")
-                loc = geolocator.geocode(address, timeout=10)
-                if loc:
-                    st.session_state.lat, st.session_state.lon, st.session_state.country = loc.latitude, loc.longitude, loc.address
-                    st.rerun()
-                else:
-                    st.error("검색 결과가 없습니다. 다른 지명을 입력해 주세요.")
-            except:
-                st.error("위치 서비스(ArcGIS)가 일시적으로 응답하지 않습니다. 지도에서 직접 클릭해 주세요.")
-        
-        m = folium.Map(location=[st.session_state.lat, st.session_state.lon], zoom_start=10)
-        folium.Marker([st.session_state.lat, st.session_state.lon], tooltip="선택된 위치").add_to(m)
-        
-        # Restore Map Click Functionality
-        map_out = st_folium(m, height=300, use_container_width=True, key="location_map")
-        
-        if map_out and map_out.get("last_clicked"):
-            new_lat = map_out["last_clicked"]["lat"]
-            new_lng = map_out["last_clicked"]["lng"]
-            if abs(new_lat - st.session_state.lat) > 0.0001 or abs(new_lng - st.session_state.lon) > 0.0001:
-                st.session_state.lat = new_lat
-                st.session_state.lon = new_lng
-                # Attempt reverse geocode using ArcGIS
+    with main_tabs[0]:
+        col1, col2 = st.columns([1, 1.2])
+        with col1:
+            st.subheader("📍 1. 위치 및 수요 설정")
+            st.markdown("<small style='color: #888;'>지명을 검색하거나 지도 위의 포인트를 클릭하여 위치를 선정하세요.</small>", unsafe_allow_html=True)
+            
+            address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country)
+            if st.button("위치 확인"):
                 try:
                     from geopy.geocoders import ArcGIS
                     geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v1")
-                    rev = geolocator.reverse(f"{new_lat}, {new_lng}", timeout=5)
-                    if rev: st.session_state.country = rev.address
+                    loc = geolocator.geocode(address, timeout=10)
+                    if loc:
+                        st.session_state.lat, st.session_state.lon, st.session_state.country = loc.latitude, loc.longitude, loc.address
+                        st.rerun()
+                    else:
+                        st.error("검색 결과가 없습니다. 다른 지명을 입력해 주세요.")
                 except:
-                    pass
-                st.rerun()
-        
-        st.info(f"현재 선택 좌표: {st.session_state.lat:.4f}, {st.session_state.lon:.4f}")
-        
-    with col2:
-        st.subheader("⚡ 2. 에너지 부하 패턴 (Mixed Load)")
-        hh = st.number_input("가구 수 (Households)", value=500, min_value=1)
-        st.session_state.hh = hh
-        
-        mode = st.radio("수요 산정", ["국가별 레퍼런스", "직접 입력"], horizontal=True)
-        if mode == "국가별 레퍼런스":
-            c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", list(COUNTRY_BENCHMARKS.keys()))
-            avg_kwh = COUNTRY_BENCHMARKS[c_name]
-        else:
-            avg_kwh = st.number_input("가구당 일일 사용량 (kWh)", value=5.0)
-        
-        total_daily_kwh = hh * avg_kwh
-        st.success(f"총 일일 수요: {total_daily_kwh:,.1f} kWh")
-        
-        st.write("📈 **에너지 부하 특성 조합 (Dynamic Load Mix)**")
-        
-        # Calculate percentages: 0 = 0% Residential (100% Commercial), 100 = 100% Residential (0% Commercial)
-        res_pct = st.session_state.get('mix_slider', 50)
-        com_pct = 100 - res_pct
-        
-        # Proportional Bar UI: Left (Residential/Red), Right (Commercial/Blue)
-        # Added margin: 0 12px to align with Streamlit slider's track
-        st.markdown(f"""
-        <div style='display: flex; width: auto; height: 40px; border-radius: 6px; overflow: hidden; margin: 0 12px 10px 12px; border: 1px solid #444;'>
-            <div style='flex: {res_pct if res_pct > 0 else 0.1}; background: linear-gradient(90deg, #801a1a 0%, #ff4b4b 100%); display: flex; align-items: center; padding-left: 15px; transition: flex 0.1s ease;'>
-                <span style='color: white; font-weight: bold; white-space: nowrap; font-size: 13px;'>🏠 주거 {res_pct}%</span>
+                    st.error("위치 서비스(ArcGIS)가 일시적으로 응답하지 않습니다. 지도에서 직접 클릭해 주세요.")
+            
+            m = folium.Map(location=[st.session_state.lat, st.session_state.lon], zoom_start=10)
+            folium.Marker([st.session_state.lat, st.session_state.lon], tooltip="선택된 위치").add_to(m)
+            
+            # Restore Map Click Functionality
+            map_out = st_folium(m, height=300, use_container_width=True, key="location_map")
+            
+            if map_out and map_out.get("last_clicked"):
+                new_lat = map_out["last_clicked"]["lat"]
+                new_lng = map_out["last_clicked"]["lng"]
+                if abs(new_lat - st.session_state.lat) > 0.0001 or abs(new_lng - st.session_state.lon) > 0.0001:
+                    st.session_state.lat = new_lat
+                    st.session_state.lon = new_lng
+                    # Attempt reverse geocode using ArcGIS
+                    try:
+                        from geopy.geocoders import ArcGIS
+                        geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v1")
+                        rev = geolocator.reverse(f"{new_lat}, {new_lng}", timeout=5)
+                        if rev: st.session_state.country = rev.address
+                    except:
+                        pass
+                    st.rerun()
+            
+            st.info(f"현재 선택 좌표: {st.session_state.lat:.4f}, {st.session_state.lon:.4f}")
+            
+        with col2:
+            st.subheader("⚡ 2. 에너지 부하 패턴 (Mixed Load)")
+            hh = st.number_input("가구 수 (Households)", value=500, min_value=1)
+            st.session_state.hh = hh
+            
+            mode = st.radio("수요 산정", ["국가별 레퍼런스", "직접 입력"], horizontal=True)
+            if mode == "국가별 레퍼런스":
+                c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", list(COUNTRY_BENCHMARKS.keys()))
+                avg_kwh = COUNTRY_BENCHMARKS[c_name]
+            else:
+                avg_kwh = st.number_input("가구당 일일 사용량 (kWh)", value=5.0)
+            
+            total_daily_kwh = hh * avg_kwh
+            st.success(f"총 일일 수요: {total_daily_kwh:,.1f} kWh")
+            
+            st.write("📈 **에너지 부하 특성 조합 (Dynamic Load Mix)**")
+            
+            res_pct = st.session_state.get('mix_slider', 50)
+            com_pct = 100 - res_pct
+            st.markdown(f"""
+            <div style='display: flex; width: auto; height: 40px; border-radius: 6px; overflow: hidden; margin: 0 12px 10px 12px; border: 1px solid #444;'>
+                <div style='flex: {res_pct if res_pct > 0 else 0.1}; background: linear-gradient(90deg, #801a1a 0%, #ff4b4b 100%); display: flex; align-items: center; padding-left: 15px; transition: flex 0.1s ease;'>
+                    <span style='color: white; font-weight: bold; white-space: nowrap; font-size: 13px;'>🏠 주거 {res_pct}%</span>
+                </div>
+                <div style='flex: {com_pct if com_pct > 0 else 0.1}; background: linear-gradient(90deg, #00d4ff 0%, #0055ff 100%); display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; transition: flex 0.1s ease;'>
+                    <span style='color: white; font-weight: bold; white-space: nowrap; font-size: 13px;'>상업 {com_pct}% 🏢</span>
+                </div>
             </div>
-            <div style='flex: {com_pct if com_pct > 0 else 0.1}; background: linear-gradient(90deg, #00d4ff 0%, #0055ff 100%); display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; transition: flex 0.1s ease;'>
-                <span style='color: white; font-weight: bold; white-space: nowrap; font-size: 13px;'>상업 {com_pct}% 🏢</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        mix_val = st.slider("부하 패턴 혼합 비율", 0, 100, 50, key='mix_slider', label_visibility="collapsed")
-        
-        ratio_a = mix_val / 100.0  # Residential ratio (increases to the right)
-        ratio_b = 1.0 - ratio_a    # Commercial ratio
-        
-        combined_pattern = [(PATTERN_A[i]*ratio_a + PATTERN_B[i]*ratio_b) for i in range(24)]
-        norm_factor = sum(combined_pattern) / 24
-        final_pattern = [p / norm_factor for p in combined_pattern]
-        
-        fig_load = px.line(y=final_pattern, x=list(range(24)), title="24시간 Hourly Load Profile (Normalized)")
-        fig_load.update_layout(height=200, margin=dict(l=0,r=0,t=30,b=0), template="plotly_dark")
-        st.plotly_chart(fig_load, use_container_width=True)
+            """, unsafe_allow_html=True)
+            
+            mix_val = st.slider("부하 패턴 혼합 비율", 0, 100, 50, key='mix_slider', label_visibility="collapsed")
+            
+            ratio_a = mix_val / 100.0
+            ratio_b = 1.0 - ratio_a
+            
+            combined_pattern = [(PATTERN_A[i]*ratio_a + PATTERN_B[i]*ratio_b) for i in range(24)]
+            norm_factor = sum(combined_pattern) / 24
+            final_pattern = [p / norm_factor for p in combined_pattern]
+            
+            fig_load = px.line(y=final_pattern, x=list(range(24)), title="24시간 Hourly Load Profile (Normalized)")
+            fig_load.update_layout(height=200, margin=dict(l=0,r=0,t=30,b=0), template="plotly_dark")
+            st.plotly_chart(fig_load, use_container_width=True)
 
-    if st.button("🚀 최적화 시뮬레이션 시작", use_container_width=True, type="primary"):
-        st.session_state.total_d = total_daily_kwh
-        st.session_state.load_profile = final_pattern
-        st.session_state.step = 'result'
-        st.rerun()
+        if st.button("🚀 최적화 시뮬레이션 시작", use_container_width=True, type="primary"):
+            st.session_state.total_d = total_daily_kwh
+            st.session_state.load_profile = final_pattern
+            st.session_state.step = 'result'
+            st.rerun()
+
+    with main_tabs[1]:
+        st.subheader("🚀 대량 위치 배치 시뮬레이션 (Batch Processing)")
+        st.markdown("""
+        여러 지역의 데이터를 한꺼번에 분석하고 싶을 때 사용하세요. 
+        아래 형식의 CSV 파일을 업로드하면 모든 지역에 대해 시뮬레이션을 자동 수행합니다.
+        
+        **CSV 형식 (헤더 포함):** `Name, Lat, Lon, HH, Demand`
+        """)
+        
+        uploaded_file = st.file_uploader("위치 리스트 CSV 파일 업로드", type="csv")
+        
+        if uploaded_file is not None:
+            batch_df = pd.read_csv(uploaded_file)
+            if st.button("배치 시뮬레이션 시작"):
+                batch_results = []
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                
+                for idx, row in batch_df.iterrows():
+                    status_text.text(f"⏳ 처리 중 ({idx+1}/{len(batch_df)}): {row['Name']}...")
+                    try:
+                        b_lat, b_lon = row['Lat'], row['Lon']
+                        b_total_d = row['HH'] * row['Demand']
+                        b_df_h = get_nasa_data(b_lat, b_lon)
+                        if b_df_h is not None:
+                            b_df_h['Gen_1kW'] = (b_df_h['Insolation'] * (0.85 * (1 - 0.004 * (b_df_h['Temp'] - 25))) * INV_EFF) / 1000
+                            b_yield = b_df_h['Gen_1kW'].sum()
+                            b_pv_ideal = (b_total_d * 365) / (b_yield * 0.98)
+                            
+                            b_bess_a = b_total_d * 15 
+                            b_capex_a = (b_pv_ideal * PRICE_PV) + (b_bess_a * PRICE_BESS) + (row['HH'] * 1500)
+                            
+                            b_pv_hybrid = b_pv_ideal * 1.3
+                            b_bess_b = b_total_d * 1.5
+                            b_capex_b = (b_pv_hybrid * PRICE_PV) + (b_bess_b * PRICE_BESS) + (b_total_d/6 * PRICE_EL) + (b_total_d/10 * PRICE_FC) + (row['HH'] * 1500)
+                            
+                            batch_results.append({
+                                'Name': row['Name'], 'Lat': b_lat, 'Lon': b_lon,
+                                'PV_kWp': b_pv_hybrid, 'BESS_kWh': b_bess_b,
+                                'CAPEX_A($)': b_capex_a, 'CAPEX_B($)': b_capex_b,
+                                'Saving(%)': (1 - b_capex_b/b_capex_a) * 100
+                            })
+                    except: pass
+                    progress_bar.progress((idx + 1) / len(batch_df))
+                
+                status_text.text("✅ 모든 배치가 완료되었습니다!")
+                res_df = pd.DataFrame(batch_results)
+                st.dataframe(res_df.style.format(precision=1), use_container_width=True)
+                res_csv = res_df.to_csv(index=False).encode('utf-8-sig')
+                st.download_button("📥 배치 결과 CSV 다운로드", data=res_csv, file_name="batch_results.csv", mime='text/csv')
 
 # --- UI: Result Step ---
 elif st.session_state.step == 'result':
