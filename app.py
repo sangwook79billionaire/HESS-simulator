@@ -339,8 +339,8 @@ elif st.session_state.step == 'result':
                         <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span><br>
                         <b style='color: #fff; font-size: 20px;'>{area_a:,.0f} m²</b> <small style='color: #888;'>(약 {area_a/3305.8:,.1f}평)</small>
                         <div style='font-size: 13px; color: #888; margin-top: 8px; line-height: 1.4;'>
-                            • 태양광(PV): {pv_ideal * 10:,.0f} m²<br>
-                            • 배터리(BESS): {bess_a * 0.1:,.0f} m²
+                            • 태양광(PV): {pv_ideal * 10:,.0f} m² <span style='font-size: 11px;'>(10m²/kWp)</span><br>
+                            • 배터리(BESS): {bess_a * 0.1:,.0f} m² <span style='font-size: 11px;'>(0.1m²/kWh)</span>
                         </div>
                     </li>
                 </ul>
@@ -372,9 +372,9 @@ elif st.session_state.step == 'result':
                         <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span><br>
                         <b style='color: #fff; font-size: 20px;'>{area_b:,.0f} m²</b> <small style='color: #888;'>(약 {area_b/3305.8:,.1f}평)</small>
                         <div style='font-size: 13px; color: #888; margin-top: 8px; line-height: 1.4;'>
-                            • 태양광(PV): {pv_hybrid * 10:,.0f} m²<br>
-                            • 배터리(BESS): {bess_b * 0.1:,.0f} m²<br>
-                            • 수소(HESS): {max(h2_stock) * 1.5 + 50:,.0f} m²
+                            • 태양광(PV): {pv_hybrid * 10:,.0f} m² <span style='font-size: 11px;'>(10m²/kWp)</span><br>
+                            • 배터리(BESS): {bess_b * 0.1:,.0f} m² <span style='font-size: 11px;'>(0.1m²/kWh)</span><br>
+                            • 수소(HESS): {max(h2_stock) * 1.5 + 50:,.0f} m² <span style='font-size: 11px;'>(1.5m²/kg+base)</span>
                         </div>
                     </li>
                 </ul>
