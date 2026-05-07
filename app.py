@@ -80,6 +80,12 @@ PRICE_FC = 2000 # $/kW
 PRICE_TANK = 50 # $/kg (Storage)
 OPEX_RATE = 0.02 # 2% of CAPEX/year
 
+# Technical Efficiency Constants
+BESS_EFF = 0.90  # Round-trip 90%
+H2_EL_EFF = 0.70 # Electrolyzer
+H2_FC_EFF = 0.50 # Fuel Cell
+INV_EFF = 0.95   # Inverter/System
+
 # --- Session State ---
 if 'step' not in st.session_state: st.session_state.step = 'input'
 if 'lat' not in st.session_state: st.session_state.lat = -8.4095
@@ -416,11 +422,7 @@ elif st.session_state.step == 'result':
     hh = st.session_state.hh
     annual_demand = total_d * 365
     
-    # Efficiency Constants
-    BESS_EFF = 0.90  # Round-trip 90%
-    H2_EL_EFF = 0.70 # Electrolyzer
-    H2_FC_EFF = 0.50 # Fuel Cell
-    INV_EFF = 0.95   # Inverter/System
+    # Efficiency Constants (Now Global)
     
     # Common: Ideal PV sizing (Annual Net-Zero)
     # NASA Hourly is W/m^2. Convert to kWh/kWp/hour
