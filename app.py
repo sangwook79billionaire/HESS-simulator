@@ -344,7 +344,11 @@ elif st.session_state.step == 'result':
                 <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>배터리와 수소가 단기/장기 변동을 나누어 담당하여 효율을 극대화합니다.</p>
                 <hr style='border-color: #444;'>
                 <ul style='list-style: none; padding: 0; font-size: 18px;'>
-                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br><b style='color: #fff; font-size: 22px;'>{pv_hybrid:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br><b style='color: #fff; font-size: 22px;'>{pv_hybrid:,.1f} kWp</b>
+                        <div style='font-size: 12px; color: #00d4ff; margin-top: 4px; line-height: 1.3;'>
+                            *수소 왕복 효율(Round-trip efficiency, ~35%) 고려 시, 에너지 전환 손실 보충을 위해 배터리 단독 대비 더 넓은 PV 면적이 요구됨
+                        </div>
+                    </li>
                     <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>BESS 용량:</span> <br><b style='color: #fff; font-size: 22px;'>{bess_b:,.1f} kWh</b> <span style='font-size: 16px; color: #00d4ff; font-weight: bold;'>(1.5일분)</span></li>
                     <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>수소 시스템 (HESS):</span>
                         <ul style='font-size: 16px; color: #ccc; margin-top: 8px; list-style: none; padding-left: 0;'>
