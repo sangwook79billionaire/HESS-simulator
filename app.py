@@ -561,8 +561,34 @@ elif st.session_state.step == 'result':
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("### 🏗️ 2. 시스템 아키텍처 비교 (System Architecture & Design Logic)")
-        c1, c2, c3 = st.columns([1, 1, 0.8])
+        col_title, col_cta = st.columns([3, 1])
+        with col_title:
+            st.markdown("### 🏗️ 2. 시스템 아키텍처 비교 (System Architecture Comparison)")
+        with col_cta:
+            with st.popover("📖 설계 산출 로직 확인 (Design Rationale)", use_container_width=True):
+                st.markdown(f"""
+                <div style='background-color: #0f172a; padding: 20px; border-radius: 10px; color: #e2e8f0; font-size: 14px; line-height: 1.8;'>
+                    <h4 style='color: #38bdf8; margin-top: 0;'>💡 설계 산출 로직</h4>
+                    <div style='margin-bottom: 20px;'>
+                        <b style='color: #38bdf8;'>1. 데이터 분석</b><br>
+                        NASA 기상 데이터와 마을의 24시간 전력 사용 패턴을 결합하여 1시간 단위의 에너지 수지를 시뮬레이션합니다.
+                    </div>
+                    <div style='margin-bottom: 20px;'>
+                        <b style='color: #38bdf8;'>2. 시나리오 A 도출</b><br>
+                        일조량이 가장 적은 기간에도 정전이 발생하지 않도록 오직 <b>배터리 용량만</b>을 늘려 설계합니다.
+                    </div>
+                    <div style='margin-bottom: 20px;'>
+                        <b style='color: #38bdf8;'>3. 시나리오 B 도출</b><br>
+                        배터리는 단기 변동만 담당하고, 잉여 에너지를 <b>수소로 저장</b>해 장기적으로 꺼내 쓰는 '계절 이동' 원리를 적용합니다.
+                    </div>
+                    <div style='margin-bottom: 10px;'>
+                        <b style='color: #38bdf8;'>4. 경제성 최적화</b><br>
+                        두 시나리오 중 전체 투자비(CAPEX)와 운영 비용을 고려하여 가장 낮은 발전단가(LCOE)를 만드는 설비 조합을 선정합니다.
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        c1, c2 = st.columns(2)
         
         # Footprint Estimation
         area_a = (pv_ideal * 10) + (bess_a * 0.1)
@@ -624,38 +650,7 @@ elif st.session_state.step == 'result':
             </div>
             """, unsafe_allow_html=True)
 
-        with c3:
-            st.markdown(f"""
-            <div style='background-color: #0f172a; padding: 25px; border-radius: 12px; border: 1px solid #64748b; min-height: 680px; color: #e2e8f0;'>
-                <h4 style='color: #94a3b8; text-align: center; font-size: 18px; margin-bottom: 20px;'>💡 설계 산출 로직 (Design Rationale)</h4>
-                <div style='font-size: 14px; line-height: 1.8;'>
-                    <div style='margin-bottom: 25px;'>
-                        <b style='color: #38bdf8;'>1. 데이터 분석</b><br>
-                        NASA 기상 데이터와 마을의 24시간 전력 사용 패턴을 결합하여 1시간 단위의 에너지 수지를 시뮬레이션합니다.
-                    </div>
-                    <div style='margin-bottom: 25px;'>
-                        <b style='color: #38bdf8;'>2. 시나리오 A 도출</b><br>
-                        일조량이 가장 적은 기간에도 정전이 발생하지 않도록 오직 <b>배터리 용량만</b>을 늘려 설계합니다.
-                    </div>
-                    <div style='margin-bottom: 25px;'>
-                        <b style='color: #38bdf8;'>3. 시나리오 B 도출</b><br>
-                        배터리는 단기 변동만 잡고, 남는 여름 에너지를 <b>수소로 저장</b>해 겨울에 쓰는 '계절 이동' 원리를 적용합니다.
-                    </div>
-                    <div style='margin-bottom: 25px;'>
-                        <b style='color: #38bdf8;'>4. 경제성 최적화</b><br>
-                        두 시나리오 중 전체 투자비(CAPEX)와 운영 비용을 고려하여 가장 낮은 발전단가(LCOE)를 만드는 설비 조합을 선정합니다.
-                    </div>
-                    <div style='margin-top: 20px; padding-top: 15px; border-top: 1px solid #334155;'>
-                        <b style='color: #fbbf24;'>📐 면적 산출 근거 (Footprint Basis)</b><br>
-                        <div style='font-size: 12px; color: #94a3b8; line-height: 1.6; margin-top: 5px;'>
-                            • <b>태양광(PV)</b>: 패널 면적 + 어레이 간격(그림자 간섭 방지) + 유지보수 통로 포함 (10m²/kWp)<br>
-                            • <b>배터리(BESS)</b>: 컨테이너 하우징 + 변압기/PCS + 화재 안전 이격 거리 포함 (0.1m²/kWh)<br>
-                            • <b>수소(HESS)</b>: 수전해/연료전지 BOP + 수소 탱크 고압 안전 이격 거리 포함 (1.5m²/kg + base 50m²)
-                        </div>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+
 
         # 3. 주요 운영 지표 시각화
         st.markdown("### 📊 3. 시나리오별 주요 지표 비교 (Operational Indicators)")
