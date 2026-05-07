@@ -716,6 +716,7 @@ elif st.session_state.step == 'result':
         fig_break.add_trace(go.Bar(name='Solar PV', x=['Scenario A'], y=[cost_pv_a], marker_color='#FFD700', text=[f"${cost_pv_a/1e6:.2f}M"], textposition='auto'))
         fig_break.add_trace(go.Bar(name='BESS (Battery)', x=['Scenario A'], y=[cost_bess_a], marker_color='#4CAF50', text=[f"${cost_bess_a/1e6:.2f}M"], textposition='auto'))
         fig_break.add_trace(go.Bar(name='Distribution', x=['Scenario A'], y=[cost_dist], marker_color='#9E9E9E', text=[f"${cost_dist/1e6:.2f}M"], textposition='auto'))
+        
         # Scenario B
         fig_break.add_trace(go.Bar(name='Solar PV', x=['Scenario B'], y=[cost_pv_b], marker_color='#FFD700', showlegend=False, text=[f"${cost_pv_b/1e6:.2f}M"], textposition='auto'))
         fig_break.add_trace(go.Bar(name='BESS (Battery)', x=['Scenario B'], y=[cost_bess_b], marker_color='#4CAF50', showlegend=False, text=[f"${cost_bess_b/1e6:.2f}M"], textposition='auto'))
@@ -738,104 +739,135 @@ elif st.session_state.step == 'result':
         fig_break.update_layout(title="투자 비용 구성 항목 비교 (Cost Breakdown)", barmode='stack', template="plotly_dark", height=500, yaxis=dict(range=[0, max(capex_a, capex_b)*1.2]))
         st.plotly_chart(fig_break, use_container_width=True)
 
-        # --- 4. Financial Feasibility Study (Scenario B Focus) ---
-        st.markdown("### 💰 4. 사업성 간이 평가 (Financial Feasibility Study)")
+        # --- 4. Financial Feasibility Study (Indonesia Strategy Model) ---
+        st.markdown("### 💰 4. 인도네시아 도서지역 사업성 정밀 평가 (Financial Feasibility Study)")
         
-        # --- 4. Financial Feasibility Study (Scenario B Focus) ---
-        st.markdown("### 💰 4. 사업성 간이 평가 (Financial Feasibility Study)")
-        
-        # Financial logic helpers
-        def calculate_npv_irr(capex, annual_demand, rate, subsidy, opex_total, life, discount):
-            annual_rev = (annual_demand * rate) + subsidy
-            cash_flows = [-capex] + [annual_rev - opex_total] * int(life)
+        def calculate_fs_metrics(capex, annual_demand, rate, subsidy, other_rev, opex_total, life, discount):
+            annual_rev = (annual_demand * rate) + subsidy + other_rev
+            annual_net = annual_rev - opex_total
+            cash_flows = [-capex] + [annual_net] * int(life)
             
             # Simple NPV
             npv = sum(cf / (1 + discount)**t for t, cf in enumerate(cash_flows))
             
-            # Simple IRR search
+            # IRR search
             def get_irr(flows):
-                for r in np.linspace(-0.2, 1.0, 1200):
+                for r in np.linspace(-0.2, 1.0, 1500):
                     n = sum(cf / (1 + r)**t for t, cf in enumerate(flows))
                     if n < 0: return r * 100
                 return 0
             
-            irr = get_irr(cash_flows)
-            payback = capex / (annual_rev - opex_total) if (annual_rev - opex_total) > 0 else 99
-            return npv, irr, payback
-
-        @st.dialog("🚀 상세 사업성 분석 시나리오 시뮬레이션", width="large")
-        def show_fs_modal():
-            st.markdown(f"#### 📍 {st.session_state.country} 사업성 정밀 검토")
+            # LCOE Calculation: (CAPEX + Total OPEX) / Total Yield
+            total_opex_life = opex_total * life
+            lcoe = (capex + total_opex_life) / (annual_demand * life)
             
-            # Initial Data Calculation
-            matched = next((c for c in COUNTRY_BENCHMARKS.keys() if c.lower() in st.session_state.country.lower()), "Global Average")
-            ref_rate = COUNTRY_BENCHMARKS[matched]['rate']
+            irr = get_irr(cash_flows)
+            payback = capex / annual_net if annual_net > 0 else 99
+            return npv, irr, payback, lcoe
+
+        @st.dialog("🚀 인도네시아 마이크로그리드 사업성 시뮬레이션", width="large")
+        def show_fs_modal():
+            st.markdown(f"#### 🇮🇩 {st.session_state.country} 전략적 사업성 검토")
+            st.caption("본 시뮬레이션은 인도네시아 도서 지역 특유의 물류비, 보조금 모델(MTOP) 및 디젤 발전 대체 효과를 반영합니다.")
+            
+            # Initial Data Calculation based on User spec
+            equip_capex = (pv_hybrid * 1000) + (bess_b * 300) + (el_kw * 550) + (fc_kw * 700) + (max(h2_stock) * 650)
             
             # 1. CAPEX Breakdown Editor
-            st.markdown("##### 🏗️ A. 초기 투자비 세부 항목 (CAPEX Breakdown)")
+            st.markdown("##### 🏗️ A. 초기 투자비 상세 (CAPEX Breakdown)")
             capex_items = {
-                "구성 항목": ["Solar PV System", "BESS (Battery)", "Hydrogen System (EL/FC/Tank)", "Infrastructure (Grid/Misc)"],
-                "단위": ["USD", "USD", "USD", "USD"],
-                "설정 금액": [int(pv_hybrid * PRICE_PV), int(bess_b * PRICE_BESS), int((el_kw * PRICE_EL) + (fc_kw * PRICE_FC) + (max(h2_stock) * PRICE_TANK)), int(hh * 1500)],
-                "산출 근거 (Basis)": [
-                    f"{pv_hybrid:,.1f} kWp * ${PRICE_PV}/kWp",
-                    f"{bess_b:,.1f} kWh * ${PRICE_BESS}/kWh",
-                    f"H2 System Unit Costs (EL/FC/Tank)",
-                    f"{hh} Households * $1,500/hh"
+                "구성 항목": [
+                    "Solar PV System", "BESS (Battery)", "Hydrogen System (EL/FC/Tank)", 
+                    "해수 담수화/수처리", "에너지 관리 시스템(EMS)", "물류 및 격오지 시공비", "인프라 (배전망 등)"
+                ],
+                "설정 금액": [
+                    int(pv_hybrid * 1000), int(bess_b * 300), 
+                    int((el_kw * 550) + (fc_kw * 700) + (max(h2_stock) * 650)),
+                    int(equip_capex * 0.07), int(equip_capex * 0.03), 
+                    int(equip_capex * 0.25), int(hh * 1500)
+                ],
+                "설계 및 산출 근거 (Basis)": [
+                    f"{pv_hybrid:,.1f} kWp * $1,000/kWp (통합)", f"{bess_b:,.1f} kWh * $300/kWh (Packaged)", "H2 Units ($450~800/kW)",
+                    "전체 CAPEX의 7% (초순수 공급)", "설비가액의 3% (EMS S/W)", "장비가의 25% (해상 물류 할증)",
+                    f"{hh} 가구 대상 전력망 구축"
                 ]
             }
             df_capex = pd.DataFrame(capex_items)
             edited_capex = st.data_editor(
-                df_capex, 
-                use_container_width=True, 
-                num_rows="fixed", 
-                key="capex_editor",
-                column_config={
-                    "설정 금액": st.column_config.NumberColumn("설정 금액", format="%d")
-                }
+                df_capex, use_container_width=True, num_rows="fixed", key="capex_editor_v4",
+                column_config={"설정 금액": st.column_config.NumberColumn("설정 금액 (USD)", format="%d")}
             )
             total_capex_fs = edited_capex["설정 금액"].sum()
             
             st.divider()
             
             # 2. Revenue & OPEX Editor
-            st.markdown("##### 🪙 B. 수익 및 운영비 세부 항목 (Revenue & OPEX)")
+            st.markdown("##### 🪙 B. 수익 및 운영비 상세 (Revenue & OPEX)")
+            matched = next((c for c in COUNTRY_BENCHMARKS.keys() if c.lower() in st.session_state.country.lower()), "Global Average")
+            ref_rate = COUNTRY_BENCHMARKS[matched]['rate']
+            
             rev_opex_items = {
-                "구분": ["Revenue", "Revenue", "OPEX", "OPEX"],
-                "상세 항목": ["전기 판매 요금 (Elec. Rate)", "정부 보조금 (Annual Subsidy)", "유지보수비 (Maintenance)", "인건비 및 보험료 (Labor/Ins.)"],
-                "단위": ["USD/kWh", "USD/year", "USD/year", "USD/year"],
-                "설정값": [ref_rate, 0, int(total_capex_fs * 0.015), 50000]
+                "구분": ["Revenue", "Revenue", "Revenue", "OPEX", "OPEX"],
+                "상세 항목": [
+                    "전기 판매 요금 (PPA 단가)", "디젤 보조금 절감액 (MTOP)", "담수 판매 및 탄소권", 
+                    "정기 유지보수비 (Fixed PM)", "현지 운영 인건비"
+                ],
+                "설정값": [ref_rate, 50000.0, 10000.0, float(total_capex_fs * 0.015), 30000.0],
+                "운영 및 수익 근거": [
+                    "PLN 협상 기준 단가", "디젤 발전소 중단 보상금", "식수 판매/탄소권 수익",
+                    "연간 CAPEX의 1.5%", "현지 상주 인력 및 관제"
+                ]
             }
             df_rev = pd.DataFrame(rev_opex_items)
             edited_rev = st.data_editor(
-                df_rev, 
-                use_container_width=True, 
-                num_rows="fixed", 
-                key="rev_editor",
-                column_config={
-                    "설정값": st.column_config.NumberColumn("설정값", format="%.2f") # Keep decimals for rate, but users can enter ints for others
-                }
+                df_rev, use_container_width=True, num_rows="fixed", key="rev_editor_v4",
+                column_config={"설정값": st.column_config.NumberColumn("설정값", format="%.2f")}
             )
             
             # 3. Financial Terms
-            st.markdown("##### 📉 C. 금융 및 운영 조건 (Financial Terms)")
-            c_f1, c_f2 = st.columns(2)
-            p_life = c_f1.number_input("운영 기간 (Years)", 10, 50, 25)
+            st.markdown("##### 📉 C. 금융 및 타당성 조건 (Financial & Feasibility)")
+            c_f1, c_f2, c_f3 = st.columns(3)
+            p_life = c_f1.number_input("운영 기간 (Project Life)", 10, 50, 30)
             p_disc = c_f2.number_input("할인율 (%)", 0.0, 20.0, 8.0) / 100
+            diesel_ref = c_f3.number_input("디젤 원가 벤치마크 ($/kWh)", 0.0, 1.0, 0.62)
             
             # Calculations
             rev_vals = edited_rev["설정값"].values
-            p_rate, p_subsidy = rev_vals[0], rev_vals[1]
-            p_opex_total = rev_vals[2] + rev_vals[3]
+            p_rate, p_subsidy, p_other = rev_vals[0], rev_vals[1], rev_vals[2]
+            p_opex_total = rev_vals[3] + rev_vals[4]
             
-            npv, irr, payback = calculate_npv_irr(total_capex_fs, annual_demand, p_rate, p_subsidy, p_opex_total, p_life, p_disc)
+            npv, irr, payback, lcoe_fs = calculate_fs_metrics(total_capex_fs, annual_demand, p_rate, p_subsidy, p_other, p_opex_total, p_life, p_disc)
             
             st.divider()
-            st.markdown("#### 📊 시뮬레이션 결과 (Financial Indicators)")
+            st.markdown("#### 📊 전략적 사업성 분석 결과 (Strategic Result)")
             f1, f2, f3 = st.columns(3)
             f1.metric("순현재가치 (NPV)", f"${npv/1e6:.2f}M", delta=f"{'Success' if npv > 0 else 'Deficit'}")
-            f2.metric("내부수익률 (IRR)", f"{irr:.2f}%", delta=f"{irr - (p_disc*100):.1f}% vs Discount")
-            f3.metric("투자비 회수 기간", f"{payback:.1f} Years")
+            f2.metric("내부수익률 (IRR)", f"{irr:.2f}%", delta=f"{irr - (p_disc*100):.1f}% vs Target")
+            f3.metric("LCOE vs Diesel", f"${lcoe_fs:.3f}", delta=f"{(lcoe_fs - diesel_ref)/diesel_ref*100:.1f}% vs Diesel", delta_color="inverse")
+            
+            fig_lcoe = go.Figure()
+            fig_lcoe.add_trace(go.Bar(x=['Diesel (Benchmark)', 'HESS Hybrid (Target)'], y=[diesel_ref, lcoe_fs], marker_color=['#888', '#00d4ff'], width=0.4))
+            fig_lcoe.update_layout(title="LCOE 발전 원가 비교 ($/kWh)", template="plotly_dark", height=300, margin=dict(l=0,r=0,t=40,b=0))
+            st.plotly_chart(fig_lcoe, use_container_width=True)
+            
+            st.info(f"💡 **종합 평가:** 본 프로젝트는 인도네시아 디젤 원가(${diesel_ref}) 대비 **{abs((lcoe_fs - diesel_ref)/diesel_ref*100):.1f}%**의 높은 원가 경쟁력을 확보하고 있습니다.")
+            if st.button("✅ 시뮬레이션 결과 확정", use_container_width=True): st.rerun()
+
+        # Summary Card and CTA
+        f_col1, f_col2 = st.columns([2, 1])
+        with f_col1:
+            st.markdown(f"""
+            <div style='background: rgba(0, 212, 255, 0.05); border: 1px solid #00d4ff; padding: 20px; border-radius: 12px;'>
+                <p style='margin:0; color:#aaa; font-size:14px;'>Scenario B 전략적 투자 규모 (Estimated CAPEX)</p>
+                <h3 style='margin:10px 0; color:#00d4ff;'>Total: ${capex_b * 1.35:,.0f}</h3>
+                <p style='margin:0; font-size:13px; color:#888;'>• <b>도서지역 물류/시공 할증 반영:</b> 격오지 인프라 패키지 포함가</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with f_col2:
+            st.write("") # Spacer
+            if st.button("🚀 인도네시아 전략 FS 실행", type="primary", use_container_width=True):
+                show_fs_modal()
+            st.caption("※ MTOP 보조금 및 디젤 대체 효과 연동")
             
             st.info(f"💡 **종합 평가:** 총 투자비 **${total_capex_fs/1e6:.2f}M** 대비 연간 순수익 **${((annual_demand * p_rate) + p_subsidy - p_opex_total)/1e3:,.1f}k**로 산출되었습니다.")
             if st.button("✅ 분석 완료 및 닫기", use_container_width=True): st.rerun()
