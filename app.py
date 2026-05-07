@@ -776,7 +776,13 @@ elif st.session_state.step == 'result':
             capex_items = {
                 "구성 항목": ["Solar PV System", "BESS (Battery)", "Hydrogen System (EL/FC/Tank)", "Infrastructure (Grid/Misc)"],
                 "단위": ["USD", "USD", "USD", "USD"],
-                "설정 금액": [float(pv_hybrid * PRICE_PV), float(bess_b * PRICE_BESS), float((el_kw * PRICE_EL) + (fc_kw * PRICE_FC) + (max(h2_stock) * PRICE_TANK)), float(hh * 1500)]
+                "설정 금액": [float(pv_hybrid * PRICE_PV), float(bess_b * PRICE_BESS), float((el_kw * PRICE_EL) + (fc_kw * PRICE_FC) + (max(h2_stock) * PRICE_TANK)), float(hh * 1500)],
+                "산출 근거 (Basis)": [
+                    f"{pv_hybrid:,.1f} kWp * ${PRICE_PV}/kWp",
+                    f"{bess_b:,.1f} kWh * ${PRICE_BESS}/kWh",
+                    f"H2 System Unit Costs (EL/FC/Tank)",
+                    f"{hh} Households * $1,500/hh"
+                ]
             }
             df_capex = pd.DataFrame(capex_items)
             edited_capex = st.data_editor(df_capex, use_container_width=True, num_rows="fixed", key="capex_editor")
