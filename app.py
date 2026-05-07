@@ -719,25 +719,30 @@ elif st.session_state.step == 'result':
         is_b_better = capex_b < capex_a
         color_win = "#00ff88"
         
-        # Top Summary Card (Moved from bottom as per request)
+        # Premium Summary Cards (Image-inspired Layout)
         c_sum1, c_sum2 = st.columns(2)
         with c_sum1:
             st.markdown(f"""
-            <div style='background: rgba(255, 75, 75, 0.05); border: 1px solid #ff4b4b; padding: 15px; border-radius: 10px; text-align: center;'>
-                <p style='margin:0; color:#aaa; font-size:13px;'>Scenario A 총 투자비</p>
-                <h3 style='margin:5px 0; color:#fff;'>${capex_a:,.0f}</h3>
+            <div style='background: rgba(255, 75, 75, 0.05); border: 1px solid #ff4b4b; padding: 25px; border-radius: 12px; text-align: center; height: 160px; display: flex; flex-direction: column; justify-content: center;'>
+                <p style='margin:0; color:#888; font-size:14px;'>Scenario A 총 투자비</p>
+                <h1 style='margin:10px 0; color:#eee; font-size: 36px; font-weight: 800;'>${capex_a:,.0f}</h1>
             </div>
             """, unsafe_allow_html=True)
         with c_sum2:
             border_b = f"2px solid {color_win}" if is_b_better else "1px solid #00d4ff"
             bg_b = "rgba(0, 255, 136, 0.05)" if is_b_better else "rgba(0, 212, 255, 0.05)"
-            label_b = f"<span style='color:{color_win}; font-weight:bold;'>🚀 사업성 있음 (Feasible)</span>" if is_b_better else ""
+            shadow = f"box-shadow: 0 0 20px {color_win}33;" if is_b_better else ""
+            badge = f"""
+                <div style='position: absolute; top: -12px; right: 10px; background: #000; border: 1px solid {color_win}; color: {color_win}; padding: 2px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; box-shadow: 0 0 10px {color_win}66;'>
+                    🚀 사업성 있음 (Feasible)
+                </div>
+            """ if is_b_better else ""
             
             st.markdown(f"""
-            <div style='background: {bg_b}; border: {border_b}; padding: 15px; border-radius: 10px; text-align: center; position: relative;'>
-                <div style='position: absolute; top: -10px; right: 10px; background: #0e1117; padding: 0 5px;'>{label_b}</div>
-                <p style='margin:0; color:#aaa; font-size:13px;'>Scenario B 총 투자비</p>
-                <h3 style='margin:5px 0; color:#00d4ff;'>${capex_b:,.0f}</h3>
+            <div style='background: {bg_b}; border: {border_b}; {shadow} padding: 25px; border-radius: 12px; text-align: center; position: relative; height: 160px; display: flex; flex-direction: column; justify-content: center;'>
+                {badge}
+                <p style='margin:0; color:#888; font-size:14px;'>Scenario B 총 투자비</p>
+                <h1 style='margin:10px 0; color:#00d4ff; font-size: 36px; font-weight: 800;'>${capex_b:,.0f} <span style='font-size: 20px; color: #888;'> ↔</span></h1>
             </div>
             """, unsafe_allow_html=True)
         
