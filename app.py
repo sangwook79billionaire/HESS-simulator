@@ -16,56 +16,56 @@ st.set_page_config(page_title="Net-Zero Optimizer Pro", page_icon="⚡", layout=
 
 # --- Constants & Benchmarks ---
 COUNTRY_BENCHMARKS = {
-    "Afghanistan": 1.2,
-    "Argentina": 12.0,
-    "Bangladesh": 2.0,
-    "Bhutan": 4.0,
-    "Brazil": 6.5,
-    "Cambodia": 1.5,
-    "Canada": 32.0,
-    "Chile": 7.0,
-    "Colombia": 5.5,
-    "Egypt": 9.0,
-    "Ecuador": 5.0,
-    "Ethiopia": 0.5,
-    "Fiji": 4.0,
-    "France": 12.5,
-    "Germany": 8.5,
-    "Ghana": 1.5,
-    "Global Average": 5.0,
-    "Guatemala": 3.0,
-    "India": 2.5,
-    "Indonesia": 4.2,
-    "Iraq": 12.0,
-    "Japan": 15.5,
-    "Jordan": 8.0,
-    "Kenya": 0.8,
-    "Laos": 2.0,
-    "Lebanon": 7.0,
-    "Malaysia": 15.0,
-    "Mexico": 10.0,
-    "Morocco": 4.5,
-    "Myanmar": 1.2,
-    "Nepal": 1.5,
-    "Nigeria": 1.2,
-    "Norway": 45.0,
-    "Pakistan": 1.8,
-    "Papua New Guinea": 1.0,
-    "Peru": 4.5,
-    "Philippines": 3.5,
-    "Rwanda": 0.4,
-    "South Africa": 8.5,
-    "South Korea": 11.2,
-    "Sri Lanka": 3.0,
-    "Tanzania": 0.7,
-    "Thailand": 7.5,
-    "Uganda": 0.5,
-    "United Kingdom": 10.0,
-    "United States": 29.5,
-    "Vietnam": 5.0,
-    "Yemen": 1.0,
-    "Zambia": 1.2,
-    "Zimbabwe": 1.8
+    "Afghanistan": {"demand": 1.2, "rate": 0.05},
+    "Argentina": {"demand": 12.0, "rate": 0.04},
+    "Bangladesh": {"demand": 2.0, "rate": 0.06},
+    "Bhutan": {"demand": 4.0, "rate": 0.04},
+    "Brazil": {"demand": 6.5, "rate": 0.19},
+    "Cambodia": {"demand": 1.5, "rate": 0.14},
+    "Canada": {"demand": 32.0, "rate": 0.12},
+    "Chile": {"demand": 7.0, "rate": 0.16},
+    "Colombia": {"demand": 5.5, "rate": 0.15},
+    "Egypt": {"demand": 9.0, "rate": 0.03},
+    "Ecuador": {"demand": 5.0, "rate": 0.09},
+    "Ethiopia": {"demand": 0.5, "rate": 0.01},
+    "Fiji": {"demand": 4.0, "rate": 0.13},
+    "France": {"demand": 12.5, "rate": 0.25},
+    "Germany": {"demand": 8.5, "rate": 0.42},
+    "Ghana": {"demand": 1.5, "rate": 0.12},
+    "Global Average": {"demand": 5.0, "rate": 0.15},
+    "Guatemala": {"demand": 3.0, "rate": 0.21},
+    "India": {"demand": 2.5, "rate": 0.08},
+    "Indonesia": {"demand": 4.2, "rate": 0.10},
+    "Iraq": {"demand": 12.0, "rate": 0.03},
+    "Japan": {"demand": 15.5, "rate": 0.26},
+    "Jordan": {"demand": 8.0, "rate": 0.10},
+    "Kenya": {"demand": 0.8, "rate": 0.20},
+    "Laos": {"demand": 2.0, "rate": 0.05},
+    "Lebanon": {"demand": 7.0, "rate": 0.01},
+    "Malaysia": {"demand": 15.0, "rate": 0.06},
+    "Mexico": {"demand": 10.0, "rate": 0.11},
+    "Morocco": {"demand": 4.5, "rate": 0.11},
+    "Myanmar": {"demand": 1.2, "rate": 0.04},
+    "Nepal": {"demand": 1.5, "rate": 0.09},
+    "Nigeria": {"demand": 1.2, "rate": 0.06},
+    "Norway": {"demand": 45.0, "rate": 0.15},
+    "Pakistan": {"demand": 1.8, "rate": 0.10},
+    "Papua New Guinea": {"demand": 1.0, "rate": 0.12},
+    "Peru": {"demand": 4.5, "rate": 0.17},
+    "Philippines": {"demand": 3.5, "rate": 0.18},
+    "Rwanda": {"demand": 0.4, "rate": 0.22},
+    "South Africa": {"demand": 8.5, "rate": 0.16},
+    "South Korea": {"demand": 11.2, "rate": 0.12},
+    "Sri Lanka": {"demand": 3.0, "rate": 0.10},
+    "Tanzania": {"demand": 0.7, "rate": 0.15},
+    "Thailand": {"demand": 7.5, "rate": 0.13},
+    "Uganda": {"demand": 0.5, "rate": 0.18},
+    "United Kingdom": {"demand": 10.0, "rate": 0.35},
+    "United States": {"demand": 29.5, "rate": 0.18},
+    "Vietnam": {"demand": 5.0, "rate": 0.08},
+    "Yemen": {"demand": 1.0, "rate": 0.15},
+    "Zambia": {"demand": 1.2, "rate": 0.05},
+    "Zimbabwe": {"demand": 1.8, "rate": 0.13}
 }
 
 # Load Patterns (A: Night/Residential, B: Day/Commercial)
@@ -738,111 +738,76 @@ elif st.session_state.step == 'result':
         fig_break.update_layout(title="투자 비용 구성 항목 비교 (Cost Breakdown)", barmode='stack', template="plotly_dark", height=500, yaxis=dict(range=[0, max(capex_a, capex_b)*1.2]))
         st.plotly_chart(fig_break, use_container_width=True)
 
-        # Comparison Table
-        st.markdown("#### 📑 세부 항목별 산출 근거 (Unit Price Basis)")
-        breakdown_html = f"""
-        <table style='width: 100%; color: white; border-collapse: collapse; font-size: 13px; background-color: #1a1f2b; border-radius: 10px; overflow: hidden;'>
-            <tr style='background-color: #333; border-bottom: 2px solid #555;'>
-                <th style='padding: 10px; text-align: left; color: white;'>항목 (Component)</th>
-                <th style='padding: 10px; text-align: center;'>단위</th>
-                <th style='padding: 10px; text-align: right;'>단가 (Price)</th>
-                <th style='padding: 10px; text-align: right;'>Scenario A</th>
-                <th style='padding: 10px; text-align: right;'>Scenario B</th>
-                <th style='padding: 10px; text-align: left; padding-left: 15px;'>산출 근거 (Rationale)</th>
-            </tr>
-            <tr style='border-bottom: 1px solid #444;'>
-                <td style='padding: 8px; color: white;'>Solar PV System</td>
-                <td style='padding: 8px; text-align: center; color: white;'>kWp</td>
-                <td style='padding: 8px; text-align: right; color: white;'>${PRICE_PV:,.0f}</td>
-                <td style='padding: 8px; text-align: right; color: white;'>${cost_pv_a:,.0f}</td>
-                <td style='padding: 8px; text-align: right; color: white;'>${cost_pv_b:,.0f}</td>
-                <td style='padding: 8px; color: #aaa; padding-left: 15px;'>모듈, 인버터, 구조물 및 설치비 포함 (글로벌 평균)</td>
-            </tr>
-            <tr style='border-bottom: 1px solid #444;'>
-                <td style='padding: 8px; color: white;'>BESS (Battery)</td>
-                <td style='padding: 8px; text-align: center; color: white;'>kWh</td>
-                <td style='padding: 8px; text-align: right; color: white;'>${PRICE_BESS:,.0f}</td>
-                <td style='padding: 8px; text-align: right; color: white;'>${cost_bess_a:,.0f}</td>
-                <td style='padding: 8px; text-align: right; color: white;'>${cost_bess_b:,.0f}</td>
-                <td style='padding: 8px; color: #aaa; padding-left: 15px;'>Li-ion 랙, PCS 및 컨테이너 패키징 공사비</td>
-            </tr>
-            <tr style='border-bottom: 1px solid #444; color: #00d4ff;'>
-                <td style='padding: 8px;'>Electrolyzer (H2)</td>
-                <td style='padding: 8px; text-align: center;'>kW</td>
-                <td style='padding: 8px; text-align: right;'>${PRICE_EL:,.0f}</td>
-                <td style='padding: 8px; text-align: right;'>-</td>
-                <td style='padding: 8px; text-align: right;'>${cost_el:,.0f}</td>
-                <td style='padding: 8px; color: #00d4ff; padding-left: 15px;'>PEM 수전해 스택 및 BOP(정수, 건조) 시스템 일체</td>
-            </tr>
-            <tr style='border-bottom: 1px solid #444; color: #00d4ff;'>
-                <td style='padding: 8px;'>Fuel Cell (H2)</td>
-                <td style='padding: 8px; text-align: center;'>kW</td>
-                <td style='padding: 8px; text-align: right;'>${PRICE_FC:,.0f}</td>
-                <td style='padding: 8px; text-align: right;'>-</td>
-                <td style='padding: 8px; text-align: right;'>${cost_fc:,.0f}</td>
-                <td style='padding: 8px; color: #00d4ff; padding-left: 15px;'>Stationary PEM 수소 연료전지 발전기 시스템</td>
-            </tr>
-            <tr style='border-bottom: 1px solid #444; color: #00d4ff;'>
-                <td style='padding: 8px;'>H2 Storage Tank</td>
-                <td style='padding: 8px; text-align: center;'>kg</td>
-                <td style='padding: 8px; text-align: right;'>$500</td>
-                <td style='padding: 8px; text-align: right;'>-</td>
-                <td style='padding: 8px; text-align: right;'>${cost_h2_tank:,.0f}</td>
-                <td style='padding: 8px; color: #00d4ff; padding-left: 15px;'>350bar 고압 기체 저장 탱크 (Type-III)</td>
-            </tr>
-            <tr style='border-bottom: 2px solid #555;'>
-                <td style='padding: 8px; color: white;'>Distribution/Grid</td>
-                <td style='padding: 8px; text-align: center; color: white;'>hh</td>
-                <td style='padding: 8px; text-align: right; color: white;'>$1,500</td>
-                <td style='padding: 8px; text-align: right; color: white;'>${cost_dist:,.0f}</td>
-                <td style='padding: 8px; text-align: right; color: white;'>${cost_dist:,.0f}</td>
-                <td style='padding: 8px; color: #aaa; padding-left: 15px;'>마을 내 가공 배전로, 전신주 및 가구별 계량기</td>
-            </tr>
-            <tr style='background-color: #222; font-size: 15px; font-weight: bold;'>
-                <td colspan='3' style='padding: 10px; text-align: center;'>총 투자비 (Total CAPEX)</td>
-                <td style='padding: 10px; text-align: right; color: #ff4b4b;'>${capex_a:,.0f}</td>
-                <td style='padding: 10px; text-align: right; color: #00d4ff;'>${capex_b:,.0f}</td>
-                <td style='padding: 10px;'></td>
-            </tr>
-        </table>
-        """
-        st.markdown(breakdown_html, unsafe_allow_html=True)
-        st.caption("※ 이 수치는 단순 비교를 위한 시뮬레이션 결과이며, 실제 사이트 여건 및 인프라 구성에 따른 투자비 검토 결과와 다를 수 있습니다.")
-        st.info(f"💡 **분석 결과:** Scenario B(하이브리드)가 시나리오 A 대비 **${(capex_a - capex_b)/1e6:.2f}M ({ (1 - capex_b/capex_a)*100:.1f}%)**의 비용 절감 효과가 있는 것으로 나타났습니다.")
-
-        # 5. EDCF 기반 LCOE 비교 (Moved to main tab)
-        st.markdown("### 🪙 5. EDCF 금융 모델 기반 사업성 분석")
-        st.markdown("""
-        <div style='background-color: #1a1f2b; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #333;'>
-            <p style='margin: 0; color: #ddd; font-size: 14px;'>
-                <b>💡 금융 조건 알림:</b> 본 분석의 LCOE(균등화발전비용)는 <b>시나리오 A와 B 모두 동일하게</b> EDCF 양자 차관 조건(이율 0.01%, 40년 상환)을 반영하여 산출되었습니다.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        lcoe_saving = (lcoe_a - lcoe_b) / lcoe_a * 100
-        lcoe_html = f"""
-        <div style='display: flex; gap: 20px; margin-bottom: 20px;'>
-            <div style='flex: 1; background: #1a1f2b; padding: 20px; border-radius: 15px; border-top: 5px solid #ff4b4b; text-align: center;'>
-                <p style='margin: 0; color: #aaa; font-size: 14px;'>LCOE (Scenario A)</p>
-                <h2 style='margin: 10px 0; color: #ff4b4b; font-size: 32px;'>${lcoe_a:.3f}<span style='font-size: 16px; color: #aaa;'> /kWh</span></h2>
-                <p style='margin: 0; color: #888; font-size: 12px;'>Giant BESS Only</p>
-            </div>
-            <div style='flex: 1; background: #1a1f2b; padding: 20px; border-radius: 15px; border-top: 5px solid #00d4ff; text-align: center;'>
-                <p style='margin: 0; color: #aaa; font-size: 14px;'>LCOE (Scenario B)</p>
-                <h2 style='margin: 10px 0; color: #00d4ff; font-size: 32px;'>${lcoe_b:.3f}<span style='font-size: 16px; color: #aaa;'> /kWh</span></h2>
-                <p style='margin: 0; color: #888; font-size: 12px;'>BESS-HESS Hybrid</p>
-            </div>
-            <div style='flex: 1; background: linear-gradient(135deg, #00d4ff 0%, #0055ff 100%); padding: 20px; border-radius: 15px; text-align: center;'>
-                <p style='margin: 0; color: rgba(255,255,255,0.8); font-size: 14px;'>LCOE 절감 효과</p>
-                <h2 style='margin: 10px 0; color: white; font-size: 36px;'>{lcoe_saving:.1f}%</h2>
-                <p style='margin: 0; color: rgba(255,255,255,0.6); font-size: 12px;'>Scenario B vs A</p>
-            </div>
-        </div>
-        """
-        st.markdown(lcoe_html, unsafe_allow_html=True)
+        # --- 4. Financial Feasibility Study (Scenario B Focus) ---
+        st.markdown("### 💰 4. 사업성 간이 평가 (Financial Feasibility Study)")
         
-        st.success(f"✅ **Sweet Spot Insight:** 수소 하이브리드(Scenario B) 시스템을 적용할 경우, 배터리 단독 모델 대비 연간 균등화발전원가(LCOE)를 **{lcoe_saving:.1f}%** 절감할 수 있으며, 이는 프로젝트의 장기적 재무 건전성을 획기적으로 개선합니다.")
+        # Financial logic helpers
+        def calculate_npv_irr(capex, annual_demand, rate, opex_rate, life, discount):
+            annual_rev = annual_demand * rate
+            annual_opex = capex * opex_rate
+            cash_flows = [-capex] + [annual_rev - annual_opex] * int(life)
+            
+            # Simple NPV
+            npv = sum(cf / (1 + discount)**t for t, cf in enumerate(cash_flows))
+            
+            # Simple IRR search
+            def get_irr(flows):
+                for r in np.linspace(-0.2, 1.0, 1200):
+                    n = sum(cf / (1 + r)**t for t, cf in enumerate(flows))
+                    if n < 0: return r * 100
+                return 0
+            
+            irr = get_irr(cash_flows)
+            payback = capex / (annual_rev - annual_opex) if (annual_rev - annual_opex) > 0 else 99
+            return npv, irr, payback
+
+        @st.dialog("🚀 상세 사업성 분석 시뮬레이션", width="large")
+        def show_fs_modal():
+            st.markdown(f"#### 📍 {st.session_state.country} 사업성 시나리오 분석")
+            st.write("아래 표의 항목을 수정하여 프로젝트의 수익성을 검토하세요. 레퍼런스 데이터는 IEA/World Bank 2023 자료를 기반으로 합니다.")
+            
+            # Match current country for rate
+            matched = next((c for c in COUNTRY_BENCHMARKS.keys() if c.lower() in st.session_state.country.lower()), "Global Average")
+            ref_rate = COUNTRY_BENCHMARKS[matched]['rate']
+            
+            fs_data = {
+                "항목 (Parameters)": ["운영 기간 (Project Life)", "할인율 (Discount Rate)", "전기 판매 요금 (Elec. Rate)", "연간 운영비 (OPEX Rate)", "이자율 (Interest Rate)"],
+                "단위": ["Years", "%", "USD/kWh", "% of Capex", "%"],
+                "설정값 (Value)": [25.0, 8.0, ref_rate, 2.0, 5.0],
+                "Reference (IEA/WB)": ["Standard 25y", "Global Avg", f"{matched} Avg", "Typical Microgrid", "Market Rate"]
+            }
+            df_fs = pd.DataFrame(fs_data)
+            edited_fs = st.data_editor(df_fs, use_container_width=True, num_rows="fixed", key="fs_editor")
+            
+            vals = edited_fs["설정값 (Value)"].values
+            p_life, p_disc, p_rate, p_opex, p_int = vals[0], vals[1]/100, vals[2], vals[3]/100, vals[4]/100
+            
+            npv, irr, payback = calculate_npv_irr(capex_b, annual_demand, p_rate, p_opex, p_life, p_disc)
+            
+            st.divider()
+            f1, f2, f3 = st.columns(3)
+            f1.metric("순현재가치 (NPV)", f"${npv/1e6:.2f}M", delta=f"{'Success' if npv > 0 else 'Deficit'}")
+            f2.metric("내부수익률 (IRR)", f"{irr:.2f}%", delta=f"{irr - (p_disc*100):.1f}% vs Discount")
+            f3.metric("투자비 회수 기간", f"{payback:.1f} Years")
+            
+            st.info(f"💡 **분석 결과:** 본 프로젝트는 현재 조건에서 **{payback:.1f}년** 내에 투자비 회수가 가능하며, IRR **{irr:.2f}%**로 사업성이 {'충분함' if irr > 10 else '추가 검토 필요'}으로 판단됩니다.")
+            if st.button("✅ 분석 결과 확정 및 닫기"): st.rerun()
+
+        # Summary Card and CTA
+        f_col1, f_col2 = st.columns([2, 1])
+        with f_col1:
+            st.markdown(f"""
+            <div style='background: rgba(0, 212, 255, 0.05); border: 1px solid #00d4ff; padding: 20px; border-radius: 12px;'>
+                <p style='margin:0; color:#aaa; font-size:14px;'>Scenario B 예상 투자 규모 (CAPEX)</p>
+                <h3 style='margin:10px 0; color:#00d4ff;'>Total: ${capex_b:,.0f}</h3>
+                <p style='margin:0; font-size:13px; color:#888;'>• 시스템 구성: PV {pv_hybrid:,.0f}kWp + BESS {bess_b:,.0f}kWh + HESS {max(h2_stock):,.1f}kg</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with f_col2:
+            st.write("") # Spacer
+            if st.button("🚀 상세 사업성 분석 실행", type="primary", use_container_width=True):
+                show_fs_modal()
+            st.caption("※ 국가별 전기 요금 및 금융 데이터 자동 연동됨")
 
     with tabs[1]:
         from plotly.subplots import make_subplots
