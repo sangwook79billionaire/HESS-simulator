@@ -944,6 +944,36 @@ elif st.session_state.step == 'result':
             fig_lcoe.update_layout(title="LCOE 발전 원가 비교 ($/kWh)", template="plotly_dark", height=300, margin=dict(l=0,r=0,t=40,b=0))
             st.plotly_chart(fig_lcoe, use_container_width=True)
             
+            # 4. Yearly Cash Flow Table (New)
+            st.markdown("#### 📅 연도별 현금 흐름 (Yearly Cash Flow)")
+            years = list(range(int(p_life) + 1))
+            capex_list = [total_capex_fs] + [0] * int(p_life)
+            rev_annual = (annual_demand * p_rate) + p_subsidy + p_other
+            rev_list = [0] + [rev_annual] * int(p_life)
+            opex_list = [0] + [p_opex_total] * int(p_life)
+            net_list = [-total_capex_fs] + [(rev_annual - p_opex_total)] * int(p_life)
+            cum_list = np.cumsum(net_list)
+            
+            df_cf = pd.DataFrame({
+                "Year": years,
+                "CAPEX ($)": capex_list,
+                "Revenue ($)": rev_list,
+                "OPEX ($)": opex_list,
+                "Net Cash Flow ($)": net_list,
+                "Cumulative ($)": cum_list
+            })
+            
+            st.dataframe(
+                df_cf.style.format({
+                    "CAPEX ($)": "${:,.0f}",
+                    "Revenue ($)": "${:,.0f}",
+                    "OPEX ($)": "${:,.0f}",
+                    "Net Cash Flow ($)": "${:,.0f}",
+                    "Cumulative ($)": "${:,.0f}"
+                }),
+                use_container_width=True, height=300
+            )
+            
             st.info(f"💡 **종합 평가:** 본 프로젝트는 벤치마크 원가(${diesel_ref}) 대비 **{abs((lcoe_fs - diesel_ref)/diesel_ref*100):.1f}%**의 높은 원가 경쟁력을 확보하고 있습니다.")
             if st.button("✅ 시나리오 확정 및 닫기", use_container_width=True): st.rerun()
 
