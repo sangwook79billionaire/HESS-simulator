@@ -613,10 +613,6 @@ elif st.session_state.step == 'result':
                 </div>
                 """, unsafe_allow_html=True)
 
-        # Comparison and Highlighting Logic
-        is_b_better = capex_b < capex_a
-        color_win = "#00ff88"  # Greenish glow for the winner
-        
         c1, c2 = st.columns(2)
         
         # Footprint Estimation
@@ -624,14 +620,8 @@ elif st.session_state.step == 'result':
         area_b = (pv_hybrid * 10) + (bess_b * 0.1) + (max(h2_stock) * 1.5) + 50
 
         with c1:
-            # Dynamic styling for Scenario A
-            border_a = f"2px solid {color_win}" if not is_b_better else "1px solid #ff4b4b"
-            bg_a = "rgba(0, 255, 136, 0.05)" if not is_b_better else "#1a1a1a"
-            label_a = "🏆 배터리(A)가 유리" if not is_b_better else ""
-            
             st.markdown(f"""
-            <div style='background-color: {bg_a}; padding: 25px; border-radius: 12px; border: {border_a}; min-height: 550px; color: #eee; position: relative;'>
-                <div style='position: absolute; top: 10px; right: 15px; color: {color_win}; font-weight: bold;'>{label_a}</div>
+            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #ff4b4b; min-height: 520px; color: #eee;'>
                 <h4 style='color: #ff4b4b; text-align: center; font-size: 20px; margin-bottom: 15px;'>Scenario A: Giant BESS Only</h4>
                 <div style='text-align: center; font-size: 40px; margin: 10px 0;'>☀️ ➡ 🔋 ➡ 🏠</div>
                 <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>거대 배터리 뱅크를 통해 계절적 불균형을 해소하는 단순 구조입니다.</p>
@@ -648,15 +638,9 @@ elif st.session_state.step == 'result':
             """, unsafe_allow_html=True)
 
         with c2:
-            # Dynamic styling for Scenario B
-            border_b = f"2px solid {color_win}" if is_b_better else "1px solid #00d4ff"
-            bg_b = "rgba(0, 255, 136, 0.05)" if is_b_better else "#1a1a1a"
-            label_b = "🚀 사업성 있음 (Feasible)" if is_b_better else ""
-            
             h2_days = (max(h2_stock) * 33.33 * H2_FC_EFF) / total_d
             st.markdown(f"""
-            <div style='background-color: {bg_b}; padding: 25px; border-radius: 12px; border: {border_b}; min-height: 550px; color: #eee; position: relative;'>
-                <div style='position: absolute; top: 10px; right: 15px; color: {color_win}; font-weight: bold;'>{label_b}</div>
+            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; min-height: 520px; color: #eee;'>
                 <h4 style='color: #00d4ff; text-align: center; font-size: 20px; margin-bottom: 15px;'>Scenario B: BESS-HESS Hybrid</h4>
                 <div style='text-align: center; font-size: 40px; margin: 10px 0;'>☀️ ➡ 🔋 + 💧(H2) ➡ 🏠</div>
                 <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>배터리와 수소가 단기/장기 변동을 나누어 담당하여 효율을 극대화합니다.</p>
@@ -674,14 +658,6 @@ elif st.session_state.step == 'result':
                 </ul>
             </div>
             """, unsafe_allow_html=True)
-            
-            # Contextual CTA for Scenario B
-            if is_b_better:
-                st.write("") # Spacer
-                if st.button("🚀 사업성 정밀 평가 실행", type="primary", use_container_width=True, key="cta_fs_winner"):
-                    show_fs_modal()
-            else:
-                st.caption("ℹ️ 현재 부하 조건에서는 배터리 전용(A)이 더 경제적입니다.")
 
 
 
@@ -739,6 +715,34 @@ elif st.session_state.step == 'result':
         # 4. CAPEX 상세 내역 및 비교
         st.markdown("### 💰 4. 투자비 상세 내역 (CAPEX Breakdown)")
         
+        # Comparison Logic for Highlight
+        is_b_better = capex_b < capex_a
+        color_win = "#00ff88"
+        
+        # Top Summary Card (Moved from bottom as per request)
+        c_sum1, c_sum2 = st.columns(2)
+        with c_sum1:
+            st.markdown(f"""
+            <div style='background: rgba(255, 75, 75, 0.05); border: 1px solid #ff4b4b; padding: 15px; border-radius: 10px; text-align: center;'>
+                <p style='margin:0; color:#aaa; font-size:13px;'>Scenario A 총 투자비</p>
+                <h3 style='margin:5px 0; color:#fff;'>${capex_a:,.0f}</h3>
+            </div>
+            """, unsafe_allow_html=True)
+        with c_sum2:
+            border_b = f"2px solid {color_win}" if is_b_better else "1px solid #00d4ff"
+            bg_b = "rgba(0, 255, 136, 0.05)" if is_b_better else "rgba(0, 212, 255, 0.05)"
+            label_b = f"<span style='color:{color_win}; font-weight:bold;'>🚀 사업성 있음 (Feasible)</span>" if is_b_better else ""
+            
+            st.markdown(f"""
+            <div style='background: {bg_b}; border: {border_b}; padding: 15px; border-radius: 10px; text-align: center; position: relative;'>
+                <div style='position: absolute; top: -10px; right: 10px; background: #0e1117; padding: 0 5px;'>{label_b}</div>
+                <p style='margin:0; color:#aaa; font-size:13px;'>Scenario B 총 투자비</p>
+                <h3 style='margin:5px 0; color:#00d4ff;'>${capex_b:,.0f}</h3>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.write("") # Spacer
+
         # Breakdown Data Calculation
         cost_pv_a = pv_ideal * PRICE_PV
         cost_bess_a = bess_a * PRICE_BESS
@@ -900,18 +904,11 @@ elif st.session_state.step == 'result':
             st.info(f"💡 **종합 평가:** 본 프로젝트는 벤치마크 원가(${diesel_ref}) 대비 **{abs((lcoe_fs - diesel_ref)/diesel_ref*100):.1f}%**의 높은 원가 경쟁력을 확보하고 있습니다.")
             if st.button("✅ 시나리오 확정 및 닫기", use_container_width=True): st.rerun()
 
-        # Summary Card and CTA
-        f_col1, f_col2 = st.columns([2, 1])
+        # Consolidated CTA (Summary Card moved to CAPEX section)
+        f_col1, f_col2 = st.columns([1, 1])
         with f_col1:
-            st.markdown(f"""
-            <div style='background: rgba(0, 212, 255, 0.05); border: 1px solid #00d4ff; padding: 20px; border-radius: 12px;'>
-                <p style='margin:0; color:#aaa; font-size:14px;'>Scenario B 전략적 투자 규모 (Estimated CAPEX)</p>
-                <h3 style='margin:10px 0; color:#00d4ff;'>Total: ${capex_b * 1.35:,.0f}</h3>
-                <p style='margin:0; font-size:13px; color:#888;'>• <b>물류/시공 할증 반영:</b> 격오지 패키지 인프라 포함가</p>
-            </div>
-            """, unsafe_allow_html=True)
+            st.info("💡 **전략적 사업성 시뮬레이션:** 현지 전력 요금, 보조금 및 물류 할증이 반영된 상세 FS를 시작합니다.")
         with f_col2:
-            st.write("") # Spacer
             if st.button("🚀 전략 사업성 시뮬레이션", type="primary", use_container_width=True):
                 show_fs_modal()
             st.caption("※ 보조금 및 벤치마크 에너지 원가 연동")
