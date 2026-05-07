@@ -741,11 +741,13 @@ elif st.session_state.step == 'result':
         # --- 4. Financial Feasibility Study (Scenario B Focus) ---
         st.markdown("### 💰 4. 사업성 간이 평가 (Financial Feasibility Study)")
         
+        # --- 4. Financial Feasibility Study (Scenario B Focus) ---
+        st.markdown("### 💰 4. 사업성 간이 평가 (Financial Feasibility Study)")
+        
         # Financial logic helpers
-        def calculate_npv_irr(capex, annual_demand, rate, opex_rate, life, discount):
-            annual_rev = annual_demand * rate
-            annual_opex = capex * opex_rate
-            cash_flows = [-capex] + [annual_rev - annual_opex] * int(life)
+        def calculate_npv_irr(capex, annual_demand, rate, subsidy, opex_total, life, discount):
+            annual_rev = (annual_demand * rate) + subsidy
+            cash_flows = [-capex] + [annual_rev - opex_total] * int(life)
             
             # Simple NPV
             npv = sum(cf / (1 + discount)**t for t, cf in enumerate(cash_flows))
@@ -758,40 +760,63 @@ elif st.session_state.step == 'result':
                 return 0
             
             irr = get_irr(cash_flows)
-            payback = capex / (annual_rev - annual_opex) if (annual_rev - annual_opex) > 0 else 99
+            payback = capex / (annual_rev - opex_total) if (annual_rev - opex_total) > 0 else 99
             return npv, irr, payback
 
-        @st.dialog("🚀 상세 사업성 분석 시뮬레이션", width="large")
+        @st.dialog("🚀 상세 사업성 분석 시나리오 시뮬레이션", width="large")
         def show_fs_modal():
-            st.markdown(f"#### 📍 {st.session_state.country} 사업성 시나리오 분석")
-            st.write("아래 표의 항목을 수정하여 프로젝트의 수익성을 검토하세요. 레퍼런스 데이터는 IEA/World Bank 2023 자료를 기반으로 합니다.")
+            st.markdown(f"#### 📍 {st.session_state.country} 사업성 정밀 검토")
             
-            # Match current country for rate
+            # Initial Data Calculation
             matched = next((c for c in COUNTRY_BENCHMARKS.keys() if c.lower() in st.session_state.country.lower()), "Global Average")
             ref_rate = COUNTRY_BENCHMARKS[matched]['rate']
             
-            fs_data = {
-                "항목 (Parameters)": ["운영 기간 (Project Life)", "할인율 (Discount Rate)", "전기 판매 요금 (Elec. Rate)", "연간 운영비 (OPEX Rate)", "이자율 (Interest Rate)"],
-                "단위": ["Years", "%", "USD/kWh", "% of Capex", "%"],
-                "설정값 (Value)": [25.0, 8.0, ref_rate, 2.0, 5.0],
-                "Reference (IEA/WB)": ["Standard 25y", "Global Avg", f"{matched} Avg", "Typical Microgrid", "Market Rate"]
+            # 1. CAPEX Breakdown Editor
+            st.markdown("##### 🏗️ A. 초기 투자비 세부 항목 (CAPEX Breakdown)")
+            capex_items = {
+                "구성 항목": ["Solar PV System", "BESS (Battery)", "Hydrogen System (EL/FC/Tank)", "Infrastructure (Grid/Misc)"],
+                "단위": ["USD", "USD", "USD", "USD"],
+                "설정 금액": [float(pv_hybrid * PRICE_PV), float(bess_b * PRICE_BESS), float((el_kw * PRICE_EL) + (fc_kw * PRICE_FC) + (max(h2_stock) * PRICE_TANK)), float(hh * 1500)]
             }
-            df_fs = pd.DataFrame(fs_data)
-            edited_fs = st.data_editor(df_fs, use_container_width=True, num_rows="fixed", key="fs_editor")
-            
-            vals = edited_fs["설정값 (Value)"].values
-            p_life, p_disc, p_rate, p_opex, p_int = vals[0], vals[1]/100, vals[2], vals[3]/100, vals[4]/100
-            
-            npv, irr, payback = calculate_npv_irr(capex_b, annual_demand, p_rate, p_opex, p_life, p_disc)
+            df_capex = pd.DataFrame(capex_items)
+            edited_capex = st.data_editor(df_capex, use_container_width=True, num_rows="fixed", key="capex_editor")
+            total_capex_fs = edited_capex["설정 금액"].sum()
             
             st.divider()
+            
+            # 2. Revenue & OPEX Editor
+            st.markdown("##### 🪙 B. 수익 및 운영비 세부 항목 (Revenue & OPEX)")
+            rev_opex_items = {
+                "구분": ["Revenue", "Revenue", "OPEX", "OPEX"],
+                "상세 항목": ["전기 판매 요금 (Elec. Rate)", "정부 보조금 (Annual Subsidy)", "유지보수비 (Maintenance)", "인건비 및 보험료 (Labor/Ins.)"],
+                "단위": ["USD/kWh", "USD/year", "USD/year", "USD/year"],
+                "설정값": [ref_rate, 0.0, float(total_capex_fs * 0.015), 50000.0]
+            }
+            df_rev = pd.DataFrame(rev_opex_items)
+            edited_rev = st.data_editor(df_rev, use_container_width=True, num_rows="fixed", key="rev_editor")
+            
+            # 3. Financial Terms
+            st.markdown("##### 📉 C. 금융 및 운영 조건 (Financial Terms)")
+            c_f1, c_f2 = st.columns(2)
+            p_life = c_f1.number_input("운영 기간 (Years)", 10, 50, 25)
+            p_disc = c_f2.number_input("할인율 (%)", 0.0, 20.0, 8.0) / 100
+            
+            # Calculations
+            rev_vals = edited_rev["설정값"].values
+            p_rate, p_subsidy = rev_vals[0], rev_vals[1]
+            p_opex_total = rev_vals[2] + rev_vals[3]
+            
+            npv, irr, payback = calculate_npv_irr(total_capex_fs, annual_demand, p_rate, p_subsidy, p_opex_total, p_life, p_disc)
+            
+            st.divider()
+            st.markdown("#### 📊 시뮬레이션 결과 (Financial Indicators)")
             f1, f2, f3 = st.columns(3)
             f1.metric("순현재가치 (NPV)", f"${npv/1e6:.2f}M", delta=f"{'Success' if npv > 0 else 'Deficit'}")
             f2.metric("내부수익률 (IRR)", f"{irr:.2f}%", delta=f"{irr - (p_disc*100):.1f}% vs Discount")
             f3.metric("투자비 회수 기간", f"{payback:.1f} Years")
             
-            st.info(f"💡 **분석 결과:** 본 프로젝트는 현재 조건에서 **{payback:.1f}년** 내에 투자비 회수가 가능하며, IRR **{irr:.2f}%**로 사업성이 {'충분함' if irr > 10 else '추가 검토 필요'}으로 판단됩니다.")
-            if st.button("✅ 분석 결과 확정 및 닫기"): st.rerun()
+            st.info(f"💡 **종합 평가:** 총 투자비 **${total_capex_fs/1e6:.2f}M** 대비 연간 순수익 **${((annual_demand * p_rate) + p_subsidy - p_opex_total)/1e3:,.1f}k**로 산출되었습니다.")
+            if st.button("✅ 분석 완료 및 닫기", use_container_width=True): st.rerun()
 
         # Summary Card and CTA
         f_col1, f_col2 = st.columns([2, 1])
