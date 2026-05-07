@@ -16,13 +16,27 @@ st.set_page_config(page_title="Net-Zero Optimizer Pro", page_icon="⚡", layout=
 
 # --- Constants & Benchmarks ---
 COUNTRY_BENCHMARKS = {
-    "Indonesia": 4.2,
-    "Philippines": 8.5,
-    "Vietnam": 6.5,
-    "South Korea": 11.2,
-    "United States": 29.5,
+    "Brazil": 6.5,
+    "Canada": 32.0,
+    "Chile": 7.0,
+    "Ethiopia": 0.5,
+    "France": 12.5,
     "Germany": 8.5,
-    "Unknown": 5.0
+    "Global Average": 5.0,
+    "India": 2.5,
+    "Indonesia": 4.2,
+    "Japan": 15.5,
+    "Kenya": 0.8,
+    "Nigeria": 1.2,
+    "Norway": 45.0,
+    "Pakistan": 1.8,
+    "Philippines": 3.5,
+    "South Africa": 8.5,
+    "South Korea": 11.2,
+    "Thailand": 7.5,
+    "United Kingdom": 10.0,
+    "United States": 29.5,
+    "Vietnam": 5.0
 }
 
 # Load Patterns (A: Night/Residential, B: Day/Commercial)
