@@ -323,15 +323,15 @@ elif st.session_state.step == 'result':
         
         with c1:
             st.markdown(f"""
-            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #ff4b4b; min-height: 520px; color: #eee;'>
-                <h4 style='color: #ff4b4b; text-align: center; font-size: 18px; margin-bottom: 15px;'>Scenario A: Giant BESS Only</h4>
+            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #ff4b4b; min-height: 550px; color: #eee;'>
+                <h4 style='color: #ff4b4b; text-align: center; font-size: 20px; margin-bottom: 15px;'>Scenario A: Giant BESS Only</h4>
                 <div style='text-align: center; font-size: 40px; margin: 10px 0;'>☀️ ➡ 🔋 ➡ 🏠</div>
-                <p style='font-size: 14px; color: #ccc; line-height: 1.5;'>거대 배터리 뱅크를 통해 계절적 불균형을 해소하는 단순 구조입니다.</p>
+                <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>거대 배터리 뱅크를 통해 계절적 불균형을 해소하는 단순 구조입니다.</p>
                 <hr style='border-color: #444;'>
-                <ul style='list-style: none; padding: 0; font-size: 15px;'>
-                    <li style='margin-bottom: 12px;'>🔆 <span style='color: #aaa;'>PV 규모:</span> <b style='color: #fff;'>{pv_ideal:,.1f} kWp</b></li>
-                    <li style='margin-bottom: 12px;'>🔋 <span style='color: #aaa;'>BESS 용량:</span> <b style='color: #fff;'>{bess_a:,.1f} kWh</b></li>
-                    <li style='margin-bottom: 12px;'>📅 <span style='color: #aaa;'>저장 필요 일수:</span> <b style='color: #ff4b4b;'>{bess_a/total_d:.1f} 일분</b></li>
+                <ul style='list-style: none; padding: 0; font-size: 18px;'>
+                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br><b style='color: #fff; font-size: 22px;'>{pv_ideal:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>BESS 용량:</span> <br><b style='color: #fff; font-size: 22px;'>{bess_a:,.1f} kWh</b></li>
+                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>저장 필요 일수:</span> <br><b style='color: #ff4b4b; font-size: 22px;'>{bess_a/total_d:.1f} 일분</b></li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
@@ -339,22 +339,19 @@ elif st.session_state.step == 'result':
         with c2:
             h2_days = (max(h2_stock) * 33.33 * H2_FC_EFF) / total_d
             st.markdown(f"""
-            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; min-height: 520px; color: #eee;'>
-                <h4 style='color: #00d4ff; text-align: center; font-size: 18px; margin-bottom: 15px;'>Scenario B: BESS-HESS Hybrid</h4>
+            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; min-height: 550px; color: #eee;'>
+                <h4 style='color: #00d4ff; text-align: center; font-size: 20px; margin-bottom: 15px;'>Scenario B: BESS-HESS Hybrid</h4>
                 <div style='text-align: center; font-size: 40px; margin: 10px 0;'>☀️ ➡ 🔋 + 💧(H2) ➡ 🏠</div>
-                <p style='font-size: 14px; color: #ccc; line-height: 1.5;'>배터리와 수소가 단기/장기 변동을 나누어 담당하여 효율을 극대화합니다.</p>
+                <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>배터리와 수소가 단기/장기 변동을 나누어 담당하여 효율을 극대화합니다.</p>
                 <hr style='border-color: #444;'>
-                <ul style='list-style: none; padding: 0; font-size: 14px;'>
-                    <li style='margin-bottom: 10px;'>🔆 <span style='color: #aaa;'>PV 규모:</span> <b style='color: #fff;'>{pv_hybrid:,.1f} kWp</b> <span style='font-size: 12px; color: #00d4ff;'>({pv_hybrid/pv_ideal:.2f}배)</span></li>
-                    <li style='margin-bottom: 10px;'>🔋 <span style='color: #aaa;'>BESS 용량:</span> <b style='color: #fff;'>{bess_b:,.1f} kWh</b> <span style='font-size: 12px; color: #00d4ff;'>(1.5일분)</span></li>
-                    <li style='margin-bottom: 10px;'>💧 <span style='color: #aaa;'>수소 시스템 (HESS):</span>
-                        <ul style='font-size: 13px; color: #ccc; margin-top: 5px;'>
-                            <li>수전해기(EL): <b style='color: #fff;'>{el_kw:,.1f} kW</b></li>
-                            <li>연료전지(FC): <b style='color: #fff;'>{fc_kw:,.1f} kW</b></li>
-                            <li>최대 수소 저장: <b style='color: #00ff88;'>{max(h2_stock):,.1f} kg</b> <span style='color: #00ff88;'>({h2_days:.1f}일분)</span></li>
-                            <p style='font-size: 11px; color: #aaa; margin-top: 5px; line-height: 1.3;'>
-                                * 수소는 계절 간 에너지 불균형을 해소하며, 일조량이 가장 적은 시기를 대비한 최대치 기준 설계입니다.
-                            </p>
+                <ul style='list-style: none; padding: 0; font-size: 18px;'>
+                    <li style='margin-bottom: 12px;'><span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br><b style='color: #fff; font-size: 22px;'>{pv_hybrid:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 12px;'><span style='font-size: 17px; color: #aaa;'>BESS 용량:</span> <br><b style='color: #fff; font-size: 22px;'>{bess_b:,.1f} kWh</b></li>
+                    <li style='margin-bottom: 12px;'><span style='font-size: 17px; color: #aaa;'>수소 시스템 (HESS):</span>
+                        <ul style='font-size: 16px; color: #ccc; margin-top: 5px; list-style: none; padding-left: 0;'>
+                            <li style='margin-bottom: 5px;'>▪️ EL: <b style='color: #fff; font-size: 20px;'>{el_kw:,.1f} kW</b></li>
+                            <li style='margin-bottom: 5px;'>▪️ FC: <b style='color: #fff; font-size: 20px;'>{fc_kw:,.1f} kW</b></li>
+                            <li style='margin-bottom: 5px;'>▪️ H2: <b style='color: #00ff88; font-size: 20px;'>{max(h2_stock):,.1f} kg</b> <span style='font-size: 14px; color: #00ff88;'>({h2_days:.1f}일분)</span></li>
                         </ul>
                     </li>
                 </ul>
