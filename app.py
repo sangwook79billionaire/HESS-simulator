@@ -402,6 +402,14 @@ elif st.session_state.step == 'result':
                         <b style='color: #38bdf8;'>4. 경제성 최적화</b><br>
                         두 시나리오 중 전체 투자비(CAPEX)와 운영 비용을 고려하여 가장 낮은 발전단가(LCOE)를 만드는 설비 조합을 선정합니다.
                     </div>
+                    <div style='margin-top: 20px; padding-top: 15px; border-top: 1px solid #334155;'>
+                        <b style='color: #fbbf24;'>📐 면적 산출 근거 (Footprint Basis)</b><br>
+                        <div style='font-size: 12px; color: #94a3b8; line-height: 1.6; margin-top: 5px;'>
+                            • <b>태양광(PV)</b>: 패널 면적 + 어레이 간격(그림자 간섭 방지) + 유지보수 통로 포함 (10m²/kWp)<br>
+                            • <b>배터리(BESS)</b>: 컨테이너 하우징 + 변압기/PCS + 화재 안전 이격 거리 포함 (0.1m²/kWh)<br>
+                            • <b>수소(HESS)</b>: 수전해/연료전지 BOP + 수소 탱크 고압 안전 이격 거리 포함 (1.5m²/kg + base 50m²)
+                        </div>
+                    </div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
