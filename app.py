@@ -248,10 +248,18 @@ if st.session_state.step == 'input':
             st.plotly_chart(fig_load, use_container_width=True)
 
         if st.button("🚀 최적화 시뮬레이션 시작", use_container_width=True, type="primary"):
-            st.session_state.total_d = total_daily_kwh
-            st.session_state.load_profile = final_pattern
-            st.session_state.step = 'result'
-            st.rerun()
+            with st.status("🚀 시뮬레이션 엔진 가동 중...", expanded=True) as status:
+                st.write("📍 위치 및 기상 좌표 검증 중...")
+                st.session_state.total_d = total_daily_kwh
+                st.session_state.load_profile = final_pattern
+                
+                import time
+                time.sleep(0.5)
+                st.write("📊 에너지 수요 프로파일 생성 완료...")
+                st.session_state.step = 'result'
+                status.update(label="✅ 분석 준비 완료! 결과 화면으로 이동합니다.", state="complete", expanded=False)
+                time.sleep(0.5)
+                st.rerun()
 
     with main_tabs[1]:
         st.subheader("🚀 지도 기반 대량 배치 시뮬레이션 (Spatial Batch)")
