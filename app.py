@@ -971,8 +971,31 @@ elif st.session_state.step == 'result':
                     "Net Cash Flow ($)": "${:,.0f}",
                     "Cumulative ($)": "${:,.0f}"
                 }),
-                use_container_width=True, height=300
+                use_container_width=True, height=250
             )
+            
+            # 5. Cash Flow Chart (New)
+            fig_cf = go.Figure()
+            fig_cf.add_trace(go.Bar(
+                x=df_cf['Year'], y=df_cf['Net Cash Flow ($)'],
+                name='Net Cash Flow',
+                marker_color=['#ff4b4b' if x < 0 else '#00d4ff' for x in df_cf['Net Cash Flow ($)']]
+            ))
+            fig_cf.add_trace(go.Scatter(
+                x=df_cf['Year'], y=df_cf['Cumulative ($)'],
+                name='Cumulative Cash Flow',
+                line=dict(color='#00ff88', width=3),
+                mode='lines+markers'
+            ))
+            fig_cf.add_hline(y=0, line_dash="dash", line_color="white", opacity=0.5)
+            fig_cf.update_layout(
+                title="현금 흐름 프로젝션 (Cash Flow Projection)",
+                template="plotly_dark", height=400,
+                xaxis_title="Year", yaxis_title="Amount ($)",
+                margin=dict(l=0, r=0, t=50, b=0),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            )
+            st.plotly_chart(fig_cf, use_container_width=True)
             
             st.info(f"💡 **종합 평가:** 본 프로젝트는 벤치마크 원가(${diesel_ref}) 대비 **{abs((lcoe_fs - diesel_ref)/diesel_ref*100):.1f}%**의 높은 원가 경쟁력을 확보하고 있습니다.")
             if st.button("✅ 시나리오 확정 및 닫기", use_container_width=True): st.rerun()
