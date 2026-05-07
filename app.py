@@ -78,6 +78,12 @@ def calc_edcf_payment(amount, years=40, grace=15, rate=0.0001):
 if st.session_state.step == 'input':
     st.title("🌍 Universal Net-Zero Microgrid Optimizer")
     st.markdown("전 세계 격오지 재생에너지 전환을 위한 하이브리드 시스템 설계 솔루션")
+    st.markdown("""
+    <div style='background: rgba(0, 212, 255, 0.1); padding: 10px 15px; border-radius: 8px; border-left: 4px solid #00d4ff; margin-bottom: 20px;'>
+        <span style='color: #00d4ff; font-weight: bold;'>📖 시뮬레이터 사용법:</span> 
+        <span style='color: #ccc; margin-left: 10px;'>1. 위치 선정 ➜ 2. 수요 설정 ➜ 3. 에너지 부하 패턴 지정</span>
+    </div>
+    """, unsafe_allow_html=True)
     
     col1, col2 = st.columns([1, 1.2])
     with col1:
