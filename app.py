@@ -715,17 +715,6 @@ elif st.session_state.step == 'result':
         # 4. CAPEX 상세 내역 및 비교
         st.markdown("### 💰 4. 투자비 상세 내역 (CAPEX Breakdown)")
         
-        # Breakdown Data Calculation
-        cost_pv_a = pv_ideal * PRICE_PV
-        cost_bess_a = bess_a * PRICE_BESS
-        cost_dist = hh * 1500
-        
-        cost_pv_b = pv_hybrid * PRICE_PV
-        cost_bess_b = bess_b * PRICE_BESS
-        cost_el = el_kw * PRICE_EL
-        cost_fc = fc_kw * PRICE_FC
-        cost_h2_tank = max(h2_stock) * 500
-        
         # Stacked Bar Chart for Breakdown
         fig_break = go.Figure()
         # Scenario A
@@ -741,38 +730,42 @@ elif st.session_state.step == 'result':
         fig_break.add_trace(go.Bar(name='H2 Tank', x=['Scenario B'], y=[cost_h2_tank], marker_color='#00BCD4', text=[f"${cost_h2_tank/1e6:.2f}M"], textposition='auto'))
         fig_break.add_trace(go.Bar(name='Distribution', x=['Scenario B'], y=[cost_dist], marker_color='#9E9E9E', showlegend=False, text=[f"${cost_dist/1e6:.2f}M"], textposition='auto'))
         
-        # Add Total Labels & Highlights at the top
-        fig_break.add_trace(go.Scatter(
-            x=['Scenario A', 'Scenario B'], 
-            y=[capex_a, capex_b], 
-            mode='text', 
-            text=[f"Total: ${capex_a:,.0f}", f"Total: ${capex_b:,.0f}"],
-            textposition='top center',
-            textfont=dict(size=18, color='white', family="Arial Black"),
-            showlegend=False
-        ))
+        # Scenario A Total Annotation
+        fig_break.add_annotation(
+            x='Scenario A', y=capex_a,
+            text=f"Total: ${capex_a:,.0f}",
+            showarrow=False, yshift=20,
+            font=dict(size=20, color='white', family="Arial Black")
+        )
         
-        # Highlight Annotation for Feasibility
+        # Scenario B Total Annotation
+        fig_break.add_annotation(
+            x='Scenario B', y=capex_b,
+            text=f"Total: ${capex_b:,.0f}",
+            showarrow=False, yshift=20,
+            font=dict(size=20, color="#00d4ff", family="Arial Black")
+        )
+        
+        # Highlight Annotation for Feasibility (Scenario B winner)
         if capex_b < capex_a:
             fig_break.add_annotation(
-                x='Scenario B', y=capex_b * 1.05,
+                x='Scenario B', y=capex_b,
                 text="🚀 사업성 있음 (Feasible)",
-                showarrow=False,
+                showarrow=False, yshift=55,
                 font=dict(size=14, color="#00ff88", family="Arial Black"),
                 bgcolor="rgba(0,0,0,0.8)",
                 bordercolor="#00ff88",
                 borderwidth=1,
-                borderpad=4,
-                yshift=30
+                borderpad=4
             )
         
         fig_break.update_layout(
             title="투자 비용 구성 항목 비교 (Cost Breakdown)", 
             barmode='stack', 
             template="plotly_dark", 
-            height=550, 
-            margin=dict(t=80), # Space for annotations
-            yaxis=dict(range=[0, max(capex_a, capex_b)*1.3])
+            height=580, 
+            margin=dict(t=100), 
+            yaxis=dict(range=[0, max(capex_a, capex_b)*1.4])
         )
         st.plotly_chart(fig_break, use_container_width=True)
 
