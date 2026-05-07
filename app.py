@@ -115,7 +115,7 @@ if st.session_state.step == 'input':
         
         mode = st.radio("수요 산정", ["국가별 레퍼런스", "직접 입력"], horizontal=True)
         if mode == "국가별 레퍼런스":
-            c_name = st.selectbox("대상 국가 선택", list(COUNTRY_BENCHMARKS.keys()))
+            c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", list(COUNTRY_BENCHMARKS.keys()))
             avg_kwh = COUNTRY_BENCHMARKS[c_name]
         else:
             avg_kwh = st.number_input("가구당 일일 사용량 (kWh)", value=5.0)
