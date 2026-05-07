@@ -897,17 +897,65 @@ elif st.session_state.step == 'result':
             
             # 3. Financial Terms
             st.markdown("##### 📉 C. 금융 및 타당성 조건 (Financial & Feasibility)")
-            c_f1, c_f2, c_f3 = st.columns(3)
+            c_f1, c_f2, c_f3, c_f4 = st.columns(4)
             p_life = c_f1.number_input("운영 기간 (Project Life)", 10, 50, 30)
             p_disc = c_f2.number_input("할인율 (%)", 0.0, 20.0, 8.0) / 100
             diesel_ref = c_f3.number_input("에너지 벤치마크 원가 ($/kWh)", 0.0, 1.0, 0.62)
+            use_edcf = c_f4.toggle("🇰🇷 EDCF 차관 활용", value=False, help="40% CAPEX 지원, 15년 거치 25년 상환, 금리 0.01%")
             
             # Calculations
             rev_vals = edited_rev["금액 ($)"].values
             p_rate, p_subsidy, p_other = rev_vals[0], rev_vals[1], rev_vals[2]
             p_opex_total = rev_vals[3] + rev_vals[4] + rev_vals[5] + rev_vals[6]
             
-            npv, irr, payback, lcoe_fs = calculate_fs_metrics(total_capex_fs, annual_demand, p_rate, p_subsidy, p_other, p_opex_total, p_life, p_disc)
+            # EDCF Loan Logic
+            loan_amt = total_capex_fs * 0.4 if use_edcf else 0
+            
+            npv, irr, payback, lcoe_fs = calculate_fs_metrics(total_capex_fs - loan_amt, annual_demand, p_rate, p_subsidy, p_other, p_opex_total, p_life, p_disc)
+            
+            st.divider()
+            
+            # Yearly Cash Flow Table (Timed Replacements)
+            years = list(range(int(p_life) + 1))
+            fixed_opex_annual = rev_vals[3] + rev_vals[4]
+            rev_annual = (annual_demand * p_rate) + p_subsidy + p_other
+            
+            bess_replace_cost = bess_b * 300 * 0.7 
+            stack_replace_cost = (el_kw * 550 + fc_kw * 700) * 0.5 
+            
+            capex_out = [total_capex_fs] + [0] * int(p_life)
+            rev_in = [0] + [rev_annual] * int(p_life)
+            opex_base = [0] + [fixed_opex_annual] * int(p_life)
+            replace_out = [0] * (int(p_life) + 1)
+            edcf_flow = [loan_amt] + [0] * int(p_life)
+            
+            rem_principal = loan_amt
+            for y in range(1, int(p_life) + 1):
+                if y % 10 == 0: replace_out[y] += bess_replace_cost
+                if y % 8 == 0: replace_out[y] += stack_replace_cost
+                
+                # EDCF Loan Servicing
+                if use_edcf:
+                    interest = rem_principal * 0.0001
+                    principal = 0
+                    if y > 15:
+                        principal = loan_amt / 25
+                        rem_principal = max(0, rem_principal - principal)
+                    edcf_flow[y] = -(principal + interest)
+            
+            net_flow = [(rev_in[y] - opex_base[y] - replace_out[y] - (total_capex_fs if y==0 else 0) + edcf_flow[y]) for y in range(int(p_life) + 1)]
+            cum_flow = np.cumsum(net_flow)
+            
+            df_cf = pd.DataFrame({
+                "Year": years,
+                "Initial CAPEX ($)": capex_out,
+                "EDCF Loan Flow ($)": edcf_flow,
+                "Revenue ($)": rev_in,
+                "Base OPEX ($)": opex_base,
+                "Replacement ($)": replace_out,
+                "Net Flow ($)": net_flow,
+                "Cumulative ($)": cum_flow
+            })
             
             st.divider()
             st.markdown("#### 📊 전략적 사업성 분석 결과 (Strategic Result)")
@@ -944,62 +992,26 @@ elif st.session_state.step == 'result':
             fig_lcoe.update_layout(title="LCOE 발전 원가 비교 ($/kWh)", template="plotly_dark", height=300, margin=dict(l=0,r=0,t=40,b=0))
             st.plotly_chart(fig_lcoe, use_container_width=True)
             
-            # 4. Yearly Cash Flow Table (Timed Replacements)
-            st.markdown("#### 📅 연도별 현금 흐름 (Yearly Cash Flow)")
-            years = list(range(int(p_life) + 1))
-            
-            # Base OPEX (Excluding replacement funds from the sum to avoid double counting)
-            # rev_vals[3]: O&M, rev_vals[4]: Personnel
-            fixed_opex_annual = rev_vals[3] + rev_vals[4]
-            rev_annual = (annual_demand * p_rate) + p_subsidy + p_other
-            
-            # Replacement Costs
-            bess_replace_cost = bess_b * 300 * 0.7 # 70% of initial
-            stack_replace_cost = (el_kw * 550 + fc_kw * 700) * 0.5 # 50% of initial
-            
-            capex_out = [total_capex_fs] + [0] * int(p_life)
-            rev_in = [0] + [rev_annual] * int(p_life)
-            opex_base = [0] + [fixed_opex_annual] * int(p_life)
-            replace_out = [0] * (int(p_life) + 1)
-            
-            for y in range(1, int(p_life) + 1):
-                if y % 10 == 0: replace_out[y] += bess_replace_cost
-                if y % 8 == 0: replace_out[y] += stack_replace_cost
-            
-            net_flow = [-total_capex_fs] + [(rev_annual - fixed_opex_annual - replace_out[y]) for y in range(1, int(p_life) + 1)]
-            cum_flow = np.cumsum(net_flow)
-            
-            df_cf = pd.DataFrame({
-                "Year": years,
-                "Initial CAPEX ($)": capex_out,
-                "Revenue ($)": rev_in,
-                "Base OPEX ($)": opex_base,
-                "Replacement ($)": replace_out,
-                "Net Flow ($)": net_flow,
-                "Cumulative ($)": cum_flow
-            })
-            
             st.dataframe(
                 df_cf.style.format({
-                    "Initial CAPEX ($)": "${:,.0f}", "Revenue ($)": "${:,.0f}",
-                    "Base OPEX ($)": "${:,.0f}", "Replacement ($)": "${:,.0f}",
-                    "Net Flow ($)": "${:,.0f}", "Cumulative ($)": "${:,.0f}"
+                    "Initial CAPEX ($)": "${:,.0f}", "EDCF Loan Flow ($)": "${:,.0f}",
+                    "Revenue ($)": "${:,.0f}", "Base OPEX ($)": "${:,.0f}", 
+                    "Replacement ($)": "${:,.0f}", "Net Flow ($)": "${:,.0f}", "Cumulative ($)": "${:,.0f}"
                 }),
                 use_container_width=True, height=250
             )
             
-            # 5. Stacked Cash Flow Chart (Timed Scale)
+            # 5. Stacked Cash Flow Chart (EDCF Support)
             from plotly.subplots import make_subplots
             fig_cf = make_subplots(specs=[[{"secondary_y": True}]])
             
-            # Inflow components (Year 1+)
-            yr_idx = df_cf['Year'][1:]
-            fig_cf.add_trace(go.Bar(x=yr_idx, y=[rev_annual * (annual_demand*p_rate/rev_annual)]*int(p_life), name='PPA Sales', marker_color='#00d4ff'), secondary_y=False)
-            fig_cf.add_trace(go.Bar(x=yr_idx, y=[p_subsidy]*int(p_life), name='Subsidy', marker_color='#ffd700'), secondary_y=False)
-            fig_cf.add_trace(go.Bar(x=yr_idx, y=[p_other]*int(p_life), name='Other Income', marker_color='#00ff88'), secondary_y=False)
+            yr_idx = df_cf['Year']
+            # Inflow
+            fig_cf.add_trace(go.Bar(x=yr_idx[1:], y=rev_in[1:], name='Revenue', marker_color='#00d4ff'), secondary_y=False)
+            fig_cf.add_trace(go.Bar(x=years, y=edcf_flow, name='EDCF Loan Flow', marker_color='#7e57c2'), secondary_y=False)
             
-            # Outflow components
-            fig_cf.add_trace(go.Bar(x=yr_idx, y=[-fixed_opex_annual]*int(p_life), name='Base OPEX', marker_color='#555'), secondary_y=False)
+            # Outflow
+            fig_cf.add_trace(go.Bar(x=yr_idx[1:], y=[-v for v in opex_base[1:]], name='Base OPEX', marker_color='#555'), secondary_y=False)
             fig_cf.add_trace(go.Bar(x=years, y=[-v for v in replace_out], name='Asset Replacement', marker_color='#ff8800'), secondary_y=False)
             fig_cf.add_trace(go.Bar(x=[0], y=[-total_capex_fs], name='Initial CAPEX', marker_color='#ff4b4b'), secondary_y=False)
             
@@ -1008,7 +1020,11 @@ elif st.session_state.step == 'result':
             
             fig_cf.update_yaxes(title_text="Annual Flow ($)", range=[-rev_annual * 2, rev_annual * 3], secondary_y=False)
             fig_cf.update_yaxes(title_text="Cumulative Balance ($)", secondary_y=True)
-            fig_cf.update_layout(title="연도별 현금 흐름 분석 (Timed Asset Replacement Model)", barmode='relative', template="plotly_dark", height=500, xaxis_title="Year", legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
+            fig_cf.update_layout(
+                title="연도별 현금 흐름 분석 (with EDCF Loan Support)",
+                barmode='relative', template="plotly_dark", height=500, xaxis_title="Year",
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
+            )
             st.plotly_chart(fig_cf, use_container_width=True)
             
             st.info(f"💡 **종합 평가:** 본 프로젝트는 벤치마크 원가(${diesel_ref}) 대비 **{abs((lcoe_fs - diesel_ref)/diesel_ref*100):.1f}%**의 높은 원가 경쟁력을 확보하고 있습니다.")
