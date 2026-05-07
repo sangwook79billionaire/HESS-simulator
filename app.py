@@ -98,7 +98,7 @@ if st.session_state.step == 'input':
         
     with col2:
         st.subheader("⚡ 2. 에너지 부하 패턴 (Mixed Load)")
-        hh = st.number_input("가구 수 (Households)", value=200, min_value=1)
+        hh = st.number_input("가구 수 (Households)", value=500, min_value=1)
         st.session_state.hh = hh
         
         mode = st.radio("수요 산정", ["국가별 레퍼런스", "직접 입력"], horizontal=True)
