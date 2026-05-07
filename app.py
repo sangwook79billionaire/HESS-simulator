@@ -143,8 +143,8 @@ if st.session_state.step == 'input':
             benchmark_keys = list(COUNTRY_BENCHMARKS.keys())
             aliases = {
                 "uae": "United Arab Emirates", "emirates": "United Arab Emirates", "dubai": "United Arab Emirates",
-                "korea": "South Korea", "indonesia": "Indonesia (Islands)", "india": "India",
-                "usa": "USA (Average)", "america": "USA (Average)", "united states": "USA (Average)",
+                "korea": "South Korea", "indonesia": "Indonesia", "india": "India",
+                "usa": "United States", "america": "United States", "united states": "United States",
                 "germany": "Germany", "vietnam": "Vietnam", "kenya": "Kenya"
             }
             for alias, full_name in aliases.items():
@@ -165,8 +165,6 @@ if st.session_state.step == 'input':
                     loc = geolocator.geocode(address, timeout=10)
                     if loc:
                         st.session_state.lat, st.session_state.lon, st.session_state.country = loc.latitude, loc.longitude, loc.address
-                        # Direct state injection for demand matching
-                        st.session_state["selected_benchmark"] = find_country_match(loc.address)
                         st.rerun()
                     else:
                         st.error("검색 결과가 없습니다. 다른 지명을 입력해 주세요.")
@@ -185,15 +183,12 @@ if st.session_state.step == 'input':
                 if abs(new_lat - st.session_state.lat) > 0.0001 or abs(new_lng - st.session_state.lon) > 0.0001:
                     st.session_state.lat = new_lat
                     st.session_state.lon = new_lng
-                    # Attempt reverse geocode using ArcGIS
                     try:
                         from geopy.geocoders import ArcGIS
                         geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v1")
                         rev = geolocator.reverse(f"{new_lat}, {new_lng}", timeout=5)
                         if rev: 
                             st.session_state.country = rev.address
-                            # Direct state injection for demand matching
-                            st.session_state["selected_benchmark"] = find_country_match(rev.address)
                     except:
                         pass
                     st.rerun()
@@ -210,13 +205,13 @@ if st.session_state.step == 'input':
                 benchmark_list = list(COUNTRY_BENCHMARKS.keys())
                 detected_c = find_country_match(st.session_state.country)
                 
-                # Update index fallback
+                # Update selectbox index based on detected country
                 try:
                     default_idx = benchmark_list.index(detected_c)
                 except ValueError:
                     default_idx = 0
                 
-                c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", benchmark_list, index=default_idx, key="selected_benchmark")
+                c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", benchmark_list, index=default_idx)
                 avg_kwh = COUNTRY_BENCHMARKS[c_name]['demand']
             else:
                 avg_kwh = st.number_input("가구당 일일 사용량 (kWh)", value=5.0)
