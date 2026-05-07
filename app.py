@@ -418,6 +418,7 @@ elif st.session_state.step == 'result':
             fig_soc_a.add_trace(go.Scatter(x=df_h['Timestamp'], y=net_trace, name="BESS SOC", line=dict(color='#ff4b4b', width=1)))
             fig_soc_a.update_layout(title=dict(text="Scenario A: Battery SOC (%)", font=dict(size=18)), 
                                     template="plotly_dark", height=350, margin=dict(l=60, r=60, t=60, b=50))
+            fig_soc_a.update_yaxes(title_text="BESS SOC (%)")
             st.plotly_chart(fig_soc_a, use_container_width=True)
             
         with c_net2:
@@ -425,9 +426,11 @@ elif st.session_state.step == 'result':
             # Scenario B Hybrid Status
             fig_hybrid = make_subplots(specs=[[{"secondary_y": True}]])
             fig_hybrid.add_trace(go.Scatter(x=df_h['Timestamp'], y=df_h['SOC_B'], name="BESS SOC (%)", line=dict(color="#00d4ff", width=1)), secondary_y=False)
-            fig_hybrid.add_trace(go.Scatter(x=df_h['Timestamp'], y=df_h['H2_Stock'], name="H2 Stock (kg)", fill='tozeroy', line=dict(color="#00ff88", width=1)), secondary_y=True)
-            fig_hybrid.update_layout(title=dict(text="Scenario B: BESS & H2 Status", font=dict(size=18)), 
+            fig_hybrid.add_trace(go.Scatter(x=df_h['Timestamp'], y=df_h['H2_Stock'], name="수소 저장량 (kg)", fill='tozeroy', line=dict(color="#00ff88", width=1)), secondary_y=True)
+            fig_hybrid.update_layout(title=dict(text="Scenario B: BESS & 수소 저장 현황", font=dict(size=18)), 
                                     template="plotly_dark", height=350, margin=dict(l=60, r=60, t=60, b=50), showlegend=False)
+            fig_hybrid.update_yaxes(title_text="BESS SOC (%)", secondary_y=False)
+            fig_hybrid.update_yaxes(title_text="수소 저장량 (kg)", secondary_y=True)
             st.plotly_chart(fig_hybrid, use_container_width=True)
 
         # 4. CAPEX 상세 내역 및 비교
