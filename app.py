@@ -92,9 +92,21 @@ if st.session_state.step == 'input':
         
         m = folium.Map(location=[st.session_state.lat, st.session_state.lon], zoom_start=10)
         folium.Marker([st.session_state.lat, st.session_state.lon]).add_to(m)
-        st_folium(m, height=250, use_container_width=True)
         
-        st.info(f"좌표: {st.session_state.lat:.4f}, {st.session_state.lon:.4f}")
+        # Click on Map functionality
+        map_data = st_folium(m, height=250, use_container_width=True, key="input_map")
+        
+        if map_data.get('last_clicked'):
+            new_lat, new_lon = map_data['last_clicked']['lat'], map_data['last_clicked']['lng']
+            if new_lat != st.session_state.lat or new_lon != st.session_state.lon:
+                st.session_state.lat, st.session_state.lon = new_lat, new_lon
+                geolocator = Nominatim(user_agent="net_zero_optimizer")
+                loc = geolocator.reverse(f"{new_lat}, {new_lon}")
+                st.session_state.country = loc.address if loc else f"{new_lat:.4f}, {new_lon:.4f}"
+                st.rerun()
+        
+        st.caption("💡 지명을 검색하거나 지도 위의 지점을 직접 클릭하여 위치를 선택할 수 있습니다.")
+        st.info(f"선택된 좌표: {st.session_state.lat:.4f}, {st.session_state.lon:.4f}")
         
     with col2:
         st.subheader("⚡ 2. 에너지 부하 패턴 (Mixed Load)")
