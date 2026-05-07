@@ -93,7 +93,8 @@ if st.session_state.step == 'input':
         address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country)
         if st.button("위치 확인"):
             try:
-                geolocator = Nominatim(user_agent="net_zero_simulator_sangwook_v1")
+                from geopy.geocoders import ArcGIS
+                geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v1")
                 loc = geolocator.geocode(address, timeout=10)
                 if loc:
                     st.session_state.lat, st.session_state.lon, st.session_state.country = loc.latitude, loc.longitude, loc.address
@@ -101,7 +102,7 @@ if st.session_state.step == 'input':
                 else:
                     st.error("검색 결과가 없습니다. 다른 지명을 입력해 주세요.")
             except:
-                st.error("위치 서비스가 일시적으로 응답하지 않습니다. 지도에서 직접 클릭해 주세요.")
+                st.error("위치 서비스(ArcGIS)가 일시적으로 응답하지 않습니다. 지도에서 직접 클릭해 주세요.")
         
         m = folium.Map(location=[st.session_state.lat, st.session_state.lon], zoom_start=10)
         folium.Marker([st.session_state.lat, st.session_state.lon], tooltip="선택된 위치").add_to(m)
@@ -115,10 +116,11 @@ if st.session_state.step == 'input':
             if abs(new_lat - st.session_state.lat) > 0.0001 or abs(new_lng - st.session_state.lon) > 0.0001:
                 st.session_state.lat = new_lat
                 st.session_state.lon = new_lng
-                # Attempt reverse geocode (fail silently)
+                # Attempt reverse geocode using ArcGIS
                 try:
-                    geolocator = Nominatim(user_agent="net_zero_simulator_sangwook_v1")
-                    rev = geolocator.reverse(f"{new_lat}, {new_lng}", timeout=3)
+                    from geopy.geocoders import ArcGIS
+                    geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v1")
+                    rev = geolocator.reverse(f"{new_lat}, {new_lng}", timeout=5)
                     if rev: st.session_state.country = rev.address
                 except:
                     pass
