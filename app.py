@@ -715,6 +715,17 @@ elif st.session_state.step == 'result':
         # 4. CAPEX 상세 내역 및 비교
         st.markdown("### 💰 4. 투자비 상세 내역 (CAPEX Breakdown)")
         
+        # Breakdown Data Calculation (Reinstated)
+        cost_pv_a = pv_ideal * PRICE_PV
+        cost_bess_a = bess_a * PRICE_BESS
+        cost_dist = hh * 1500
+        
+        cost_pv_b = pv_hybrid * PRICE_PV
+        cost_bess_b = bess_b * PRICE_BESS
+        cost_el = el_kw * PRICE_EL
+        cost_fc = fc_kw * PRICE_FC
+        cost_h2_tank = max(h2_stock) * 500
+        
         # Stacked Bar Chart for Breakdown
         fig_break = go.Figure()
         # Scenario A
