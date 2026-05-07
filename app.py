@@ -745,6 +745,16 @@ elif st.session_state.step == 'result':
         total_a = cost_pv_a + cost_bess_a + cost_dist
         total_b = cost_pv_b + cost_bess_b + cost_el + cost_fc + cost_h2_tank + cost_dist
 
+        # Comparison Sign Annotation (Middle)
+        sign = ">" if total_a > total_b else "<"
+        fig_break.add_annotation(
+            x=0.5, y=max(total_a, total_b) * 0.8,
+            xref="paper", yref="y",
+            text=sign,
+            showarrow=False,
+            font=dict(size=50, color="#444", family="Arial Black")
+        )
+
         # Scenario A Total Annotation
         fig_break.add_annotation(
             x='Scenario A', y=total_a,
