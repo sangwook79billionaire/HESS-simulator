@@ -900,10 +900,33 @@ elif st.session_state.step == 'result':
             
             st.divider()
             st.markdown("#### 📊 전략적 사업성 분석 결과 (Strategic Result)")
-            f1, f2, f3 = st.columns(3)
-            f1.metric("순현재가치 (NPV)", f"${npv/1e6:.2f}M", delta=f"{'Success' if npv > 0 else 'Deficit'}")
-            f2.metric("내부수익률 (IRR)", f"{irr:.2f}%", delta=f"{irr - (p_disc*100):.1f}% vs Target")
-            f3.metric("LCOE vs Benchmark", f"${lcoe_fs:.3f}", delta=f"{(lcoe_fs - diesel_ref)/diesel_ref*100:.1f}% vs Benchmark", delta_color="inverse")
+            
+            # Custom styled metrics for better visibility in modal
+            m1, m2, m3 = st.columns(3)
+            with m1:
+                st.markdown(f"""
+                <div style='background: #111; padding: 15px; border-radius: 8px; border-left: 4px solid #00d4ff;'>
+                    <div style='color: #888; font-size: 13px;'>순현재가치 (NPV)</div>
+                    <div style='color: #fff; font-size: 24px; font-weight: bold;'>${npv/1e6:.2f}M</div>
+                    <div style='color: {"#00ff88" if npv > 0 else "#ff4b4b"}; font-size: 13px;'>{'✅ 사업성 확보' if npv > 0 else '⚠️ 원금 회수 미달'}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with m2:
+                st.markdown(f"""
+                <div style='background: #111; padding: 15px; border-radius: 8px; border-left: 4px solid #ffd700;'>
+                    <div style='color: #888; font-size: 13px;'>내부수익률 (IRR)</div>
+                    <div style='color: #fff; font-size: 24px; font-weight: bold;'>{irr:.2f}%</div>
+                    <div style='color: {"#00ff88" if irr > p_disc*100 else "#ff4b4b"}; font-size: 13px;'>{irr - (p_disc*100):.1f}% vs Target</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with m3:
+                st.markdown(f"""
+                <div style='background: #111; padding: 15px; border-radius: 8px; border-left: 4px solid #00ff88;'>
+                    <div style='color: #888; font-size: 13px;'>LCOE 발전단가</div>
+                    <div style='color: #fff; font-size: 24px; font-weight: bold;'>${lcoe_fs:.3f}</div>
+                    <div style='color: {"#00ff88" if lcoe_fs < diesel_ref else "#ff4b4b"}; font-size: 13px;'>{((lcoe_fs - diesel_ref)/diesel_ref*100):.1f}% vs Bench</div>
+                </div>
+                """, unsafe_allow_html=True)
             
             fig_lcoe = go.Figure()
             fig_lcoe.add_trace(go.Bar(x=['Benchmark (Diesel)', 'HESS Hybrid (Target)'], y=[diesel_ref, lcoe_fs], marker_color=['#888', '#00d4ff'], width=0.4))
