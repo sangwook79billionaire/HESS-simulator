@@ -750,7 +750,7 @@ elif st.session_state.step == 'result':
             x='Scenario A', y=total_a,
             text=f"Total: ${total_a:,.0f}",
             showarrow=False, yshift=30,
-            font=dict(size=22, color='white', family="Arial Black")
+            font=dict(size=22, color='#ff4b4b', family="Arial Black")
         )
         
         # Scenario B Total Annotation
