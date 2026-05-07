@@ -824,31 +824,30 @@ elif st.session_state.step == 'result':
             # 1. CAPEX Breakdown Editor
             st.markdown("##### 🏗️ A. 초기 투자비 상세 (CAPEX Breakdown)")
             capex_items = {
-                "구성 항목": [
-                    "Solar PV System", "BESS (Battery)", "Hydrogen System (EL/FC/Tank)", 
-                    "해수 담수화/수처리 (Optional)", "에너지 관리 시스템(EMS)", "격오지 물류 및 시공비", "인프라 (배전망 등)"
+                "세부 항목": [
+                    "Solar PV System", "BESS (Battery)", "Electrolyzer (EL)", "Fuel Cell (FC)", "H2 Storage Tank",
+                    "해수 담수화 (Optional)", "EMS & Control", "물류 및 시공 (Logistics)", "인프라 (Distribution)"
                 ],
-                "설정 금액": [
-                    int(pv_hybrid * 1000), int(bess_b * 300), 
-                    int((el_kw * 550) + (fc_kw * 700) + (max(h2_stock) * 650)),
-                    int(equip_capex * 0.07) if inc_desal else 0, 
-                    int(equip_capex * 0.03), 
-                    int(equip_capex * 0.25), 
-                    int(hh * 1500)
-                ],
-                "설계 및 산출 근거 (Basis)": [
-                    f"{pv_hybrid:,.1f} kWp * $1,000/kWp", f"{bess_b:,.1f} kWh * $300/kWh", "H2 System Costs",
-                    "전체 CAPEX의 7% (선택 시)" if inc_desal else "미포함", 
-                    "설비가액의 3% (EMS)", "장비가의 25% (물류/설치 할증)",
-                    f"{hh} 가구 대상 인프라"
+                "단가 ($)": [1000, 300, 550, 700, 650, 50000, 30000, 100000, 1500],
+                "수량": [pv_hybrid, bess_b, el_kw, fc_kw, max(h2_stock), 1 if inc_desal else 0, 1, 1, hh],
+                "총 금액 ($)": [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                "산출 근거 (Basis)": [
+                    "$1,000/kWp", "$300/kWh", "$550/kW", "$700/kW", "$650/kg", 
+                    "Package Unit", "Integrated EMS", "격오지 할증 반영", "$1,500/Household"
                 ]
             }
             df_capex = pd.DataFrame(capex_items)
+            df_capex["총 금액 ($)"] = df_capex["단가 ($)"] * df_capex["수량"]
+            
             edited_capex = st.data_editor(
-                df_capex, use_container_width=True, num_rows="fixed", key="capex_editor_final",
-                column_config={"설정 금액": st.column_config.NumberColumn("설정 금액 (USD)", format="%d")}
+                df_capex, use_container_width=True, num_rows="fixed", key="capex_editor_v2",
+                column_config={
+                    "단가 ($)": st.column_config.NumberColumn(format="$%d"),
+                    "수량": st.column_config.NumberColumn(format="%.1f"),
+                    "총 금액 ($)": st.column_config.NumberColumn(format="$%d", disabled=True)
+                }
             )
-            total_capex_fs = edited_capex["설정 금액"].sum()
+            total_capex_fs = edited_capex["총 금액 ($)"].sum()
             
             st.divider()
             
@@ -857,21 +856,30 @@ elif st.session_state.step == 'result':
             matched = next((c for c in COUNTRY_BENCHMARKS.keys() if c.lower() in st.session_state.country.lower()), "Global Average")
             ref_rate = COUNTRY_BENCHMARKS[matched]['rate']
             
+            # Replacement calculation (annualized)
+            bess_replace_annual = (bess_b * 300 * 0.7) / 10 # 70% cost after 10 years
+            stack_replace_annual = ((el_kw * 550 + fc_kw * 700) * 0.5) / 8 # 50% cost after 8 years
+            
             rev_opex_items = {
-                "구분": ["Revenue", "Revenue", "Revenue", "OPEX", "OPEX"],
+                "구분": ["Revenue", "Revenue", "Revenue", "OPEX", "OPEX", "OPEX", "OPEX"],
                 "상세 항목": [
-                    "전기 판매 요금 (PPA 단가)", "보조금/디젤 절감 지원금", "담수 판매 및 부가 수익", 
-                    "정기 유지보수비 (Fixed PM)", "현지 운영 인건비"
+                    "전기 판매 요금 (PPA)", "보조금 (MTOP/Subsidy)", "담수 판매 수익", 
+                    "일반 유지보수비 (O&M)", "현지 운영비 (Personnel)", 
+                    "BESS 교체 적립금 (10yr cycle)", "H2 스택 교체 적립금 (8yr cycle)"
                 ],
-                "설정값": [ref_rate, 50000.0, 10000.0 if inc_desal else 0.0, float(total_capex_fs * 0.015), 30000.0],
-                "운영 및 수익 근거": [
-                    "전력 구매 계약 단가", "정부 보조금 등", "식수 판매/탄소권 수익" if inc_desal else "미발생",
-                    "연간 CAPEX의 1.5%", "현지 상주 및 운영비"
+                "설정값": [
+                    ref_rate, 50000.0, 15000.0 if inc_desal else 0.0, 
+                    float(total_capex_fs * 0.012), 30000.0, 
+                    float(bess_replace_annual), float(stack_replace_annual)
+                ],
+                "산출 및 수익 근거": [
+                    "전력 구매 계약 단가", "정부 지원금 연간 추정", "용수 판매 수익",
+                    "연간 CAPEX의 1.2%", "기술자 상주비", "배터리 수명 기반 적립", "스택 수명 기반 적립"
                 ]
             }
             df_rev = pd.DataFrame(rev_opex_items)
             edited_rev = st.data_editor(
-                df_rev, use_container_width=True, num_rows="fixed", key="rev_editor_final",
+                df_rev, use_container_width=True, num_rows="fixed", key="rev_editor_v2",
                 column_config={"설정값": st.column_config.NumberColumn("설정값", format="%.2f")}
             )
             
