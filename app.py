@@ -199,7 +199,7 @@ if st.session_state.step == 'input':
                         break
                 
                 c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", benchmark_list, index=default_idx)
-                avg_kwh = COUNTRY_BENCHMARKS[c_name]
+                avg_kwh = COUNTRY_BENCHMARKS[c_name]['demand']
             else:
                 avg_kwh = st.number_input("가구당 일일 사용량 (kWh)", value=5.0)
             
@@ -303,7 +303,7 @@ if st.session_state.step == 'input':
                         try:
                             # Match Country Benchmark
                             matched_country = next((c for c in COUNTRY_BENCHMARKS.keys() if c.lower() in loc['country'].lower()), "Global Average")
-                            avg_kwh = COUNTRY_BENCHMARKS.get(matched_country, 3.0)
+                            avg_kwh = COUNTRY_BENCHMARKS.get(matched_country, {"demand": 3.0})['demand']
                             b_total_d = batch_hh * avg_kwh
                             
                             b_df_h = get_nasa_data(loc['lat'], loc['lon'])
