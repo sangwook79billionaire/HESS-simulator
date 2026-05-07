@@ -316,7 +316,7 @@ elif st.session_state.step == 'result':
     lcoe_b = (pay_b + capex_b*OPEX_RATE) / annual_demand
 
     # --- UI Rendering ---
-    tabs = st.tabs(["📊 종합 분석 리포트", "🔍 상세 시계열 분석", "📥 데이터 익스포트"])
+    tabs = st.tabs(["📊 종합 분석 리포트", "🔍 상세 시계열 분석", "📥 데이터 익스포트", "🚀 배치 시뮬레이션"])
     
     with tabs[0]:
         st.markdown("### 📋 1. 전체 에너지 수요 (Total Energy Demand)")
@@ -663,3 +663,63 @@ elif st.session_state.step == 'result':
         
         csv = df_daily.to_csv(index=False).encode('utf-8')
         st.download_button("📥 Daily Ledger CSV 다운로드", data=csv, file_name=f"ledger_{st.session_state.country}.csv", mime='text/csv')
+
+    with tabs[3]:
+        st.subheader("🚀 대량 위치 배치 시뮬레이션 (Batch Processing)")
+        st.markdown("""
+        여러 지역의 데이터를 한꺼번에 분석하고 싶을 때 사용하세요. 
+        아래 형식의 CSV 파일을 업로드하면 모든 지역에 대해 시뮬레이션을 자동 수행합니다.
+        
+        **CSV 형식 (헤더 포함):** `Name, Lat, Lon, HH, Demand`
+        """)
+        
+        uploaded_file = st.file_uploader("위치 리스트 CSV 파일 업로드", type="csv")
+        
+        if uploaded_file is not None:
+            batch_df = pd.read_csv(uploaded_file)
+            if st.button("배치 시뮬레이션 시작"):
+                batch_results = []
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                
+                for idx, row in batch_df.iterrows():
+                    status_text.text(f"⏳ 처리 중 ({idx+1}/{len(batch_df)}): {row['Name']}...")
+                    
+                    # Core Logic Subset (Simplified for speed)
+                    try:
+                        b_lat, b_lon = row['Lat'], row['Lon']
+                        b_total_d = row['HH'] * row['Demand']
+                        
+                        # Fetch NASA (Reuse get_nasa_data)
+                        b_df_h = get_nasa_data(b_lat, b_lon)
+                        if b_df_h is not None:
+                            b_df_h['Gen_1kW'] = (b_df_h['Insolation'] * (0.85 * (1 - 0.004 * (b_df_h['Temp'] - 25))) * INV_EFF) / 1000
+                            b_yield = b_df_h['Gen_1kW'].sum()
+                            b_pv_ideal = (b_total_d * 365) / (b_yield * 0.98)
+                            
+                            # Simple BESS sizing for batch
+                            b_bess_a = b_total_d * 15 # Heuristic for quick batch
+                            b_capex_a = (b_pv_ideal * PRICE_PV) + (b_bess_a * PRICE_BESS) + (row['HH'] * 1500)
+                            
+                            # Hybrid sizing (simplified)
+                            b_pv_hybrid = b_pv_ideal * 1.3
+                            b_bess_b = b_total_d * 1.5
+                            b_capex_b = (b_pv_hybrid * PRICE_PV) + (b_bess_b * PRICE_BESS) + (b_total_d/6 * PRICE_EL) + (b_total_d/10 * PRICE_FC) + (row['HH'] * 1500)
+                            
+                            batch_results.append({
+                                'Name': row['Name'], 'Lat': b_lat, 'Lon': b_lon,
+                                'PV_kWp': b_pv_hybrid, 'BESS_kWh': b_bess_b,
+                                'CAPEX_A($)': b_capex_a, 'CAPEX_B($)': b_capex_b,
+                                'Saving(%)': (1 - b_capex_b/b_capex_a) * 100
+                            })
+                    except:
+                        pass
+                    
+                    progress_bar.progress((idx + 1) / len(batch_df))
+                
+                status_text.text("✅ 모든 배치가 완료되었습니다!")
+                res_df = pd.DataFrame(batch_results)
+                st.dataframe(res_df.style.format(precision=1), use_container_width=True)
+                
+                res_csv = res_df.to_csv(index=False).encode('utf-8-sig')
+                st.download_button("📥 배치 결과 CSV 다운로드", data=res_csv, file_name="batch_results.csv", mime='text/csv')
