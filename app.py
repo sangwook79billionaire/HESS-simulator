@@ -608,8 +608,7 @@ elif st.session_state.step == 'result':
                         <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span><br>
                         <b style='color: #fff; font-size: 20px;'>{area_a:,.0f} m²</b> <small style='color: #888;'>(약 {area_a/3.3058:,.1f}평)</small>
                         <div style='font-size: 13px; color: #888; margin-top: 8px; line-height: 1.4;'>
-                            • 태양광(PV): {pv_ideal * 10:,.0f} m² <span style='font-size: 11px;'>(10m²/kWp)</span><br>
-                            • 배터리(BESS): {bess_a * 0.1:,.0f} m² <span style='font-size: 11px;'>(0.1m²/kWh)</span>
+                            • PV: {pv_ideal * 10:,.0f}m² | • BESS: {bess_a * 0.1:,.0f}m² | • HESS: 0m²
                         </div>
                     </li>
                 </ul>
