@@ -621,15 +621,25 @@ elif st.session_state.step == 'result':
                 </div>
                 """, unsafe_allow_html=True)
 
+        # Comparison and Highlighting Logic
+        is_b_better = capex_b < capex_a
+        color_win = "#00ff88"  # Greenish glow for the winner
+        
         c1, c2 = st.columns(2)
         
         # Footprint Estimation
         area_a = (pv_ideal * 10) + (bess_a * 0.1)
-        area_b = (pv_hybrid * 10) + (bess_b * 0.1) + (max(h2_stock) * 1.5) + 50 # Including EL/FC base
+        area_b = (pv_hybrid * 10) + (bess_b * 0.1) + (max(h2_stock) * 1.5) + 50
 
         with c1:
+            # Dynamic styling for Scenario A
+            border_a = f"2px solid {color_win}" if not is_b_better else "1px solid #ff4b4b"
+            bg_a = "rgba(0, 255, 136, 0.05)" if not is_b_better else "#1a1a1a"
+            label_a = "🏆 배터리(A)가 유리" if not is_b_better else ""
+            
             st.markdown(f"""
-            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #ff4b4b; min-height: 520px; color: #eee;'>
+            <div style='background-color: {bg_a}; padding: 25px; border-radius: 12px; border: {border_a}; min-height: 550px; color: #eee; position: relative;'>
+                <div style='position: absolute; top: 10px; right: 15px; color: {color_win}; font-weight: bold;'>{label_a}</div>
                 <h4 style='color: #ff4b4b; text-align: center; font-size: 20px; margin-bottom: 15px;'>Scenario A: Giant BESS Only</h4>
                 <div style='text-align: center; font-size: 40px; margin: 10px 0;'>☀️ ➡ 🔋 ➡ 🏠</div>
                 <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>거대 배터리 뱅크를 통해 계절적 불균형을 해소하는 단순 구조입니다.</p>
@@ -640,41 +650,46 @@ elif st.session_state.step == 'result':
                     <li style='margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;'>
                         <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span><br>
                         <b style='color: #fff; font-size: 20px;'>{area_a:,.0f} m²</b> <small style='color: #888;'>(약 {area_a/3.3058:,.1f}평)</small>
-                        <div style='font-size: 11px; color: #888; margin-top: 8px; line-height: 1.4;'>
-                            • PV: {pv_ideal * 10:,.0f}m²(10m²/kWp) | • BESS: {bess_a * 0.1:,.0f}m²(0.1m²/kWh) | • HESS: 0m²(1.5m²/kg)
-                        </div>
                     </li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
 
         with c2:
+            # Dynamic styling for Scenario B
+            border_b = f"2px solid {color_win}" if is_b_better else "1px solid #00d4ff"
+            bg_b = "rgba(0, 255, 136, 0.05)" if is_b_better else "#1a1a1a"
+            label_b = "🚀 사업성 있음 (Feasible)" if is_b_better else ""
+            
             h2_days = (max(h2_stock) * 33.33 * H2_FC_EFF) / total_d
             st.markdown(f"""
-            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; min-height: 520px; color: #eee;'>
+            <div style='background-color: {bg_b}; padding: 25px; border-radius: 12px; border: {border_b}; min-height: 550px; color: #eee; position: relative;'>
+                <div style='position: absolute; top: 10px; right: 15px; color: {color_win}; font-weight: bold;'>{label_b}</div>
                 <h4 style='color: #00d4ff; text-align: center; font-size: 20px; margin-bottom: 15px;'>Scenario B: BESS-HESS Hybrid</h4>
                 <div style='text-align: center; font-size: 40px; margin: 10px 0;'>☀️ ➡ 🔋 + 💧(H2) ➡ 🏠</div>
                 <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>배터리와 수소가 단기/장기 변동을 나누어 담당하여 효율을 극대화합니다.</p>
                 <hr style='border-color: #444;'>
                 <ul style='list-style: none; padding: 0; font-size: 18px;'>
-                    <li style='margin-bottom: 15px;'>
-                        <span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br>
-                        <b style='color: #fff; font-size: 22px;'>{pv_hybrid:,.1f} kWp</b> 
-                        <span style='font-size: 12px; color: #00d4ff;'> (*수소 효율 고려로 인한 PV 증대 반영)</span>
-                    </li>
-                    <li style='margin-bottom: 20px;'><span style='font-size: 17px; color: #aaa;'>에너지 저장 시스템 (BESS + HESS):</span> <br>
-                        <span style='font-size: 16px; color: #ccc;'>▪️ BESS: <b style='color: #fff;'>{bess_b:,.1f} kWh</b> (1.5일분) | ▪️ HESS: <b style='color: #00d4ff;'>{el_kw:,.1f}/{fc_kw:,.1f} kW</b>, <b style='color: #00ff88;'>{max(h2_stock):,.1f} kg</b> <span style='font-size: 15px; color: #00ff88; font-weight: bold;'>({h2_days:.1f}일분)</span></span>
+                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br><b style='color: #fff; font-size: 22px;'>{pv_hybrid:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 20px;'><span style='font-size: 17px; color: #aaa;'>에너지 저장 (Hybrid):</span> <br>
+                        <span style='font-size: 16px; color: #ccc;'>▪️ BESS: <b style='color: #fff;'>{bess_b:,.1f} kWh</b> (1.5일분)</span><br>
+                        <span style='font-size: 16px; color: #ccc;'>▪️ HESS: <b style='color: #00d4ff;'>{el_kw:,.1f}/{fc_kw:,.1f} kW</b>, <b style='color: #00ff88;'>{max(h2_stock):,.1f} kg ({h2_days:.1f}일분)</b></span>
                     </li>
                     <li style='margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;'>
                         <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span><br>
                         <b style='color: #fff; font-size: 20px;'>{area_b:,.0f} m²</b> <small style='color: #888;'>(약 {area_b/3.3058:,.1f}평)</small>
-                        <div style='font-size: 11px; color: #888; margin-top: 8px; line-height: 1.4;'>
-                            • PV: {pv_hybrid * 10:,.0f}m²(10m²/kWp) | • BESS: {bess_b * 0.1:,.0f}m²(0.1m²/kWh) | • HESS: {max(h2_stock) * 1.5 + 50:,.0f}m²(1.5m²/kg)
-                        </div>
                     </li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
+            
+            # Contextual CTA for Scenario B
+            if is_b_better:
+                st.write("") # Spacer
+                if st.button("🚀 사업성 정밀 평가 실행", type="primary", use_container_width=True, key="cta_fs_winner"):
+                    show_fs_modal()
+            else:
+                st.caption("ℹ️ 현재 부하 조건에서는 배터리 전용(A)이 더 경제적입니다.")
 
 
 
