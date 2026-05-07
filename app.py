@@ -110,16 +110,23 @@ if st.session_state.step == 'input':
         total_daily_kwh = hh * avg_kwh
         st.success(f"총 일일 수요: {total_daily_kwh:,.1f} kWh")
         
-        st.write("📈 **에너지 부하 특성 조합 (Load Mix Ratio)**")
+        st.write("📈 **에너지 부하 특성 조합 (Dynamic Load Mix)**")
         
         # Calculate percentages
-        # mix_val 0 (Left) -> 100% Residential, 100 (Right) -> 100% Commercial
         res_pct = 100 - st.session_state.get('mix_slider', 50)
         com_pct = st.session_state.get('mix_slider', 50)
         
-        c_p1, c_p2 = st.columns(2)
-        c_p1.markdown(f"<div style='background: #1a1a1a; padding: 10px; border-radius: 5px; border-left: 5px solid #ff4b4b;'>🏠 주거 중심: <b style='color: #ff4b4b; font-size: 18px;'>{res_pct}%</b></div>", unsafe_allow_html=True)
-        c_p2.markdown(f"<div style='background: #1a1a1a; padding: 10px; border-radius: 5px; border-right: 5px solid #00d4ff; text-align: right;'>🏢 상업 중심: <b style='color: #00d4ff; font-size: 18px;'>{com_pct}%</b></div>", unsafe_allow_html=True)
+        # Proportional Bar UI
+        st.markdown(f"""
+        <div style='display: flex; width: 100%; height: 50px; border-radius: 8px; overflow: hidden; margin-bottom: 10px; border: 1px solid #444;'>
+            <div style='flex: {res_pct if res_pct > 0 else 0.1}; background: linear-gradient(90deg, #801a1a 0%, #ff4b4b 100%); display: flex; align-items: center; padding-left: 15px; transition: flex 0.3s ease;'>
+                <span style='color: white; font-weight: bold; white-space: nowrap;'>🏠 주거 {res_pct}%</span>
+            </div>
+            <div style='flex: {com_pct if com_pct > 0 else 0.1}; background: linear-gradient(90deg, #00d4ff 0%, #0055ff 100%); display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; transition: flex 0.3s ease;'>
+                <span style='color: white; font-weight: bold; white-space: nowrap;'>상업 {com_pct}% 🏢</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         mix_val = st.slider("부하 패턴 혼합 비율", 0, 100, 50, key='mix_slider', label_visibility="collapsed")
         
