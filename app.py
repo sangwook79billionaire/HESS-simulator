@@ -405,13 +405,13 @@ elif st.session_state.step == 'result':
             fig.add_trace(go.Bar(x=net_data.index, y=net_data.values, name="Net Balance", marker_color=colors), secondary_y=False)
             
             # Add Solar Irradiation Line
-            fig.add_trace(go.Scatter(x=ghi_data.index, y=ghi_data.values, name="Avg GHI", line=dict(color="#FFD700", width=3, dash='dot'), mode='lines+markers'), secondary_y=True)
+            fig.add_trace(go.Scatter(x=ghi_data.index, y=ghi_data.values, name="평균 일사량", line=dict(color="#FFD700", width=3, dash='dot'), mode='lines+markers'), secondary_y=True)
             
             fig.update_layout(title=title, template="plotly_dark", height=400, showlegend=True,
                               legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
-            fig.update_yaxes(title_text="Net Balance (kWh)", range=[y_min, y_max], secondary_y=False)
-            fig.update_yaxes(title_text="Avg GHI (kWh/m²/d)", secondary_y=True)
-            fig.update_xaxes(title_text="Month", tickmode='linear', tick0=1, dtick=1)
+            fig.update_yaxes(title_text="순 수지 (Net Balance, kWh)", range=[y_min, y_max], secondary_y=False)
+            fig.update_yaxes(title_text="평균 일사량 (kWh/m²/d)", secondary_y=True)
+            fig.update_xaxes(title_text="월 (Month)", tickmode='linear', tick0=1, dtick=1)
             return fig
 
         with c_net1:
