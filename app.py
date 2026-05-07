@@ -186,19 +186,45 @@ if st.session_state.step == 'input':
             
             mode = st.radio("수요 산정", ["국가별 레퍼런스", "직접 입력"], horizontal=True)
             if mode == "국가별 레퍼런스":
-                # Auto-detect country from session state address
-                addr_parts = st.session_state.country.split(',')
-                detected_country = addr_parts[-1].strip() if addr_parts else ""
-                
+                # Robust country detection helper
+                def find_country_match(addr):
+                    addr_clean = addr.lower()
+                    benchmark_keys = list(COUNTRY_BENCHMARKS.keys())
+                    # Custom mapping for better matching
+                    aliases = {
+                        "uae": "United Arab Emirates",
+                        "emirates": "United Arab Emirates",
+                        "dubai": "United Arab Emirates",
+                        "korea": "South Korea",
+                        "indonesia": "Indonesia (Islands)",
+                        "india": "India",
+                        "usa": "USA (Average)",
+                        "america": "USA (Average)",
+                        "united states": "USA (Average)",
+                        "germany": "Germany",
+                        "vietnam": "Vietnam",
+                        "kenya": "Kenya"
+                    }
+                    # 1. Try aliases first
+                    for alias, full_name in aliases.items():
+                        if alias in addr_clean:
+                            return full_name
+                    # 2. Try direct benchmark keys
+                    for k in benchmark_keys:
+                        if k.lower() in addr_clean:
+                            return k
+                    return "Global Average"
+
+                detected_c = find_country_match(st.session_state.country)
                 benchmark_list = list(COUNTRY_BENCHMARKS.keys())
-                # Find best match index
-                default_idx = 0
-                for i, c in enumerate(benchmark_list):
-                    if c.lower() in detected_country.lower():
-                        default_idx = i
-                        break
                 
-                c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", benchmark_list, index=default_idx)
+                # Update selectbox index
+                try:
+                    default_idx = benchmark_list.index(detected_c)
+                except ValueError:
+                    default_idx = 0
+                
+                c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", benchmark_list, index=default_idx, key="selected_benchmark")
                 avg_kwh = COUNTRY_BENCHMARKS[c_name]['demand']
             else:
                 avg_kwh = st.number_input("가구당 일일 사용량 (kWh)", value=5.0)
@@ -301,8 +327,15 @@ if st.session_state.step == 'input':
                     for idx, loc in enumerate(st.session_state.batch_list):
                         status.text(f"📡 {loc['name']} 분석 중... ({loc['country']})")
                         try:
-                            # Match Country Benchmark
-                            matched_country = next((c for c in COUNTRY_BENCHMARKS.keys() if c.lower() in loc['country'].lower()), "Global Average")
+                            # Robust Country Matching for Batch
+                            def get_batch_benchmark(addr):
+                                addr_c = addr.lower()
+                                aliases = {"uae": "United Arab Emirates", "dubai": "United Arab Emirates", "korea": "South Korea", "indonesia": "Indonesia (Islands)", "usa": "USA (Average)"}
+                                for a, full in aliases.items():
+                                    if a in addr_c: return full
+                                return next((k for k in COUNTRY_BENCHMARKS.keys() if k.lower() in addr_c), "Global Average")
+
+                            matched_country = get_batch_benchmark(loc['country'])
                             avg_kwh = COUNTRY_BENCHMARKS.get(matched_country, {"demand": 3.0})['demand']
                             b_total_d = batch_hh * avg_kwh
                             
