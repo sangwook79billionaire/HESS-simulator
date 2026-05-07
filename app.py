@@ -900,7 +900,16 @@ elif st.session_state.step == 'result':
             c_f1, c_f2, c_f3, c_f4 = st.columns(4)
             p_life = c_f1.number_input("운영 기간 (Project Life)", 10, 50, 30)
             p_disc = c_f2.number_input("할인율 (%)", 0.0, 20.0, 8.0) / 100
-            diesel_ref = c_f3.number_input("에너지 벤치마크 원가 ($/kWh)", 0.0, 1.0, 0.62)
+            
+            # Diesel LCOE Breakdown
+            with st.expander("⛽ 디젤 발전기 벤치마크 원가 산출", expanded=False):
+                d_col1, d_col2 = st.columns(2)
+                fuel_price = d_col1.number_input("디젤 연료 가격 ($/L)", 0.5, 3.0, 1.85, help="격오지 물류비용이 포함된 가격")
+                d_eff = d_col2.number_input("발전 효율 (kWh/L)", 1.0, 5.0, 3.30)
+                d_capex_om = st.slider("CAPEX/O&M 분담 ($/kWh)", 0.05, 0.30, 0.06)
+                diesel_ref = (fuel_price / d_eff) + d_capex_om
+                st.caption(f"계산된 디젤 LCOE: **${diesel_ref:.3f}/kWh**")
+
             use_edcf = c_f4.toggle("🇰🇷 EDCF 차관 활용", value=False, help="40% CAPEX 지원, 15년 거치 25년 상환, 금리 0.01%")
             
             # Calculations
