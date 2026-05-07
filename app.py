@@ -974,49 +974,70 @@ elif st.session_state.step == 'result':
                 use_container_width=True, height=250
             )
             
-            # 5. Cash Flow Chart (Optimized Scale)
+            # 5. Stacked Cash Flow Chart (Granular)
             from plotly.subplots import make_subplots
             fig_cf = make_subplots(specs=[[{"secondary_y": True}]])
             
-            # 1. Yearly Net Flow (Primary Y)
+            # Data components
+            rev_ppa = annual_demand * p_rate
+            rev_sub = p_subsidy
+            rev_oth = p_other
+            
+            # 1. PPA Revenue (Primary Y)
             fig_cf.add_trace(go.Bar(
-                x=df_cf['Year'], y=df_cf['Net Cash Flow ($)'],
-                name='Yearly Net Flow',
-                marker_color=['#ff4b4b' if x < 0 else '#00d4ff' for x in df_cf['Net Cash Flow ($)']]
+                x=df_cf['Year'][1:], y=[rev_ppa]*int(p_life),
+                name='PPA Sales', marker_color='#00d4ff'
             ), secondary_y=False)
             
-            # 2. Cumulative Flow (Secondary Y)
+            # 2. Subsidy (Primary Y)
+            fig_cf.add_trace(go.Bar(
+                x=df_cf['Year'][1:], y=[rev_sub]*int(p_life),
+                name='Subsidy (MTOP)', marker_color='#ffd700'
+            ), secondary_y=False)
+            
+            # 3. Other Rev (Primary Y)
+            fig_cf.add_trace(go.Bar(
+                x=df_cf['Year'][1:], y=[rev_oth]*int(p_life),
+                name='Other Income', marker_color='#00ff88'
+            ), secondary_y=False)
+            
+            # 4. OPEX (Primary Y - Negative)
+            fig_cf.add_trace(go.Bar(
+                x=df_cf['Year'][1:], y=[-p_opex_total]*int(p_life),
+                name='OPEX', marker_color='#555'
+            ), secondary_y=False)
+            
+            # 5. Initial CAPEX (Primary Y - Year 0 only)
+            fig_cf.add_trace(go.Bar(
+                x=[0], y=[-total_capex_fs],
+                name='Initial CAPEX', marker_color='#ff4b4b'
+            ), secondary_y=False)
+            
+            # 6. Cumulative Flow (Secondary Y)
             fig_cf.add_trace(go.Scatter(
                 x=df_cf['Year'], y=df_cf['Cumulative ($)'],
-                name='Cumulative Flow',
-                line=dict(color='#00ff88', width=3),
+                name='Cumulative Balance',
+                line=dict(color='#ffffff', width=3, dash='dot'),
                 mode='lines+markers'
             ), secondary_y=True)
             
-            # Formatting and Capping the Primary Axis for Visibility
-            max_annual_flow = max(net_list[1:]) if len(net_list) > 1 else total_capex_fs
+            # Scale Optimization
+            max_inflow = rev_ppa + rev_sub + rev_oth
             fig_cf.update_yaxes(
-                title_text="Yearly Flow ($)", 
-                range=[-max_annual_flow * 0.5, max_annual_flow * 1.5], # Focus on recurring flow
+                title_text="Annual Flow ($)", 
+                range=[-max_inflow * 1.5, max_inflow * 2.0],
                 secondary_y=False
             )
             fig_cf.update_yaxes(title_text="Cumulative Balance ($)", secondary_y=True)
             
-            # Annotation for the deep CAPEX bar
-            fig_cf.add_annotation(
-                x=0, y=0, text=f"Initial CAPEX: -${total_capex_fs:,.0f}",
-                showarrow=True, arrowhead=2, ay=50, ax=0,
-                font=dict(color="#ff4b4b", size=11),
-                secondary_y=False
-            )
-            
-            fig_cf.add_hline(y=0, line_dash="dash", line_color="white", opacity=0.5)
+            fig_cf.add_hline(y=0, line_dash="solid", line_color="white", opacity=0.3)
             fig_cf.update_layout(
-                title="현금 흐름 프로젝션 (Scale Optimized for Inflow)",
-                template="plotly_dark", height=450,
+                title="상세 현금 흐름 분석 (Stacked Cash Flow Analysis)",
+                barmode='relative', # Stack positive and negative
+                template="plotly_dark", height=500,
                 xaxis_title="Year",
                 margin=dict(l=0, r=0, t=50, b=0),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
             )
             st.plotly_chart(fig_cf, use_container_width=True)
             
