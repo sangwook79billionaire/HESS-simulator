@@ -137,7 +137,19 @@ if st.session_state.step == 'input':
             
             mode = st.radio("수요 산정", ["국가별 레퍼런스", "직접 입력"], horizontal=True)
             if mode == "국가별 레퍼런스":
-                c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", list(COUNTRY_BENCHMARKS.keys()))
+                # Auto-detect country from session state address
+                addr_parts = st.session_state.country.split(',')
+                detected_country = addr_parts[-1].strip() if addr_parts else ""
+                
+                benchmark_list = list(COUNTRY_BENCHMARKS.keys())
+                # Find best match index
+                default_idx = 0
+                for i, c in enumerate(benchmark_list):
+                    if c.lower() in detected_country.lower():
+                        default_idx = i
+                        break
+                
+                c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", benchmark_list, index=default_idx)
                 avg_kwh = COUNTRY_BENCHMARKS[c_name]
             else:
                 avg_kwh = st.number_input("가구당 일일 사용량 (kWh)", value=5.0)
