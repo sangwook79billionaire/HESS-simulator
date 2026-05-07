@@ -88,6 +88,8 @@ if st.session_state.step == 'input':
     col1, col2 = st.columns([1, 1.2])
     with col1:
         st.subheader("📍 1. 위치 및 수요 설정")
+        st.markdown("<small style='color: #888;'>지명을 검색하거나 지도 위의 포인트를 클릭하여 위치를 선정하세요.</small>", unsafe_allow_html=True)
+        
         address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country)
         if st.button("위치 확인"):
             try:
@@ -98,14 +100,31 @@ if st.session_state.step == 'input':
                     st.rerun()
                 else:
                     st.error("검색 결과가 없습니다. 다른 지명을 입력해 주세요.")
-            except Exception as e:
-                st.error("위치 서비스(Nominatim)가 일시적으로 응답하지 않습니다. 잠시 후 다시 시도해 주세요.")
+            except:
+                st.error("위치 서비스가 일시적으로 응답하지 않습니다. 지도에서 직접 클릭해 주세요.")
         
         m = folium.Map(location=[st.session_state.lat, st.session_state.lon], zoom_start=10)
-        folium.Marker([st.session_state.lat, st.session_state.lon]).add_to(m)
-        st_folium(m, height=250, use_container_width=True)
+        folium.Marker([st.session_state.lat, st.session_state.lon], tooltip="선택된 위치").add_to(m)
         
-        st.info(f"선택된 좌표: {st.session_state.lat:.4f}, {st.session_state.lon:.4f}")
+        # Restore Map Click Functionality
+        map_out = st_folium(m, height=300, use_container_width=True, key="location_map")
+        
+        if map_out and map_out.get("last_clicked"):
+            new_lat = map_out["last_clicked"]["lat"]
+            new_lng = map_out["last_clicked"]["lng"]
+            if abs(new_lat - st.session_state.lat) > 0.0001 or abs(new_lng - st.session_state.lon) > 0.0001:
+                st.session_state.lat = new_lat
+                st.session_state.lon = new_lng
+                # Attempt reverse geocode (fail silently)
+                try:
+                    geolocator = Nominatim(user_agent="net_zero_simulator_sangwook_v1")
+                    rev = geolocator.reverse(f"{new_lat}, {new_lng}", timeout=3)
+                    if rev: st.session_state.country = rev.address
+                except:
+                    pass
+                st.rerun()
+        
+        st.info(f"현재 선택 좌표: {st.session_state.lat:.4f}, {st.session_state.lon:.4f}")
         
     with col2:
         st.subheader("⚡ 2. 에너지 부하 패턴 (Mixed Load)")
