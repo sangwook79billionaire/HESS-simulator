@@ -137,6 +137,22 @@ if st.session_state.step == 'input':
     
     with main_tabs[0]:
         col1, col2 = st.columns([1, 1.2])
+        # Robust country detection helper (shared)
+        def find_country_match(addr):
+            addr_clean = addr.lower()
+            benchmark_keys = list(COUNTRY_BENCHMARKS.keys())
+            aliases = {
+                "uae": "United Arab Emirates", "emirates": "United Arab Emirates", "dubai": "United Arab Emirates",
+                "korea": "South Korea", "indonesia": "Indonesia (Islands)", "india": "India",
+                "usa": "USA (Average)", "america": "USA (Average)", "united states": "USA (Average)",
+                "germany": "Germany", "vietnam": "Vietnam", "kenya": "Kenya"
+            }
+            for alias, full_name in aliases.items():
+                if alias in addr_clean: return full_name
+            for k in benchmark_keys:
+                if k.lower() in addr_clean: return k
+            return "Global Average"
+
         with col1:
             st.subheader("📍 1. 위치 및 수요 설정")
             st.markdown("<small style='color: #888;'>지명을 검색하거나 지도 위의 포인트를 클릭하여 위치를 선정하세요.</small>", unsafe_allow_html=True)
@@ -149,6 +165,8 @@ if st.session_state.step == 'input':
                     loc = geolocator.geocode(address, timeout=10)
                     if loc:
                         st.session_state.lat, st.session_state.lon, st.session_state.country = loc.latitude, loc.longitude, loc.address
+                        # Direct state injection for demand matching
+                        st.session_state["selected_benchmark"] = find_country_match(loc.address)
                         st.rerun()
                     else:
                         st.error("검색 결과가 없습니다. 다른 지명을 입력해 주세요.")
@@ -172,7 +190,10 @@ if st.session_state.step == 'input':
                         from geopy.geocoders import ArcGIS
                         geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v1")
                         rev = geolocator.reverse(f"{new_lat}, {new_lng}", timeout=5)
-                        if rev: st.session_state.country = rev.address
+                        if rev: 
+                            st.session_state.country = rev.address
+                            # Direct state injection for demand matching
+                            st.session_state["selected_benchmark"] = find_country_match(rev.address)
                     except:
                         pass
                     st.rerun()
@@ -186,39 +207,10 @@ if st.session_state.step == 'input':
             
             mode = st.radio("수요 산정", ["국가별 레퍼런스", "직접 입력"], horizontal=True)
             if mode == "국가별 레퍼런스":
-                # Robust country detection helper
-                def find_country_match(addr):
-                    addr_clean = addr.lower()
-                    benchmark_keys = list(COUNTRY_BENCHMARKS.keys())
-                    # Custom mapping for better matching
-                    aliases = {
-                        "uae": "United Arab Emirates",
-                        "emirates": "United Arab Emirates",
-                        "dubai": "United Arab Emirates",
-                        "korea": "South Korea",
-                        "indonesia": "Indonesia (Islands)",
-                        "india": "India",
-                        "usa": "USA (Average)",
-                        "america": "USA (Average)",
-                        "united states": "USA (Average)",
-                        "germany": "Germany",
-                        "vietnam": "Vietnam",
-                        "kenya": "Kenya"
-                    }
-                    # 1. Try aliases first
-                    for alias, full_name in aliases.items():
-                        if alias in addr_clean:
-                            return full_name
-                    # 2. Try direct benchmark keys
-                    for k in benchmark_keys:
-                        if k.lower() in addr_clean:
-                            return k
-                    return "Global Average"
-
-                detected_c = find_country_match(st.session_state.country)
                 benchmark_list = list(COUNTRY_BENCHMARKS.keys())
+                detected_c = find_country_match(st.session_state.country)
                 
-                # Update selectbox index
+                # Update index fallback
                 try:
                     default_idx = benchmark_list.index(detected_c)
                 except ValueError:
