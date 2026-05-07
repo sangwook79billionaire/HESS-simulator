@@ -348,9 +348,6 @@ if st.session_state.step == 'input':
 
 # --- UI: Result Step ---
 elif st.session_state.step == 'result':
-
-# --- UI: Result Step ---
-elif st.session_state.step == 'result':
     st.title("📊 시나리오 비교 분석 및 최적화 설계")
     if st.button("⬅ 처음으로"): st.session_state.step = 'input'; st.rerun()
     
