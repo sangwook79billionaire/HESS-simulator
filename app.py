@@ -329,9 +329,8 @@ elif st.session_state.step == 'result':
                 <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>거대 배터리 뱅크를 통해 계절적 불균형을 해소하는 단순 구조입니다.</p>
                 <hr style='border-color: #444;'>
                 <ul style='list-style: none; padding: 0; font-size: 18px;'>
-                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br><b style='color: #fff; font-size: 22px;'>{pv_ideal:,.1f} kWp</b></li>
-                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>BESS 용량:</span> <br><b style='color: #fff; font-size: 22px;'>{bess_a:,.1f} kWh</b></li>
-                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>저장 필요 일수:</span> <br><b style='color: #ff4b4b; font-size: 22px;'>{bess_a/total_d:.1f} 일분</b></li>
+                    <li style='margin-bottom: 25px;'><span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br><b style='color: #fff; font-size: 22px;'>{pv_ideal:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 25px;'><span style='font-size: 17px; color: #aaa;'>BESS 용량:</span> <br><b style='color: #fff; font-size: 22px;'>{bess_a:,.1f} kWh</b> <br><span style='font-size: 18px; color: #ff4b4b; font-weight: bold;'>({bess_a/total_d:.1f}일분 저장)</span></li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
@@ -345,13 +344,13 @@ elif st.session_state.step == 'result':
                 <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>배터리와 수소가 단기/장기 변동을 나누어 담당하여 효율을 극대화합니다.</p>
                 <hr style='border-color: #444;'>
                 <ul style='list-style: none; padding: 0; font-size: 18px;'>
-                    <li style='margin-bottom: 12px;'><span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br><b style='color: #fff; font-size: 22px;'>{pv_hybrid:,.1f} kWp</b></li>
-                    <li style='margin-bottom: 12px;'><span style='font-size: 17px; color: #aaa;'>BESS 용량:</span> <br><b style='color: #fff; font-size: 22px;'>{bess_b:,.1f} kWh</b></li>
-                    <li style='margin-bottom: 12px;'><span style='font-size: 17px; color: #aaa;'>수소 시스템 (HESS):</span>
-                        <ul style='font-size: 16px; color: #ccc; margin-top: 5px; list-style: none; padding-left: 0;'>
-                            <li style='margin-bottom: 5px;'>▪️ EL: <b style='color: #fff; font-size: 20px;'>{el_kw:,.1f} kW</b></li>
-                            <li style='margin-bottom: 5px;'>▪️ FC: <b style='color: #fff; font-size: 20px;'>{fc_kw:,.1f} kW</b></li>
-                            <li style='margin-bottom: 5px;'>▪️ H2: <b style='color: #00ff88; font-size: 20px;'>{max(h2_stock):,.1f} kg</b> <span style='font-size: 14px; color: #00ff88;'>({h2_days:.1f}일분)</span></li>
+                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br><b style='color: #fff; font-size: 22px;'>{pv_hybrid:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>BESS 용량:</span> <br><b style='color: #fff; font-size: 22px;'>{bess_b:,.1f} kWh</b> <span style='font-size: 16px; color: #00d4ff; font-weight: bold;'>(1.5일분)</span></li>
+                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>수소 시스템 (HESS):</span>
+                        <ul style='font-size: 16px; color: #ccc; margin-top: 8px; list-style: none; padding-left: 0;'>
+                            <li style='margin-bottom: 8px;'>▪️ 수전해기(EL): <b style='color: #fff; font-size: 20px;'>{el_kw:,.1f} kW</b></li>
+                            <li style='margin-bottom: 8px;'>▪️ 연료전지 발전기(FC): <b style='color: #fff; font-size: 20px;'>{fc_kw:,.1f} kW</b></li>
+                            <li style='margin-bottom: 8px;'>▪️ 수소 저장 용량(H2): <b style='color: #00ff88; font-size: 20px;'>{max(h2_stock):,.1f} kg</b> <span style='font-size: 14px; color: #00ff88;'>({h2_days:.1f}일분)</span></li>
                         </ul>
                     </li>
                 </ul>
