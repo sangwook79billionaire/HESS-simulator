@@ -389,7 +389,7 @@ elif st.session_state.step == 'result':
         df_h['Month'] = df_h['Timestamp'].dt.month
         monthly_net_a = df_a.groupby(df_a['Timestamp'].dt.month)['Net'].sum()
         monthly_net_b = df_h.groupby('Month').apply(lambda x: (x['Gen_B'] - x['Load_B']).sum())
-        monthly_ghi = df_h.groupby('Month')['ALLSKY_SFC_SW_DWN'].mean()
+        monthly_ghi = df_h.groupby('Month')['Insolation'].mean()
         
         # Unified Y-axis range for comparison
         y_min = min(monthly_net_a.min(), monthly_net_b.min()) * 1.2
