@@ -182,107 +182,172 @@ if st.session_state.step == 'input':
     with main_tabs[1]:
         st.subheader("🚀 지도 기반 대량 배치 시뮬레이션 (Spatial Batch)")
         st.markdown("""
-        지도 위를 클릭하여 분석하고 싶은 지점들을 선택하세요. 
-        선택된 모든 지점에 대해 NASA 기상 데이터를 기반으로 최적화 시뮬레이션을 수행합니다.
+        지도 위를 클릭하여 지점들을 선택하세요. 각 지역의 국가별 전력 수요 통계가 자동으로 반영됩니다.
         """)
         
         if 'batch_list' not in st.session_state:
             st.session_state.batch_list = []
+        if 'batch_results' not in st.session_state:
+            st.session_state.batch_results = []
             
         b_col1, b_col2 = st.columns([2, 1])
         
         with b_col1:
-            # Main Batch Map
             bm = folium.Map(location=[0, 0], zoom_start=2)
             for i, loc in enumerate(st.session_state.batch_list):
-                folium.Marker([loc['lat'], loc['lon']], popup=f"지점 {i+1}: {loc['name']}").add_to(bm)
+                folium.Marker([loc['lat'], loc['lon']], popup=f"{loc['name']} ({loc['country']})").add_to(bm)
             
-            map_batch = st_folium(bm, height=450, use_container_width=True, key="batch_map_selector")
+            map_batch = st_folium(bm, height=450, use_container_width=True, key="batch_map_v2")
             
             if map_batch and map_batch.get("last_clicked"):
-                b_new_lat = map_batch["last_clicked"]["lat"]
-                b_new_lng = map_batch["last_clicked"]["lng"]
-                
-                # Check if this click is already added (simple debounce)
-                is_duplicate = False
-                if st.session_state.batch_list:
-                    last_loc = st.session_state.batch_list[-1]
-                    if abs(last_loc['lat'] - b_new_lat) < 0.0001 and abs(last_loc['lon'] - b_new_lng) < 0.0001:
-                        is_duplicate = True
-                
-                if not is_duplicate:
+                b_lat, b_lng = map_batch["last_clicked"]["lat"], map_batch["last_clicked"]["lng"]
+                if not st.session_state.batch_list or (abs(st.session_state.batch_list[-1]['lat'] - b_lat) > 0.001):
                     try:
                         from geopy.geocoders import ArcGIS
-                        geolocator = ArcGIS(user_agent="net_zero_batch_v1")
-                        rev = geolocator.reverse(f"{b_new_lat}, {b_new_lng}", timeout=3)
-                        b_name = rev.address.split(',')[0] if rev else f"Point_{len(st.session_state.batch_list)+1}"
+                        geolocator = ArcGIS(user_agent="net_zero_batch_v2")
+                        rev = geolocator.reverse(f"{b_lat}, {b_lng}", timeout=3)
+                        # Extract country for benchmark matching
+                        addr_parts = rev.address.split(',')
+                        b_country = addr_parts[-1].strip()
+                        b_name = addr_parts[0].strip()
                     except:
+                        b_country = "Unknown"
                         b_name = f"Point_{len(st.session_state.batch_list)+1}"
                     
                     st.session_state.batch_list.append({
-                        'name': b_name, 'lat': b_new_lat, 'lon': b_new_lng, 
-                        'hh': 500, 'demand': 3.0
+                        'name': b_name, 'lat': b_lat, 'lon': b_lng, 'country': b_country
                     })
                     st.rerun()
 
         with b_col2:
-            st.markdown("### 📍 선택된 지점")
-            if not st.session_state.batch_list:
-                st.info("지도를 클릭하여 지점을 추가하세요.")
-            else:
-                batch_df_view = pd.DataFrame(st.session_state.batch_list)
-                st.dataframe(batch_df_view[['name', 'lat', 'lon']], use_container_width=True, height=300)
+            st.markdown("### ⚙️ 일괄 설정 (Batch Settings)")
+            batch_hh = st.number_input("모든 지점 가구 수 적용", 1, 5000, 500)
+            
+            st.markdown(f"**선택된 지점: {len(st.session_state.batch_list)}개**")
+            if st.session_state.batch_list:
+                batch_df_show = pd.DataFrame(st.session_state.batch_list)
+                st.dataframe(batch_df_show[['name', 'country']], use_container_width=True, height=200)
                 
-                if st.button("🔄 지점 초기화", use_container_width=True):
-                    st.session_state.batch_list = []
-                    st.rerun()
+                c1, c2 = st.columns(2)
+                if c1.button("🔄 리스트 초기화", use_container_width=True):
+                    st.session_state.batch_list = []; st.session_state.batch_results = []; st.rerun()
                 
-                if st.button("🔥 시뮬레이션 시작", type="primary", use_container_width=True):
-                    batch_results = []
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
+                if c2.button("🔥 시뮬레이션 시작", type="primary", use_container_width=True):
+                    st.session_state.batch_results = []
+                    prog = st.progress(0)
+                    status = st.empty()
                     
                     for idx, loc in enumerate(st.session_state.batch_list):
-                        status_text.text(f"📡 분석 중 ({idx+1}/{len(st.session_state.batch_list)}): {loc['name']}...")
+                        status.text(f"📡 {loc['name']} 분석 중... ({loc['country']})")
                         try:
-                            b_total_d = loc['hh'] * loc['demand']
+                            # Match Country Benchmark
+                            matched_country = next((c for c in COUNTRY_BENCHMARKS.keys() if c.lower() in loc['country'].lower()), "Global Average")
+                            avg_kwh = COUNTRY_BENCHMARKS.get(matched_country, 3.0)
+                            b_total_d = batch_hh * avg_kwh
+                            
                             b_df_h = get_nasa_data(loc['lat'], loc['lon'])
                             if b_df_h is not None:
+                                # Logic from single-site simulation
                                 b_df_h['Gen_1kW'] = (b_df_h['Insolation'] * (0.85 * (1 - 0.004 * (b_df_h['Temp'] - 25))) * INV_EFF) / 1000
                                 b_yield = b_df_h['Gen_1kW'].sum()
                                 b_pv_ideal = (b_total_d * 365) / (b_yield * 0.98)
-                                b_bess_a = b_total_d * 15 
-                                b_capex_a = (b_pv_ideal * PRICE_PV) + (b_bess_a * PRICE_BESS) + (loc['hh'] * 1500)
+                                
+                                # Scenario A
+                                b_bess_a = b_total_d * 15 # Simplified
+                                b_capex_a = (b_pv_ideal * PRICE_PV) + (b_bess_a * PRICE_BESS) + (batch_hh * 1500)
+                                
+                                # Scenario B
                                 b_pv_hybrid = b_pv_ideal * 1.3
                                 b_bess_b = b_total_d * 1.5
-                                b_capex_b = (b_pv_hybrid * PRICE_PV) + (b_bess_b * PRICE_BESS) + (b_total_d/6 * PRICE_EL) + (b_total_d/10 * PRICE_FC) + (loc['hh'] * 1500)
-                                batch_results.append({
-                                    'Location': loc['name'], 'Lat': loc['lat'], 'Lon': loc['lon'],
-                                    'PV(kWp)': b_pv_hybrid, 'BESS(kWh)': b_bess_b,
-                                    'CAPEX_A($)': b_capex_a, 'CAPEX_B($)': b_capex_b,
-                                    'Saving(%)': (1 - b_capex_b/b_capex_a) * 100
+                                b_el, b_fc = b_total_d/6, b_total_d/10
+                                
+                                # 2-Pass for trace data
+                                b_soc, b_h2 = 50.0, 0.0
+                                b_soc_trace, b_h2_trace = [], []
+                                for _, r in b_df_h.iterrows():
+                                    gl, ll = r['Gen_1kW'] * b_pv_hybrid, (b_total_d / 24)
+                                    bal = gl - ll
+                                    if bal > 0:
+                                        ch = min(bal, (95-b_soc)*b_bess_b/100)
+                                        b_soc += (ch * np.sqrt(BESS_EFF) / b_bess_b) * 100
+                                        bal -= ch
+                                        if bal > 0 and b_soc >= 90: b_h2 += (min(bal, b_el) * H2_EL_EFF) / 33.33
+                                    else:
+                                        defic = abs(bal)
+                                        if b_soc > 20:
+                                            dis = min(defic, (b_soc-20)*b_bess_b/100/np.sqrt(BESS_EFF))
+                                            b_soc -= (dis * np.sqrt(BESS_EFF) / b_bess_b) * 100
+                                            defic -= dis
+                                        if defic > 0: b_h2 -= (min(defic, b_fc) / H2_FC_EFF) / 33.33
+                                    b_soc_trace.append(b_soc); b_h2_trace.append(b_h2)
+                                
+                                b_h2_max = max(b_h2_trace)
+                                b_capex_b = (b_pv_hybrid * PRICE_PV) + (b_bess_b * PRICE_BESS) + (b_el * PRICE_EL) + (b_fc * PRICE_FC) + (b_h2_max * PRICE_TANK) + (batch_hh * 1500)
+                                
+                                st.session_state.batch_results.append({
+                                    'loc': loc, 'df_h': b_df_h, 'res': {
+                                        'pv_a': b_pv_ideal, 'bess_a': b_bess_a, 'capex_a': b_capex_a,
+                                        'pv_b': b_pv_hybrid, 'bess_b': b_bess_b, 'h2_max': b_h2_max, 'capex_b': b_capex_b,
+                                        'soc_trace': b_soc_trace, 'h2_trace': b_h2_trace, 'country_match': matched_country, 'demand': avg_kwh
+                                    }
                                 })
-                        except: pass
-                        progress_bar.progress((idx + 1) / len(st.session_state.batch_list))
-                    
-                    status_text.text("✅ 완료!")
-                    res_df = pd.DataFrame(batch_results)
-                    st.dataframe(res_df.style.format(precision=1), use_container_width=True)
-                    res_csv = res_df.to_csv(index=False).encode('utf-8-sig')
-                    st.download_button("📥 결과 CSV 다운로드", data=res_csv, file_name="batch_results.csv", mime='text/csv')
+                        except Exception as e:
+                            st.warning(f"Error at {loc['name']}: {e}")
+                        prog.progress((idx + 1) / len(st.session_state.batch_list))
+                    status.text("✅ 시뮬레이션 완료!")
+                    st.rerun()
 
-        st.divider()
-        st.markdown("### 📥 CSV 파일 업로드 (Bulk Import)")
-        uploaded_file = st.file_uploader("Name, Lat, Lon, HH, Demand 형식", type="csv")
-        if uploaded_file:
-            import_df = pd.read_csv(uploaded_file)
-            if st.button("CSV 데이터를 지도에 추가"):
-                for _, row in import_df.iterrows():
-                    st.session_state.batch_list.append({
-                        'name': row['Name'], 'lat': row['Lat'], 'lon': row['Lon'],
-                        'hh': row.get('HH', 500), 'demand': row.get('Demand', 3.0)
-                    })
-                st.rerun()
+        # Batch Results Dashboard
+        if st.session_state.batch_results:
+            st.divider()
+            st.subheader("📊 배치 시뮬레이션 상세 리포트")
+            
+            for b_res in st.session_state.batch_results:
+                loc, res, b_df = b_res['loc'], b_res['res'], b_res['df_h']
+                with st.expander(f"📍 {loc['name']} ({loc['country']}) - 분석 결과 확인", expanded=False):
+                    m1, m2 = st.columns([1, 2])
+                    with m1:
+                        st.markdown(f"**적용 데이터:** {res['country_match']} (가구당 {res['demand']}kWh/d)")
+                        st.markdown(f"""
+                        <div style='background:#111; padding:15px; border-radius:10px; border-left:4px solid #00d4ff;'>
+                            <p style='margin:0; font-size:14px; color:#aaa;'>시스템 구성 (Scenario B)</p>
+                            <ul style='font-size:13px; color:#eee; margin-top:10px;'>
+                                <li>태양광: <b>{res['pv_b']:,.0f} kWp</b></li>
+                                <li>배터리: <b>{res['bess_b']:,.0f} kWh</b></li>
+                                <li>수소탱크: <b>{res['h2_max']:,.1f} kg</b></li>
+                            </ul>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # CAPEX Comparison
+                        saving = (1 - res['capex_b']/res['capex_a']) * 100
+                        st.markdown(f"""
+                        <div style='margin-top:20px; text-align:center;'>
+                            <p style='color:#aaa; font-size:12px;'>투자비 총액 비교 (CAPEX)</p>
+                            <h4 style='color:#ff4b4b; margin:0;'>A: ${res['capex_a']/1e6:.2f}M</h4>
+                            <h4 style='color:#00d4ff; margin:5px 0;'>B: ${res['capex_b']/1e6:.2f}M</h4>
+                            <div style='background:#00d4ff; color:black; font-weight:bold; padding:5px; border-radius:5px; margin-top:10px;'>
+                                {saving:.1f}% 절감 효과
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                    with m2:
+                        # Monthly Net Balance + GHI
+                        b_df['Month'] = b_df['Timestamp'].dt.month
+                        monthly_net = (b_df['Gen_1kW']*res['pv_b'] - (batch_hh*res['demand']/24)).groupby(b_df['Month']).sum()
+                        monthly_ghi = b_df['Insolation'].groupby(b_df['Month']).mean()
+                        st.plotly_chart(create_net_chart(monthly_net, monthly_ghi, f"{loc['name']} 월간 수지 & 일사량"), use_container_width=True)
+                        
+                        # Hybrid Status
+                        fig_b = make_subplots(specs=[[{"secondary_y": True}]])
+                        fig_b.add_trace(go.Scatter(x=b_df['Timestamp'], y=res['soc_trace'], name="SOC(%)", line=dict(color="#00d4ff")), secondary_y=False)
+                        fig_b.add_trace(go.Scatter(x=b_df['Timestamp'], y=res['h2_trace'], name="H2(kg)", fill='tozeroy', line=dict(color="#00ff88")), secondary_y=True)
+                        fig_b.update_layout(height=250, margin=dict(l=0,r=0,t=30,b=0), template="plotly_dark", showlegend=False, title="BESS SOC & 수소 저장량")
+                        st.plotly_chart(fig_b, use_container_width=True)
+
+# --- UI: Result Step ---
+elif st.session_state.step == 'result':
 
 # --- UI: Result Step ---
 elif st.session_state.step == 'result':
