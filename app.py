@@ -130,13 +130,14 @@ if st.session_state.step == 'input':
         com_pct = 100 - res_pct
         
         # Proportional Bar UI: Left (Residential/Red), Right (Commercial/Blue)
+        # Added margin: 0 12px to align with Streamlit slider's track
         st.markdown(f"""
-        <div style='display: flex; width: 100%; height: 50px; border-radius: 8px; overflow: hidden; margin-bottom: 10px; border: 1px solid #444;'>
-            <div style='flex: {res_pct if res_pct > 0 else 0.1}; background: linear-gradient(90deg, #801a1a 0%, #ff4b4b 100%); display: flex; align-items: center; padding-left: 15px; transition: flex 0.3s ease;'>
-                <span style='color: white; font-weight: bold; white-space: nowrap;'>🏠 주거 {res_pct}%</span>
+        <div style='display: flex; width: auto; height: 40px; border-radius: 6px; overflow: hidden; margin: 0 12px 10px 12px; border: 1px solid #444;'>
+            <div style='flex: {res_pct if res_pct > 0 else 0.1}; background: linear-gradient(90deg, #801a1a 0%, #ff4b4b 100%); display: flex; align-items: center; padding-left: 15px; transition: flex 0.1s ease;'>
+                <span style='color: white; font-weight: bold; white-space: nowrap; font-size: 13px;'>🏠 주거 {res_pct}%</span>
             </div>
-            <div style='flex: {com_pct if com_pct > 0 else 0.1}; background: linear-gradient(90deg, #00d4ff 0%, #0055ff 100%); display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; transition: flex 0.3s ease;'>
-                <span style='color: white; font-weight: bold; white-space: nowrap;'>상업 {com_pct}% 🏢</span>
+            <div style='flex: {com_pct if com_pct > 0 else 0.1}; background: linear-gradient(90deg, #00d4ff 0%, #0055ff 100%); display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; transition: flex 0.1s ease;'>
+                <span style='color: white; font-weight: bold; white-space: nowrap; font-size: 13px;'>상업 {com_pct}% 🏢</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
