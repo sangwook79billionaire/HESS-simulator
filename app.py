@@ -125,26 +125,26 @@ if st.session_state.step == 'input':
         
         st.write("📈 **에너지 부하 특성 조합 (Dynamic Load Mix)**")
         
-        # Calculate percentages
-        res_pct = 100 - st.session_state.get('mix_slider', 50)
-        com_pct = st.session_state.get('mix_slider', 50)
+        # Calculate percentages: 0 = 100% Commercial, 100 = 100% Residential
+        res_pct = st.session_state.get('mix_slider', 50)
+        com_pct = 100 - res_pct
         
-        # Proportional Bar UI
+        # Proportional Bar UI: Left (Commercial/Blue), Right (Residential/Red)
         st.markdown(f"""
         <div style='display: flex; width: 100%; height: 50px; border-radius: 8px; overflow: hidden; margin-bottom: 10px; border: 1px solid #444;'>
-            <div style='flex: {res_pct if res_pct > 0 else 0.1}; background: linear-gradient(90deg, #801a1a 0%, #ff4b4b 100%); display: flex; align-items: center; padding-left: 15px; transition: flex 0.3s ease;'>
-                <span style='color: white; font-weight: bold; white-space: nowrap;'>🏠 주거 {res_pct}%</span>
+            <div style='flex: {com_pct if com_pct > 0 else 0.1}; background: linear-gradient(90deg, #0055ff 0%, #00d4ff 100%); display: flex; align-items: center; padding-left: 15px; transition: flex 0.3s ease;'>
+                <span style='color: white; font-weight: bold; white-space: nowrap;'>🏢 상업 {com_pct}%</span>
             </div>
-            <div style='flex: {com_pct if com_pct > 0 else 0.1}; background: linear-gradient(90deg, #00d4ff 0%, #0055ff 100%); display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; transition: flex 0.3s ease;'>
-                <span style='color: white; font-weight: bold; white-space: nowrap;'>상업 {com_pct}% 🏢</span>
+            <div style='flex: {res_pct if res_pct > 0 else 0.1}; background: linear-gradient(90deg, #ff4b4b 0%, #801a1a 100%); display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; transition: flex 0.3s ease;'>
+                <span style='color: white; font-weight: bold; white-space: nowrap;'>주거 {res_pct}% 🏠</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
         
         mix_val = st.slider("부하 패턴 혼합 비율", 0, 100, 50, key='mix_slider', label_visibility="collapsed")
         
-        ratio_b = mix_val / 100.0  # Commercial ratio
-        ratio_a = 1.0 - ratio_b    # Residential ratio
+        ratio_a = mix_val / 100.0  # Residential ratio (increases to the right)
+        ratio_b = 1.0 - ratio_a    # Commercial ratio
         
         combined_pattern = [(PATTERN_A[i]*ratio_a + PATTERN_B[i]*ratio_b) for i in range(24)]
         norm_factor = sum(combined_pattern) / 24
