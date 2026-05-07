@@ -630,9 +630,8 @@ elif st.session_state.step == 'result':
                         <b style='color: #fff; font-size: 22px;'>{pv_hybrid:,.1f} kWp</b> 
                         <span style='font-size: 12px; color: #00d4ff;'> (*수소 효율 고려로 인한 PV 증대 반영)</span>
                     </li>
-                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>BESS 용량:</span> <br><b style='color: #fff; font-size: 22px;'>{bess_b:,.1f} kWh</b> <span style='font-size: 16px; color: #00d4ff; font-weight: bold;'>(1.5일분)</span></li>
-                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>수소 시스템 (HESS):</span><br>
-                        <span style='font-size: 15px; color: #ccc;'>▪️ EL/FC: <b style='color: #fff;'>{el_kw:,.1f}/{fc_kw:,.1f} kW</b> | ▪️ H2: <b style='color: #00ff88;'>{max(h2_stock):,.1f} kg</b> <span style='font-size: 12px; color: #00ff88;'>({h2_days:.1f}일분)</span></span>
+                    <li style='margin-bottom: 20px;'><span style='font-size: 17px; color: #aaa;'>에너지 저장 시스템 (BESS + HESS):</span> <br>
+                        <span style='font-size: 16px; color: #ccc;'>▪️ BESS: <b style='color: #fff;'>{bess_b:,.1f} kWh</b> (1.5일분) | ▪️ HESS: <b style='color: #00d4ff;'>{el_kw:,.1f}/{fc_kw:,.1f} kW</b>, <b style='color: #00ff88;'>{max(h2_stock):,.1f} kg</b></span>
                     </li>
                     <li style='margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;'>
                         <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span><br>
