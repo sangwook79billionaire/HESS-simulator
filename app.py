@@ -788,9 +788,10 @@ elif st.session_state.step == 'result':
             title="투자 비용 구성 항목 비교 (Cost Breakdown)", 
             barmode='stack', 
             template="plotly_dark", 
-            height=600, 
-            margin=dict(t=120), 
-            yaxis=dict(range=[0, max(total_a, total_b)*1.5])
+            height=620, 
+            margin=dict(t=120, b=100), 
+            yaxis=dict(range=[0, max(total_a, total_b)*1.5]),
+            legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5)
         )
         st.plotly_chart(fig_break, use_container_width=True)
 
