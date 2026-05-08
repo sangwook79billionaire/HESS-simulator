@@ -1043,18 +1043,22 @@ elif st.session_state.step == 'result':
             be_c1, be_c2 = st.columns(2)
             with be_c1:
                 st.markdown(f"""
-                <div style='background: rgba(0, 212, 255, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed #00d4ff;'>
-                    <div style='color: #00d4ff; font-weight: bold; font-size: 14px;'>1. 필요한 최소 전기 요금</div>
-                    <div style='color: #fff; font-size: 22px; font-weight: bold; margin: 5px 0;'>${req_tariff:.3f} <small style='font-size: 13px; font-weight: 400;'>/kWh</small></div>
-                    <div style='color: #888; font-size: 12px;'>현행 요금(${p_rate:.2f}) 대비 {'상향' if req_tariff > p_rate else '하향'} 필요</div>
+                <div style='background: #0f172a; padding: 20px; border-radius: 12px; border: 1px solid #00d4ff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
+                    <div style='color: #38bdf8; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;'>1. 필요한 최소 전기 요금</div>
+                    <div style='color: #ffffff; font-size: 28px; font-weight: 800; margin: 10px 0;'>${req_tariff:.3f} <small style='font-size: 14px; font-weight: 400; color: #94a3b8;'>/kWh</small></div>
+                    <div style='background: rgba(56, 189, 248, 0.1); color: #38bdf8; padding: 4px 8px; border-radius: 4px; font-size: 12px; display: inline-block;'>
+                        현행(${p_rate:.2f}) 대비 {'📈 상향' if req_tariff > p_rate else '📉 하향'} 필요
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
             with be_c2:
                 st.markdown(f"""
-                <div style='background: rgba(0, 255, 136, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed #00ff88;'>
-                    <div style='color: #00ff88; font-weight: bold; font-size: 14px;'>2. 필요한 연간 보조금</div>
-                    <div style='color: #fff; font-size: 22px; font-weight: bold; margin: 5px 0;'>${req_subsidy/1000:,.1f}k <small style='font-size: 13px; font-weight: 400;'>/year</small></div>
-                    <div style='color: #888; font-size: 12px;'>현행 보조금(${p_subsidy/1000:,.0f}k) 대비 {'추가' if req_subsidy > p_subsidy else '절감'} 가능</div>
+                <div style='background: #064e3b; padding: 20px; border-radius: 12px; border: 1px solid #10b981; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
+                    <div style='color: #34d399; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;'>2. 필요한 연간 보조금</div>
+                    <div style='color: #ffffff; font-size: 28px; font-weight: 800; margin: 10px 0;'>${req_subsidy/1000:,.1f}k <small style='font-size: 14px; font-weight: 400; color: #a7f3d0;'>/year</small></div>
+                    <div style='background: rgba(16, 185, 129, 0.1); color: #34d399; padding: 4px 8px; border-radius: 4px; font-size: 12px; display: inline-block;'>
+                        현행(${p_subsidy/1000:,.0f}k) 대비 {'⚠️ 추가' if req_subsidy > p_subsidy else '✅ 절감'} 가능
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
             
