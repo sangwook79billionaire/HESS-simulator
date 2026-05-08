@@ -172,8 +172,11 @@ if st.session_state.step == 'input':
             st.subheader("📍 1. 위치 및 수요 설정")
             st.markdown("<small style='color: #888;'>지명을 검색하거나 지도 위의 포인트를 클릭하여 위치를 선정하세요.</small>", unsafe_allow_html=True)
             
-            address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country)
-            if st.button("위치 확인"):
+            with st.form("search_form"):
+                address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country)
+                submitted = st.form_submit_button("위치 확인", use_container_width=True)
+                
+            if submitted:
                 try:
                     from geopy.geocoders import ArcGIS
                     geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v1")
