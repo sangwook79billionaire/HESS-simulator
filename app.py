@@ -146,32 +146,32 @@ if st.session_state.step == 'input':
             words = addr_clean.split()
             benchmark_keys = list(COUNTRY_BENCHMARKS.keys())
             
-            # 1. Comprehensive Alias & ISO Code Check (Multilingual Support)
+            # 1. Comprehensive Alias & ISO Code Check (Multilingual & City-Level)
             aliases = {
                 # English & Codes
                 "uae": "United Arab Emirates", "emirates": "United Arab Emirates", "dubai": "United Arab Emirates",
-                "korea": "South Korea", "kor": "South Korea", "kr": "South Korea",
-                "indonesia": "Indonesia", "idn": "Indonesia", "id": "Indonesia",
-                "india": "India", "ind": "India",
-                "usa": "United States", "us": "United States", "america": "United States",
-                "germany": "Germany", "deu": "Germany", "de": "Germany",
-                "vietnam": "Vietnam", "vnm": "Vietnam", "vn": "Vietnam",
-                "kenya": "Kenya", "ken": "Kenya", "ke": "Kenya",
-                "philippines": "Philippines", "phl": "Philippines", "ph": "Philippines",
-                "cambodia": "Cambodia", "khm": "Cambodia", "kh": "Cambodia",
-                "thailand": "Thailand", "tha": "Thailand", "th": "Thailand",
-                "malaysia": "Malaysia", "mys": "Malaysia", "my": "Malaysia",
+                "korea": "South Korea", "kor": "South Korea", "kr": "South Korea", "seoul": "South Korea",
+                "indonesia": "Indonesia", "idn": "Indonesia", "id": "Indonesia", "jakarta": "Indonesia", "bali": "Indonesia",
+                "india": "India", "ind": "India", "mumbai": "India", "delhi": "India",
+                "usa": "United States", "us": "United States", "america": "United States", "ny": "United States",
+                "germany": "Germany", "deu": "Germany", "de": "Germany", "berlin": "Germany",
+                "vietnam": "Vietnam", "vnm": "Vietnam", "vn": "Vietnam", "hanoi": "Vietnam",
+                "kenya": "Kenya", "nairobi": "Kenya",
+                "philippines": "Philippines", "phl": "Philippines", "ph": "Philippines", "manila": "Philippines",
+                "cambodia": "Cambodia", "phnom penh": "Cambodia",
+                "thailand": "Thailand", "bangkok": "Thailand",
+                "malaysia": "Malaysia", "kuala lumpur": "Malaysia",
                 
-                # Korean Support
-                "대한민국": "South Korea", "한국": "South Korea", "남한": "South Korea",
-                "인도네시아": "Indonesia", "인니": "Indonesia",
-                "베트남": "Vietnam", "월남": "Vietnam",
-                "필리핀": "Philippines",
-                "태국": "Thailand", "타이": "Thailand",
-                "말레이시아": "Malaysia",
-                "캄보디아": "Cambodia",
-                "미국": "United States", "미합중국": "United States",
-                "독일": "Germany", "인도": "India"
+                # Korean Support (Countries & Cities)
+                "대한민국": "South Korea", "한국": "South Korea", "남한": "South Korea", "서울": "South Korea", "부산": "South Korea", "인천": "South Korea",
+                "인도네시아": "Indonesia", "인니": "Indonesia", "자카르타": "Indonesia", "발리": "Indonesia",
+                "베트남": "Vietnam", "월남": "Vietnam", "하노이": "Vietnam", "호치민": "Vietnam",
+                "필리핀": "Philippines", "마닐라": "Philippines",
+                "태국": "Thailand", "타이": "Thailand", "방콕": "Thailand",
+                "말레이시아": "Malaysia", "쿠알라룸푸르": "Malaysia",
+                "캄보디아": "Cambodia", "프놈펜": "Cambodia",
+                "미국": "United States", "뉴욕": "United States",
+                "독일": "Germany", "베를린": "Germany", "인도": "India"
             }
             
             # Check for direct alias/code match in any word
