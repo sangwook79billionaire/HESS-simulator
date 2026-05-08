@@ -148,19 +148,21 @@ if st.session_state.step == 'input':
             
             # 1. Comprehensive Alias & ISO Code Check (Multilingual & City-Level)
             aliases = {
-                # English & Codes
+                # ISO 3-Letter Codes & English
+                "kor": "South Korea", "idn": "Indonesia", "vnm": "Vietnam", "phl": "Philippines",
+                "tha": "Thailand", "mys": "Malaysia", "usa": "United States", "can": "Canada",
+                "deu": "Germany", "ind": "India", "bgd": "Bangladesh", "jpn": "Japan",
+                "arg": "Argentina", "bra": "Brazil", "khm": "Cambodia", "eth": "Ethiopia",
+                "ken": "Kenya", "zaf": "South Africa", "gbr": "United Kingdom",
+                
+                # Extended Aliases
                 "uae": "United Arab Emirates", "emirates": "United Arab Emirates", "dubai": "United Arab Emirates",
-                "korea": "South Korea", "kor": "South Korea", "kr": "South Korea", "seoul": "South Korea",
-                "indonesia": "Indonesia", "idn": "Indonesia", "id": "Indonesia", "jakarta": "Indonesia", "bali": "Indonesia",
-                "india": "India", "ind": "India", "mumbai": "India", "delhi": "India",
-                "usa": "United States", "us": "United States", "america": "United States", "ny": "United States",
-                "germany": "Germany", "deu": "Germany", "de": "Germany", "berlin": "Germany",
-                "vietnam": "Vietnam", "vnm": "Vietnam", "vn": "Vietnam", "hanoi": "Vietnam",
-                "kenya": "Kenya", "nairobi": "Kenya",
-                "philippines": "Philippines", "phl": "Philippines", "ph": "Philippines", "manila": "Philippines",
-                "cambodia": "Cambodia", "phnom penh": "Cambodia",
-                "thailand": "Thailand", "bangkok": "Thailand",
-                "malaysia": "Malaysia", "kuala lumpur": "Malaysia",
+                "korea": "South Korea", "kr": "South Korea", "seoul": "South Korea",
+                "id": "Indonesia", "jakarta": "Indonesia", "bali": "Indonesia",
+                "america": "United States", "ny": "United States",
+                "berlin": "Germany", "de": "Germany",
+                "hanoi": "Vietnam", "vn": "Vietnam",
+                "manila": "Philippines", "ph": "Philippines",
                 
                 # Korean Support (Countries & Cities)
                 "대한민국": "South Korea", "한국": "South Korea", "남한": "South Korea", "서울": "South Korea", "부산": "South Korea", "인천": "South Korea",
@@ -229,7 +231,10 @@ if st.session_state.step == 'input':
                         from geopy.geocoders import ArcGIS
                         geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v2")
                         rev = geolocator.reverse(f"{new_lat}, {new_lng}", timeout=5)
-                        if rev: st.session_state.country = rev.address
+                        if rev: 
+                            # Extract raw country code for absolute reliability
+                            c_code = rev.raw.get('address', {}).get('CountryCode', '')
+                            st.session_state.country = f"{rev.address} ({c_code})" if c_code else rev.address
                     except: pass
                     st.session_state.loc_confirmed = False
                     st.rerun()
