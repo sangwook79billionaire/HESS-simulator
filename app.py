@@ -1024,6 +1024,40 @@ elif st.session_state.step == 'result':
                 "Cumulative ($)": cum_flow
             })
             
+            # 💼 사업성 확보 가이드 (Break-even Analysis)
+            st.markdown("#### 💼 사업성 확보 가이드 (Break-even Analysis)")
+            st.caption("NPV를 0(손익분기점)으로 만들기 위해 필요한 최소 조건입니다.")
+            
+            # Calculate PV of all outflows (Costs + Loan Repayments - Initial Loan Inflow)
+            pv_factor = [(1 / (1 + p_disc) ** y) for y in years]
+            pv_costs = sum((capex_out[y] + opex_base[y] + replace_out[y] - edcf_flow[y]) * pv_factor[y] for y in years)
+            pv_other = sum(p_other * pv_factor[y] for y in years[1:])
+            pv_ifa = sum(pv_factor[y] for y in years[1:])
+            
+            # Case 1: Required Tariff (assuming current subsidy and other revenue)
+            req_tariff = (pv_costs - pv_other - (p_subsidy * pv_ifa)) / (annual_demand * pv_ifa)
+            
+            # Case 2: Required Subsidy (assuming current tariff and other revenue)
+            req_subsidy = (pv_costs - pv_other - (p_rate * annual_demand * pv_ifa)) / pv_ifa
+            
+            be_c1, be_c2 = st.columns(2)
+            with be_c1:
+                st.markdown(f"""
+                <div style='background: rgba(0, 212, 255, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed #00d4ff;'>
+                    <div style='color: #00d4ff; font-weight: bold; font-size: 14px;'>1. 필요한 최소 전기 요금</div>
+                    <div style='color: #fff; font-size: 22px; font-weight: bold; margin: 5px 0;'>${req_tariff:.3f} <small style='font-size: 13px; font-weight: 400;'>/kWh</small></div>
+                    <div style='color: #888; font-size: 12px;'>현행 요금(${p_rate:.2f}) 대비 {'상향' if req_tariff > p_rate else '하향'} 필요</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with be_c2:
+                st.markdown(f"""
+                <div style='background: rgba(0, 255, 136, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed #00ff88;'>
+                    <div style='color: #00ff88; font-weight: bold; font-size: 14px;'>2. 필요한 연간 보조금</div>
+                    <div style='color: #fff; font-size: 22px; font-weight: bold; margin: 5px 0;'>${req_subsidy/1000:,.1f}k <small style='font-size: 13px; font-weight: 400;'>/year</small></div>
+                    <div style='color: #888; font-size: 12px;'>현행 보조금(${p_subsidy/1000:,.0f}k) 대비 {'추가' if req_subsidy > p_subsidy else '절감'} 가능</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
             st.divider()
             st.markdown("#### 📊 전략적 사업성 분석 결과 (Strategic Result)")
             
