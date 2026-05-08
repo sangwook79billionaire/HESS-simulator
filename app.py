@@ -273,6 +273,7 @@ if st.session_state.step == 'input':
                 except ValueError: default_idx = benchmark_list.index("Global Average")
                 
                 c_name = d_c2.selectbox("국가 레퍼런스 데이터 (IEA/WB)", benchmark_list, index=default_idx)
+                avg_kwh = COUNTRY_BENCHMARKS[c_name]['demand']
                 total_daily_kwh = hh * avg_kwh
                 st.markdown(f"""
                 <div style='background: #1a1f2b; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #00d4ff; margin-bottom: 20px;'>
