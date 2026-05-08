@@ -237,11 +237,14 @@ if st.session_state.step == 'input':
             if mode == "국가별 레퍼런스":
                 benchmark_list = list(COUNTRY_BENCHMARKS.keys())
                 
-                # Use key-based session state for forced synchronization
-                if "country_benchmark" not in st.session_state:
-                    st.session_state.country_benchmark = find_country_match(st.session_state.country)
+                # Dynamic index calculation based on current geocoded country
+                detected_c = find_country_match(st.session_state.country)
+                try:
+                    default_idx = benchmark_list.index(detected_c)
+                except ValueError:
+                    default_idx = benchmark_list.index("Global Average")
                 
-                c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", benchmark_list, key="country_benchmark")
+                c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", benchmark_list, index=default_idx)
                 avg_kwh = COUNTRY_BENCHMARKS[c_name]['demand']
             else:
                 avg_kwh = st.number_input("가구당 일일 사용량 (kWh)", value=5.0)
