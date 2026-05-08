@@ -904,9 +904,9 @@ elif st.session_state.step == 'result':
             edited_capex = st.data_editor(
                 df_capex, use_container_width=True, num_rows="fixed", key="capex_editor_v5",
                 column_config={
-                    "단가 ($)": st.column_config.NumberColumn(format="$%d"),
-                    "수량": st.column_config.NumberColumn(format="%d"),
-                    "총 금액 ($)": st.column_config.NumberColumn(format="$%d", disabled=True)
+                    "단가 ($)": st.column_config.NumberColumn(format="$%,d"),
+                    "수량": st.column_config.NumberColumn(format="%,d"),
+                    "총 금액 ($)": st.column_config.NumberColumn(format="$%,d", disabled=True)
                 }
             )
             total_capex_fs = int(edited_capex["총 금액 ($)"].sum())
@@ -930,7 +930,7 @@ elif st.session_state.step == 'result':
             edited_rev = st.data_editor(
                 df_rev_init, use_container_width=True, num_rows="fixed", key="rev_editor_v5",
                 column_config={
-                    "금액 ($)": st.column_config.NumberColumn(format="$%,.0f")
+                    "금액 ($)": st.column_config.NumberColumn(format="$%,.2f")
                 }
             )
             rev_vals = edited_rev["금액 ($)"].values
