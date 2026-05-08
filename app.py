@@ -193,112 +193,82 @@ if st.session_state.step == 'input':
             
             return "Global Average"
 
+        # Sequential UX State Initialization
+        if 'loc_confirmed' not in st.session_state: st.session_state.loc_confirmed = False
+
         with col1:
-            st.subheader("📍 1. 위치 및 수요 설정")
-            st.markdown("<small style='color: #888;'>지명을 검색하거나 지도 위의 포인트를 클릭하여 위치를 선정하세요.</small>", unsafe_allow_html=True)
+            st.subheader("📍 Phase 1: 위치 선정 및 데이터 연동")
+            st.markdown("<small style='color: #888;'>지명을 검색하거나 지도에서 핀을 이동하여 분석 지점을 확정하세요.</small>", unsafe_allow_html=True)
             
             with st.form("search_form"):
-                address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country)
-                submitted = st.form_submit_button("위치 확인", use_container_width=True)
+                address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country, placeholder="e.g. Seoul, Bali, Nairobi...")
+                submitted = st.form_submit_button("위치 찾기", use_container_width=True)
                 
             if submitted:
                 try:
                     from geopy.geocoders import ArcGIS
-                    geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v1")
+                    geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v2")
                     loc = geolocator.geocode(address, timeout=10)
                     if loc:
                         st.session_state.lat, st.session_state.lon, st.session_state.country = loc.latitude, loc.longitude, loc.address
-                        # Force sync benchmark state
-                        st.session_state.country_benchmark = find_country_match(loc.address)
+                        st.session_state.loc_confirmed = False # Reset confirmation on new search
                         st.rerun()
-                    else:
-                        st.error("검색 결과가 없습니다. 다른 지명을 입력해 주세요.")
-                except:
-                    st.error("위치 서비스(ArcGIS)가 일시적으로 응답하지 않습니다. 지도에서 직접 클릭해 주세요.")
+                    else: st.error("검색 결과가 없습니다.")
+                except: st.error("위치 서비스 응답 지연. 지도에서 직접 클릭해 주세요.")
             
             m = folium.Map(location=[st.session_state.lat, st.session_state.lon], zoom_start=10)
-            folium.Marker([st.session_state.lat, st.session_state.lon], tooltip="선택된 위치").add_to(m)
+            folium.Marker([st.session_state.lat, st.session_state.lon], draggable=True, tooltip="이 핀을 움직여 위치를 조정할 수 있습니다.").add_to(m)
             
-            map_out = st_folium(m, height=300, use_container_width=True, key="location_map")
+            map_out = st_folium(m, height=400, use_container_width=True, key="location_map_v2")
             
             if map_out and map_out.get("last_clicked"):
-                new_lat = map_out["last_clicked"]["lat"]
-                new_lng = map_out["last_clicked"]["lng"]
-                if abs(new_lat - st.session_state.lat) > 0.0001 or abs(new_lng - st.session_state.lon) > 0.0001:
-                    st.session_state.lat = new_lat
-                    st.session_state.lon = new_lng
+                new_lat, new_lng = map_out["last_clicked"]["lat"], map_out["last_clicked"]["lng"]
+                if abs(new_lat - st.session_state.lat) > 0.0001:
+                    st.session_state.lat, st.session_state.lon = new_lat, new_lng
                     try:
                         from geopy.geocoders import ArcGIS
-                        geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v1")
+                        geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v2")
                         rev = geolocator.reverse(f"{new_lat}, {new_lng}", timeout=5)
-                        if rev: 
-                            st.session_state.country = rev.address
-                            # Force sync benchmark state
-                            st.session_state.country_benchmark = find_country_match(rev.address)
-                    except:
-                        pass
+                        if rev: st.session_state.country = rev.address
+                    except: pass
+                    st.session_state.loc_confirmed = False
                     st.rerun()
             
-            st.info(f"현재 선택 좌표: {st.session_state.lat:.4f}, {st.session_state.lon:.4f}")
-            
         with col2:
-            st.subheader("⚡ 2. 에너지 부하 패턴 (Mixed Load)")
-            hh = st.number_input("가구 수 (Households)", value=500, min_value=1)
-            st.session_state.hh = hh
-            
-            mode = st.radio("수요 산정", ["국가별 레퍼런스", "직접 입력"], horizontal=True)
-            if mode == "국가별 레퍼런스":
-                benchmark_list = list(COUNTRY_BENCHMARKS.keys())
+            if not st.session_state.loc_confirmed:
+                st.subheader("🏁 위치 및 국가 정보 확정")
+                st.info("선정된 위치를 기반으로 전력 수요 벤치마크 데이터를 연동합니다.")
                 
-                # Dynamic index calculation based on current geocoded country
-                detected_c = find_country_match(st.session_state.country)
-                try:
-                    default_idx = benchmark_list.index(detected_c)
-                except ValueError:
-                    default_idx = benchmark_list.index("Global Average")
+                st.markdown(f"""
+                <div style='background: #111; padding: 20px; border-radius: 10px; border-left: 5px solid #ffd700; margin-bottom: 20px;'>
+                    <div style='color: #888; font-size: 13px;'>검색된 주소 / 지명</div>
+                    <div style='color: #fff; font-size: 16px; font-weight: bold; margin-bottom: 15px;'>{st.session_state.country if st.session_state.country else "미지정 (지도를 클릭하세요)"}</div>
+                    <div style='display: flex; gap: 20px;'>
+                        <div><div style='color: #888; font-size: 11px;'>위도</div><div style='color: #00d4ff;'>{st.session_state.lat:.4f}</div></div>
+                        <div><div style='color: #888; font-size: 11px;'>경도</div><div style='color: #00d4ff;'>{st.session_state.lon:.4f}</div></div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", benchmark_list, index=default_idx)
-                avg_kwh = COUNTRY_BENCHMARKS[c_name]['demand']
+                if st.button("📍 이 위치로 확정 및 국가 데이터 연동", type="primary", use_container_width=True):
+                    st.session_state.loc_confirmed = True
+                    st.rerun()
             else:
-                avg_kwh = st.number_input("가구당 일일 사용량 (kWh)", value=5.0)
-            
-            total_daily_kwh = hh * avg_kwh
-            st.success(f"총 일일 수요: {total_daily_kwh:,.1f} kWh")
-            
-            st.write("📈 **에너지 부하 특성 조합 (Dynamic Load Mix)**")
-            
-            res_pct = st.session_state.get('mix_slider', 50)
-            com_pct = 100 - res_pct
-            st.markdown(f"""
-            <div style='display: flex; width: auto; height: 40px; border-radius: 6px; overflow: hidden; margin: 0 12px 10px 12px; border: 1px solid #444;'>
-                <div style='flex: {res_pct if res_pct > 0 else 0.1}; background: linear-gradient(90deg, #801a1a 0%, #ff4b4b 100%); display: flex; align-items: center; padding-left: 15px; transition: flex 0.1s ease;'>
-                    <span style='color: white; font-weight: bold; white-space: nowrap; font-size: 13px;'>🏠 주거 {res_pct}%</span>
-                </div>
-                <div style='flex: {com_pct if com_pct > 0 else 0.1}; background: linear-gradient(90deg, #00d4ff 0%, #0055ff 100%); display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; transition: flex 0.1s ease;'>
-                    <span style='color: white; font-weight: bold; white-space: nowrap; font-size: 13px;'>상업 {com_pct}% 🏢</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            mix_val = st.slider("부하 패턴 혼합 비율", 0, 100, 50, key='mix_slider', label_visibility="collapsed")
-            
-            ratio_a = mix_val / 100.0
-            ratio_b = 1.0 - ratio_a
-            
-            combined_pattern = [(PATTERN_A[i]*ratio_a + PATTERN_B[i]*ratio_b) for i in range(24)]
-            norm_factor = sum(combined_pattern) / 24
-            final_pattern = [p / norm_factor for p in combined_pattern]
-            
-            fig_load = px.line(y=final_pattern, x=list(range(24)), title="24시간 Hourly Load Profile (Normalized)")
-            fig_load.update_layout(height=200, margin=dict(l=0,r=0,t=30,b=0), template="plotly_dark")
-            st.plotly_chart(fig_load, use_container_width=True)
-
-        if st.button("🚀 최적화 시뮬레이션 시작", use_container_width=True, type="primary"):
-            with st.status("🚀 시뮬레이션 엔진 가동 중...", expanded=True) as status:
-                st.write("📍 위치 및 기상 좌표 검증 중...")
-                st.session_state.total_d = total_daily_kwh
-                st.session_state.load_profile = final_pattern
+                st.subheader("⚡ Phase 2: 에너지 수요 및 패턴 설계")
+                st.success("✅ 위치 확정 완료: 국가별 통계 데이터가 활성화되었습니다.")
                 
+                # Demand Configuration
+                d_c1, d_c2 = st.columns(2)
+                hh = d_c1.number_input("가구 수 (Households)", value=500, min_value=1)
+                st.session_state.hh = hh
+                
+                benchmark_list = list(COUNTRY_BENCHMARKS.keys())
+                detected_c = find_country_match(st.session_state.country)
+                try: default_idx = benchmark_list.index(detected_c)
+                except ValueError: default_idx = benchmark_list.index("Global Average")
+                
+                c_name = d_c2.selectbox("국가 레퍼런스 데이터 (IEA/WB)", benchmark_list, index=default_idx)
+                avg_kwh = COUNTRY_BENCHMARKS[c_name]['demand']
                 import time
                 time.sleep(0.5)
                 st.write("📊 에너지 수요 프로파일 생성 완료...")
