@@ -88,9 +88,10 @@ INV_EFF = 0.95   # Inverter/System
 
 # --- Session State ---
 if 'step' not in st.session_state: st.session_state.step = 'input'
-if 'lat' not in st.session_state: st.session_state.lat = -8.4095
-if 'lon' not in st.session_state: st.session_state.lon = 115.1889
-if 'country' not in st.session_state: st.session_state.country = 'Bali, Indonesia'
+if 'lat' not in st.session_state: st.session_state.lat = 0.0
+if 'lon' not in st.session_state: st.session_state.lon = 0.0
+if 'country' not in st.session_state: st.session_state.country = ''
+if 'country_benchmark' not in st.session_state: st.session_state.country_benchmark = 'Global Average'
 if 'mix_slider' not in st.session_state: st.session_state.mix_slider = 50
 
 # --- Styles ---
