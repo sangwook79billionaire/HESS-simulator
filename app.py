@@ -141,13 +141,14 @@ if st.session_state.step == 'input':
         # Robust country detection helper (shared)
         def find_country_match(addr):
             if not addr: return "Global Average"
-            # Clean and tokenize
+            # Clean and tokenize (support both English space and potential Asian characters)
             addr_clean = addr.lower().replace(',', ' ').replace('.', ' ')
             words = addr_clean.split()
             benchmark_keys = list(COUNTRY_BENCHMARKS.keys())
             
-            # 1. Comprehensive Alias & ISO Code Check
+            # 1. Comprehensive Alias & ISO Code Check (Multilingual Support)
             aliases = {
+                # English & Codes
                 "uae": "United Arab Emirates", "emirates": "United Arab Emirates", "dubai": "United Arab Emirates",
                 "korea": "South Korea", "kor": "South Korea", "kr": "South Korea",
                 "indonesia": "Indonesia", "idn": "Indonesia", "id": "Indonesia",
@@ -160,16 +161,28 @@ if st.session_state.step == 'input':
                 "cambodia": "Cambodia", "khm": "Cambodia", "kh": "Cambodia",
                 "thailand": "Thailand", "tha": "Thailand", "th": "Thailand",
                 "malaysia": "Malaysia", "mys": "Malaysia", "my": "Malaysia",
-                "bangladesh": "Bangladesh", "bgd": "Bangladesh", "bd": "Bangladesh",
-                "canada": "Canada", "can": "Canada", "ca": "Canada",
-                "brazil": "Brazil", "bra": "Brazil", "br": "Brazil"
+                
+                # Korean Support
+                "대한민국": "South Korea", "한국": "South Korea", "남한": "South Korea",
+                "인도네시아": "Indonesia", "인니": "Indonesia",
+                "베트남": "Vietnam", "월남": "Vietnam",
+                "필리핀": "Philippines",
+                "태국": "Thailand", "타이": "Thailand",
+                "말레이시아": "Malaysia",
+                "캄보디아": "Cambodia",
+                "미국": "United States", "미합중국": "United States",
+                "독일": "Germany", "인도": "India"
             }
             
             # Check for direct alias/code match in any word
             for word in words:
                 if word in aliases: return aliases[word]
             
-            # 2. Direct Keyword Match (Check if any benchmark key is a word in the address)
+            # Check if any alias exists as a substring (for non-spaced languages)
+            for alias, full_name in aliases.items():
+                if alias in addr_clean: return full_name
+            
+            # 2. Direct Keyword Match
             for word in words:
                 for k in benchmark_keys:
                     if k.lower() == word: return k
