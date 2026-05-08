@@ -887,13 +887,14 @@ elif st.session_state.step == 'result':
             
             # 1-2. CAPEX/OPEX 세부 편집
             st.markdown("##### 🏗️ 1~2. 투자비 및 운영 수익 상세 (CAPEX / OPEX / Revenue)")
+            inc_desal = st.toggle("💧 해수 담수화 시스템 포함 (Desalination Unit)", value=False)
             
             # CAPEX Breakdown Editor
             capex_items = {
-                "세부 항목": ["Solar PV System", "BESS (Battery)", "Electrolyzer (EL)", "Fuel Cell (FC)", "H2 Storage Tank", "EMS & Control", "물류 및 시공 (Logistics)", "인프라 (Distribution)"],
-                "단가 ($)": [1000, 300, 550, 700, 650, 30000, 100000, 1500],
-                "수량": [pv_hybrid, bess_b, el_kw, fc_kw, max(h2_stock), 1, 1, hh],
-                "총 금액 ($)": [0, 0, 0, 0, 0, 0, 0, 0]
+                "세부 항목": ["Solar PV System", "BESS (Battery)", "Electrolyzer (EL)", "Fuel Cell (FC)", "H2 Storage Tank", "해수 담수화 (Optional)", "EMS & Control", "물류 및 시공 (Logistics)", "인프라 (Distribution)"],
+                "단가 ($)": [1000, 300, 550, 700, 650, 50000, 30000, 100000, 1500],
+                "수량": [pv_hybrid, bess_b, el_kw, fc_kw, max(h2_stock), 1 if inc_desal else 0, 1, 1, hh],
+                "총 금액 ($)": [0, 0, 0, 0, 0, 0, 0, 0, 0]
             }
             df_capex = pd.DataFrame(capex_items)
             df_capex["총 금액 ($)"] = df_capex["단가 ($)"] * df_capex["수량"]
