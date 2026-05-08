@@ -940,8 +940,18 @@ elif st.session_state.step == 'result':
             total_opex_sub = int(sum(rev_vals[3:]))
             
             r_c1, r_c2 = st.columns(2)
-            r_c1.markdown(f"<div style='text-align: center; background: rgba(0,212,255,0.1); padding: 10px; border-radius: 5px;'><span style='color: #888; font-size: 12px;'>Total Annual Revenue</span><br><b style='color: #00d4ff; font-size: 18px;'>${total_rev_sub:,.0f}</b></div>", unsafe_allow_html=True)
-            r_c2.markdown(f"<div style='text-align: center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px;'><span style='color: #888; font-size: 12px;'>Total Annual OPEX</span><br><b style='color: #fff; font-size: 18px;'>${total_opex_sub:,.0f}</b></div>", unsafe_allow_html=True)
+            r_c1.markdown(f"""
+                <div style='background: #111; padding: 20px; border-radius: 12px; border-left: 5px solid #00d4ff; box-shadow: 2px 2px 10px rgba(0,0,0,0.3);'>
+                    <div style='color: #888; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;'>Total Annual Revenue</div>
+                    <div style='color: #00d4ff; font-size: 26px; font-weight: 800; margin-top: 5px;'>${total_rev_sub:,.0f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            r_c2.markdown(f"""
+                <div style='background: #111; padding: 20px; border-radius: 12px; border-left: 5px solid #94a3b8; box-shadow: 2px 2px 10px rgba(0,0,0,0.3);'>
+                    <div style='color: #888; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;'>Total Annual OPEX</div>
+                    <div style='color: #ffffff; font-size: 26px; font-weight: 800; margin-top: 5px;'>${total_opex_sub:,.0f}</div>
+                </div>
+                """, unsafe_allow_html=True)
             
             st.divider()
 
