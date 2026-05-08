@@ -273,14 +273,43 @@ if st.session_state.step == 'input':
                 except ValueError: default_idx = benchmark_list.index("Global Average")
                 
                 c_name = d_c2.selectbox("국가 레퍼런스 데이터 (IEA/WB)", benchmark_list, index=default_idx)
-                avg_kwh = COUNTRY_BENCHMARKS[c_name]['demand']
-                import time
-                time.sleep(0.5)
-                st.write("📊 에너지 수요 프로파일 생성 완료...")
-                st.session_state.step = 'result'
-                status.update(label="✅ 분석 준비 완료! 결과 화면으로 이동합니다.", state="complete", expanded=False)
-                time.sleep(0.5)
-                st.rerun()
+                total_daily_kwh = hh * avg_kwh
+                st.markdown(f"""
+                <div style='background: #1a1f2b; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #00d4ff; margin-bottom: 20px;'>
+                    <span style='color: #888; font-size: 13px;'>예상 일일 총 전력 수요</span><br/>
+                    <span style='color: #00d4ff; font-size: 24px; font-weight: bold;'>{total_daily_kwh:,.1f} kWh</span>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.write("📈 **에너지 부하 특성 조합 (Load Mix)**")
+                mix_val = st.slider("주거용 🏠 vs 상업용 🏢 비중 조절", 0, 100, 50)
+                
+                ratio_a = mix_val / 100.0
+                ratio_b = 1.0 - ratio_a
+                combined_pattern = [(PATTERN_A[i]*ratio_a + PATTERN_B[i]*ratio_b) for i in range(24)]
+                norm_factor = sum(combined_pattern) / 24
+                final_pattern = [p / norm_factor for p in combined_pattern]
+                
+                fig_load = px.line(y=final_pattern, x=list(range(24)), title="24시간 Hourly Load Profile (Normalized)")
+                fig_load.update_layout(height=200, margin=dict(l=0,r=0,t=30,b=0), template="plotly_dark")
+                st.plotly_chart(fig_load, use_container_width=True)
+                
+                st.divider()
+                if st.button("🚀 시뮬레이션 및 최적 설계 시작", type="primary", use_container_width=True):
+                    with st.status("🚀 시뮬레이션 엔진 가동 중...", expanded=True) as status:
+                        st.session_state.total_d = total_daily_kwh
+                        st.session_state.load_profile = final_pattern
+                        import time
+                        time.sleep(0.5)
+                        st.write("📍 기상 데이터 및 물리 엔진 연동 완료...")
+                        st.session_state.step = 'result'
+                        status.update(label="✅ 설계 완료!", state="complete", expanded=False)
+                        time.sleep(0.5)
+                        st.rerun()
+                
+                if st.button("⬅ 위치 재설정", use_container_width=True):
+                    st.session_state.loc_confirmed = False
+                    st.rerun()
 
     with main_tabs[1]:
         st.subheader("🚀 지도 기반 대량 배치 시뮬레이션 (Spatial Batch)")
