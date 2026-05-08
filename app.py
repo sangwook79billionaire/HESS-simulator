@@ -140,29 +140,40 @@ if st.session_state.step == 'input':
         # Robust country detection helper (shared)
         def find_country_match(addr):
             if not addr: return "Global Average"
-            addr_clean = addr.lower()
+            # Clean and tokenize
+            addr_clean = addr.lower().replace(',', ' ').replace('.', ' ')
+            words = addr_clean.split()
             benchmark_keys = list(COUNTRY_BENCHMARKS.keys())
             
-            # 1. Direct Alias Check
+            # 1. Comprehensive Alias & ISO Code Check
             aliases = {
                 "uae": "United Arab Emirates", "emirates": "United Arab Emirates", "dubai": "United Arab Emirates",
-                "korea": "South Korea", "indonesia": "Indonesia", "india": "India",
-                "usa": "United States", "america": "United States", "united states": "United States",
-                "germany": "Germany", "vietnam": "Vietnam", "kenya": "Kenya", "philippines": "Philippines",
-                "cambodia": "Cambodia", "thailand": "Thailand", "malaysia": "Malaysia"
+                "korea": "South Korea", "kor": "South Korea", "kr": "South Korea",
+                "indonesia": "Indonesia", "idn": "Indonesia", "id": "Indonesia",
+                "india": "India", "ind": "India",
+                "usa": "United States", "us": "United States", "america": "United States",
+                "germany": "Germany", "deu": "Germany", "de": "Germany",
+                "vietnam": "Vietnam", "vnm": "Vietnam", "vn": "Vietnam",
+                "kenya": "Kenya", "ken": "Kenya", "ke": "Kenya",
+                "philippines": "Philippines", "phl": "Philippines", "ph": "Philippines",
+                "cambodia": "Cambodia", "khm": "Cambodia", "kh": "Cambodia",
+                "thailand": "Thailand", "tha": "Thailand", "th": "Thailand",
+                "malaysia": "Malaysia", "mys": "Malaysia", "my": "Malaysia",
+                "bangladesh": "Bangladesh", "bgd": "Bangladesh", "bd": "Bangladesh",
+                "canada": "Canada", "can": "Canada", "ca": "Canada",
+                "brazil": "Brazil", "bra": "Brazil", "br": "Brazil"
             }
-            for alias, full_name in aliases.items():
-                if alias in addr_clean: return full_name
             
-            # 2. Segmented Search (Check from end of address)
-            addr_parts = [p.strip() for p in addr_clean.split(',')]
-            for part in reversed(addr_parts):
-                for k in benchmark_keys:
-                    if k.lower() == part: return k
-                for k in benchmark_keys:
-                    if k.lower() in part: return k
+            # Check for direct alias/code match in any word
+            for word in words:
+                if word in aliases: return aliases[word]
             
-            # 3. Fallback Keyword Search
+            # 2. Direct Keyword Match (Check if any benchmark key is a word in the address)
+            for word in words:
+                for k in benchmark_keys:
+                    if k.lower() == word: return k
+            
+            # 3. Substring Match (Fallback)
             for k in benchmark_keys:
                 if k.lower() in addr_clean: return k
             
