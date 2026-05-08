@@ -702,8 +702,12 @@ elif st.session_state.step == 'result':
                 <ul style='list-style: none; padding: 0; font-size: 18px;'>
                     <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br><b style='color: #fff; font-size: 22px;'>{pv_hybrid:,.1f} kWp</b></li>
                     <li style='margin-bottom: 20px;'><span style='font-size: 17px; color: #aaa;'>에너지 저장 (Hybrid):</span> <br>
-                        <span style='font-size: 16px; color: #ccc;'>▪️ BESS: <b style='color: #fff;'>{bess_b:,.1f} kWh</b> (1.5일분)</span><br>
-                        <span style='font-size: 16px; color: #ccc;'>▪️ HESS: <b style='color: #00d4ff;'>{el_kw:,.1f}/{fc_kw:,.1f} kW</b>, <b style='color: #00ff88;'>{max(h2_stock):,.1f} kg ({h2_days:.1f}일분)</b></span>
+                        <div style='margin-top: 10px; padding-left: 10px; border-left: 2px solid #00d4ff;'>
+                            <div style='font-size: 15px; color: #ccc; margin-bottom: 5px;'>▪️ BESS (배터리): <b style='color: #fff;'>{bess_b:,.1f} kWh</b> (1.5일분)</div>
+                            <div style='font-size: 15px; color: #ccc; margin-bottom: 5px;'>▪️ 수전해기 (Electrolyzer): <b style='color: #00d4ff;'>{el_kw:,.1f} kW</b></div>
+                            <div style='font-size: 15px; color: #ccc; margin-bottom: 5px;'>▪️ 연료전지 (Fuel Cell): <b style='color: #00d4ff;'>{fc_kw:,.1f} kW</b></div>
+                            <div style='font-size: 15px; color: #ccc;'>▪️ 수소저장 (H2 Storage): <b style='color: #00ff88;'>{max(h2_stock):,.1f} kg</b> <small style='color: #888;'>({h2_days:.1f}일분)</small></div>
+                        </div>
                     </li>
                     <li style='margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;'>
                         <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span><br>
