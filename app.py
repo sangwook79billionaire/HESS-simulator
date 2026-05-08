@@ -139,18 +139,33 @@ if st.session_state.step == 'input':
         col1, col2 = st.columns([1, 1.2])
         # Robust country detection helper (shared)
         def find_country_match(addr):
+            if not addr: return "Global Average"
             addr_clean = addr.lower()
             benchmark_keys = list(COUNTRY_BENCHMARKS.keys())
+            
+            # 1. Direct Alias Check
             aliases = {
                 "uae": "United Arab Emirates", "emirates": "United Arab Emirates", "dubai": "United Arab Emirates",
                 "korea": "South Korea", "indonesia": "Indonesia", "india": "India",
                 "usa": "United States", "america": "United States", "united states": "United States",
-                "germany": "Germany", "vietnam": "Vietnam", "kenya": "Kenya"
+                "germany": "Germany", "vietnam": "Vietnam", "kenya": "Kenya", "philippines": "Philippines",
+                "cambodia": "Cambodia", "thailand": "Thailand", "malaysia": "Malaysia"
             }
             for alias, full_name in aliases.items():
                 if alias in addr_clean: return full_name
+            
+            # 2. Segmented Search (Check from end of address)
+            addr_parts = [p.strip() for p in addr_clean.split(',')]
+            for part in reversed(addr_parts):
+                for k in benchmark_keys:
+                    if k.lower() == part: return k
+                for k in benchmark_keys:
+                    if k.lower() in part: return k
+            
+            # 3. Fallback Keyword Search
             for k in benchmark_keys:
                 if k.lower() in addr_clean: return k
+            
             return "Global Average"
 
         with col1:
@@ -165,6 +180,8 @@ if st.session_state.step == 'input':
                     loc = geolocator.geocode(address, timeout=10)
                     if loc:
                         st.session_state.lat, st.session_state.lon, st.session_state.country = loc.latitude, loc.longitude, loc.address
+                        # Force sync benchmark state
+                        st.session_state.country_benchmark = find_country_match(loc.address)
                         st.rerun()
                     else:
                         st.error("검색 결과가 없습니다. 다른 지명을 입력해 주세요.")
@@ -174,7 +191,6 @@ if st.session_state.step == 'input':
             m = folium.Map(location=[st.session_state.lat, st.session_state.lon], zoom_start=10)
             folium.Marker([st.session_state.lat, st.session_state.lon], tooltip="선택된 위치").add_to(m)
             
-            # Restore Map Click Functionality
             map_out = st_folium(m, height=300, use_container_width=True, key="location_map")
             
             if map_out and map_out.get("last_clicked"):
@@ -189,6 +205,8 @@ if st.session_state.step == 'input':
                         rev = geolocator.reverse(f"{new_lat}, {new_lng}", timeout=5)
                         if rev: 
                             st.session_state.country = rev.address
+                            # Force sync benchmark state
+                            st.session_state.country_benchmark = find_country_match(rev.address)
                     except:
                         pass
                     st.rerun()
@@ -203,15 +221,12 @@ if st.session_state.step == 'input':
             mode = st.radio("수요 산정", ["국가별 레퍼런스", "직접 입력"], horizontal=True)
             if mode == "국가별 레퍼런스":
                 benchmark_list = list(COUNTRY_BENCHMARKS.keys())
-                detected_c = find_country_match(st.session_state.country)
                 
-                # Update selectbox index based on detected country
-                try:
-                    default_idx = benchmark_list.index(detected_c)
-                except ValueError:
-                    default_idx = 0
+                # Use key-based session state for forced synchronization
+                if "country_benchmark" not in st.session_state:
+                    st.session_state.country_benchmark = find_country_match(st.session_state.country)
                 
-                c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", benchmark_list, index=default_idx)
+                c_name = st.selectbox("대상 국가 선택 (출처: IEA/World Bank 2023)", benchmark_list, key="country_benchmark")
                 avg_kwh = COUNTRY_BENCHMARKS[c_name]['demand']
             else:
                 avg_kwh = st.number_input("가구당 일일 사용량 (kWh)", value=5.0)
