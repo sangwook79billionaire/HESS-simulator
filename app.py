@@ -989,12 +989,36 @@ elif st.session_state.step == 'result':
             cum_flow = np.cumsum(net_flow)
             
             fig_cf = make_subplots(specs=[[{"secondary_y": True}]])
-            fig_cf.add_trace(go.Bar(x=years, y=rev_in, name='Revenue', marker_color='#00d4ff'), secondary_y=False)
+            
+            # Scaled CAPEX for visualization (so it doesn't squash the chart)
+            viz_capex_0 = min(total_capex_fs, rev_annual * 2) 
+            
+            # Inflow
+            fig_cf.add_trace(go.Bar(x=years, y=rev_in, name='Annual Revenue', marker_color='#00d4ff'), secondary_y=False)
+            fig_cf.add_trace(go.Bar(x=[0], y=[loan_amt], name='EDCF Loan Inflow', marker_color='#7e57c2'), secondary_y=False)
+            
+            # Outflow
             fig_cf.add_trace(go.Bar(x=years, y=[-v for v in opex_base], name='Base OPEX', marker_color='#555'), secondary_y=False)
-            fig_cf.add_trace(go.Bar(x=years, y=edcf_flow, name='EDCF/CAPEX Flow', marker_color='#7e57c2'), secondary_y=False)
+            fig_cf.add_trace(go.Bar(x=years, y=[-v for v in replace_out], name='Replacement Cost', marker_color='#ff8800'), secondary_y=False)
+            fig_cf.add_trace(go.Bar(x=[0], y=[-viz_capex_0], name='Initial CAPEX (Scaled)', marker_color='#ff4b4b', 
+                                   hovertemplate="Initial CAPEX<br>Real Value: $"+f"{total_capex_fs:,.0f}"), secondary_y=False)
+            
+            # EDCF Repayment
+            edcf_repay = [min(0, v) for v in edcf_flow]
+            fig_cf.add_trace(go.Bar(x=years, y=edcf_repay, name='EDCF Repayment', marker_color='#4a148c'), secondary_y=False)
+            
+            # Cumulative Balance
             fig_cf.add_trace(go.Scatter(x=years, y=cum_flow, name='Cumulative Balance', line=dict(color='#ffffff', width=3, dash='dot')), secondary_y=True)
-            fig_cf.update_layout(template="plotly_dark", height=400, barmode='relative', margin=dict(t=20, b=20))
+            
+            fig_cf.update_layout(
+                template="plotly_dark", height=450, barmode='relative', 
+                margin=dict(t=20, b=20, l=0, r=0),
+                xaxis=dict(title="Year", tickmode='linear', dtick=5, range=[-1, int(p_life)+1]),
+                yaxis=dict(title="Annual Flow ($)", range=[-rev_annual*1.5, rev_annual*2]),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
+            )
             st.plotly_chart(fig_cf, use_container_width=True)
+            st.caption(f"※ Year 0의 CAPEX(${total_capex_fs:,.0f})는 차트 가독성을 위해 시각적으로 축소 조정되었습니다.")
             
             st.divider()
 
