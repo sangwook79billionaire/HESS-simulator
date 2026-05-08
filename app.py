@@ -890,29 +890,58 @@ elif st.session_state.step == 'result':
             inc_desal = st.toggle("💧 해수 담수화 시스템 포함 (Desalination Unit)", value=False)
             
             # CAPEX Breakdown Editor
+            st.markdown("<small style='color: #888;'>투자비 항목별 단가와 수량을 수정할 수 있습니다.</small>", unsafe_allow_html=True)
             capex_items = {
-                "세부 항목": ["Solar PV System", "BESS (Battery)", "Electrolyzer (EL)", "Fuel Cell (FC)", "H2 Storage Tank", "해수 담수화 (Optional)", "EMS & Control", "물류 및 시공 (Logistics)", "인프라 (Distribution)"],
-                "단가 ($)": [1000, 300, 550, 700, 650, 50000, 30000, 100000, 1500],
-                "수량": [pv_hybrid, bess_b, el_kw, fc_kw, max(h2_stock), 1 if inc_desal else 0, 1, 1, hh],
+                "구분": ["발전설비", "저장설비", "수소설비", "수소설비", "수소설비", "수소설비", "기타설비", "시공/인프라", "시공/인프라"],
+                "세부 항목": ["Solar PV System", "BESS (Battery)", "Electrolyzer (EL)", "Fuel Cell (FC)", "H2 Storage Tank", "H2 기자재/물류", "EMS & Control", "물류 및 시공 (Logistics)", "인프라 (Distribution)"],
+                "단가 ($)": [1000, 300, 550, 700, 650, 15000, 30000, 100000, 1500],
+                "수량": [int(pv_hybrid), int(bess_b), int(el_kw), int(fc_kw), int(max(h2_stock)), 1, 1, 1, int(hh)],
                 "총 금액 ($)": [0, 0, 0, 0, 0, 0, 0, 0, 0]
             }
             df_capex = pd.DataFrame(capex_items)
             df_capex["총 금액 ($)"] = df_capex["단가 ($)"] * df_capex["수량"]
-            edited_capex = st.data_editor(df_capex, use_container_width=True, num_rows="fixed", key="capex_editor_v4")
-            total_capex_fs = edited_capex["총 금액 ($)"].sum()
             
+            edited_capex = st.data_editor(
+                df_capex, use_container_width=True, num_rows="fixed", key="capex_editor_v5",
+                column_config={
+                    "단가 ($)": st.column_config.NumberColumn(format="$%d"),
+                    "수량": st.column_config.NumberColumn(format="%d"),
+                    "총 금액 ($)": st.column_config.NumberColumn(format="$%d", disabled=True)
+                }
+            )
+            total_capex_fs = int(edited_capex["총 금액 ($)"].sum())
+            st.markdown(f"<div style='text-align: right; font-size: 18px; color: #00d4ff; font-weight: bold;'>💰 Total CAPEX: ${total_capex_fs:,.0f}</div>", unsafe_allow_html=True)
+            
+            st.divider()
+
             # Revenue & OPEX Editor
+            st.markdown("<small style='color: #888;'>연간 운영 수익 및 고정 비용 항목입니다.</small>", unsafe_allow_html=True)
             matched = next((c for c in COUNTRY_BENCHMARKS.keys() if c.lower() in st.session_state.country.lower()), "Global Average")
             ref_rate = COUNTRY_BENCHMARKS[matched]['rate']
             bess_replace_annual = (bess_b * 300 * 0.7) / 10
             stack_replace_annual = ((el_kw * 550 + fc_kw * 700) * 0.5) / 8
             
             rev_opex_items = {
+                "구분": ["수익", "수익", "수익", "운영비", "운영비", "운영비", "운영비"],
                 "상세 항목": ["전기 판매 요금 (PPA)", "정부 운영 보조금 ($/yr)", "기타 판매 수익 ($/yr)", "일반 유지보수비 ($/yr)", "현지 운영비 ($/yr)", "BESS 교체 적립금", "H2 스택 교체 적립금"],
                 "금액 ($)": [ref_rate, 50000.0, 0.0, float(total_capex_fs * 0.012), 30000.0, float(bess_replace_annual), float(stack_replace_annual)]
             }
-            edited_rev = st.data_editor(pd.DataFrame(rev_opex_items), use_container_width=True, num_rows="fixed", key="rev_editor_v4")
+            df_rev_init = pd.DataFrame(rev_opex_items)
+            edited_rev = st.data_editor(
+                df_rev_init, use_container_width=True, num_rows="fixed", key="rev_editor_v5",
+                column_config={
+                    "금액 ($)": st.column_config.NumberColumn(format="$%,.0f")
+                }
+            )
             rev_vals = edited_rev["금액 ($)"].values
+            
+            # Sub-sums for Rev/OPEX
+            total_rev_sub = int((annual_demand * rev_vals[0]) + rev_vals[1] + rev_vals[2])
+            total_opex_sub = int(sum(rev_vals[3:]))
+            
+            r_c1, r_c2 = st.columns(2)
+            r_c1.markdown(f"<div style='text-align: center; background: rgba(0,212,255,0.1); padding: 10px; border-radius: 5px;'><span style='color: #888; font-size: 12px;'>Total Annual Revenue</span><br><b style='color: #00d4ff; font-size: 18px;'>${total_rev_sub:,.0f}</b></div>", unsafe_allow_html=True)
+            r_c2.markdown(f"<div style='text-align: center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px;'><span style='color: #888; font-size: 12px;'>Total Annual OPEX</span><br><b style='color: #fff; font-size: 18px;'>${total_opex_sub:,.0f}</b></div>", unsafe_allow_html=True)
             
             st.divider()
 
