@@ -804,6 +804,11 @@ elif st.session_state.step == 'result':
         
         best_daily_yield = monthly_daily_yield_1kw.max()
         
+        # Q2: Over-spec PV Logic
+        st.markdown("### **Q2. 저일사량 기간에 맞춰 태양광을 Over-spec 하려면 얼마나 필요한가?**")
+        pv_for_worst = (total_d / worst_daily_yield) * 1.05 
+        capex_q2 = (pv_for_worst * PRICE_PV) + (total_d * PRICE_BESS)
+        
         # Calculate Absolute Worst Day and Extreme CAPEX
         df_daily_gen = df_h.groupby(df_h['Timestamp'].dt.date)['Gen_1kW'].sum()
         abs_worst_yield = df_daily_gen.min()
