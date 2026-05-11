@@ -756,66 +756,73 @@ elif st.session_state.step == 'result':
         worst_ghi = monthly_avg_ghi.min()
         best_ghi = monthly_avg_ghi.max()
         
-        # 📊 Visualization: Monthly Insolation Profile
-        fig_base = go.Figure()
-        # Bars with conditional color (Red for worst month)
-        colors = ['#38bdf8'] * 12
-        colors[worst_month-1] = '#ff4b4b'
-        
-        fig_base.add_trace(go.Bar(
-            x=list(range(1, 13)), y=monthly_avg_ghi,
-            marker_color=colors,
-            name="월간 평균 일사량",
-            hovertemplate="Month %{x}<br>Insolation: %{y:.2f} kWh/m²/d<extra></extra>"
-        ))
-        
-        # Add Horizontal Line for Energy Target
-        # To meet total_d with 1kWp of PV, we need total_d / yield. 
-        # But here we show it conceptually as "Demand vs Supply"
-        fig_base.update_layout(
-            title=dict(text=f"해당 지역의 월별 일사량 프로필 (최저 구간: {worst_month}월)", font=dict(size=18, color="#38bdf8")),
-            template="plotly_dark", height=350,
-            margin=dict(l=50, r=50, t=50, b=50),
-            xaxis=dict(title="Month", tickmode='linear', dtick=1),
-            yaxis=dict(title="Insolation (kWh/m²/d)")
-        )
-        # Highlight Worst Month with Annotation
-        fig_base.add_annotation(
-            x=worst_month, y=worst_ghi,
-            text="Minimum Point", showarrow=True, arrowhead=1,
-            ax=0, ay=-40, bgcolor="#ff4b4b"
-        )
-        st.plotly_chart(fig_base, use_container_width=True)
-
-        # Theoretical PV for worst month
         pv_for_worst = (total_d / worst_ghi) * 1.1 
         potential_gen_best = pv_for_worst * best_ghi
         max_curtailment = max(0, potential_gen_best - total_d)
         
+        # Calculate Monthly Net Balance for Shifting Visualization
+        monthly_yield = monthly_avg_ghi * 30 # Approx month days
+        # We use pv_base (Net Zero PV) to show the actual shift needed
+        monthly_gen = monthly_avg_ghi * pv_base
+        monthly_net = monthly_gen - total_d
+        
+        c_base1, c_base2, c_base3 = st.columns([1, 1, 1.5])
+        
+        with c_base1:
+            # Compact Insolation Chart
+            fig_ins = go.Figure()
+            colors = ['#38bdf8'] * 12
+            colors[worst_month-1] = '#ff4b4b'
+            fig_ins.add_trace(go.Bar(x=list(range(1, 13)), y=monthly_avg_ghi, marker_color=colors))
+            fig_ins.update_layout(
+                title="월별 일사량 지수", template="plotly_dark", height=250,
+                margin=dict(l=20, r=20, t=40, b=20), xaxis=dict(dtick=3), yaxis=dict(visible=False)
+            )
+            st.plotly_chart(fig_ins, use_container_width=True)
+            st.caption(f"📍 최저 구간: {worst_month}월 ({worst_ghi:.2f} kWh/m²/d)")
+
+        with c_base2:
+            st.markdown(f"""
+            <div style='display: flex; flex-direction: column; gap: 10px;'>
+                <div style='background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid #38bdf8;'>
+                    <small style='color: #888;'>최저 일사량 대응 PV</small><br>
+                    <b style='color: #fff; font-size: 18px;'>{pv_for_worst:,.1f} kWp</b>
+                </div>
+                <div style='background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid #ff4b4b;'>
+                    <small style='color: #888;'>최고 시 잉여 전력</small><br>
+                    <b style='color: #ff4b4b; font-size: 18px;'>{max_curtailment:,.1f} kWh/d</b>
+                </div>
+                <div style='background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid #00ff88;'>
+                    <small style='color: #888;'>연간 에너지 밸런스 PV</small><br>
+                    <b style='color: #00ff88; font-size: 18px;'>{pv_base:,.1f} kWp</b>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with c_base3:
+            # Energy Shifting Visualization (Area Chart)
+            fig_shift = go.Figure()
+            # Surplus area
+            fig_shift.add_trace(go.Scatter(
+                x=list(range(1, 13)), y=[max(0, x) for x in monthly_net],
+                fill='tozeroy', mode='none', name='Surplus (충전 필요)', fillcolor='rgba(0, 255, 136, 0.3)'
+            ))
+            # Deficit area
+            fig_shift.add_trace(go.Scatter(
+                x=list(range(1, 13)), y=[min(0, x) for x in monthly_net],
+                fill='tozeroy', mode='none', name='Deficit (방전 필요)', fillcolor='rgba(255, 75, 75, 0.3)'
+            ))
+            fig_shift.update_layout(
+                title="에너지 이동(Shifting) 필요량 시각화", template="plotly_dark", height=250,
+                margin=dict(l=20, r=20, t=40, b=20), xaxis=dict(dtick=1), yaxis=dict(title="Net Balance (kWh/d)"),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10))
+            )
+            st.plotly_chart(fig_shift, use_container_width=True)
+
         st.markdown(f"""
-        <div style='background: #0f172a; padding: 25px; border-radius: 15px; border: 1px solid #1e293b; margin-bottom: 30px;'>
-            <div style='color: #38bdf8; font-size: 16px; font-weight: bold; margin-bottom: 20px;'>💡 시나리오 설계의 공학적 배경</div>
-            <div style='display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;'>
-                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px;'>
-                    <div style='color: #888; font-size: 12px; margin-bottom: 5px;'>최저 일사량 대응 PV</div>
-                    <div style='color: #fff; font-size: 20px; font-weight: bold;'>{pv_for_worst:,.1f} <small>kWp</small></div>
-                    <div style='color: #ccc; font-size: 11px; margin-top: 5px;'>일사량이 가장 적은 기간에 배터리 없이 실시간 수요를 충족하기 위한 용량입니다.</div>
-                </div>
-                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px;'>
-                    <div style='color: #888; font-size: 12px; margin-bottom: 5px;'>최고 일사량 시 잉여 전력</div>
-                    <div style='color: #ff4b4b; font-size: 20px; font-weight: bold;'>{max_curtailment:,.1f} <small>kWh/d</small></div>
-                    <div style='color: #ccc; font-size: 11px; margin-top: 5px;'>최저 기간에 맞추어 PV를 설계할 경우, 최고 일사량 기간에 매일 버려지는 에너지량입니다.</div>
-                </div>
-                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px;'>
-                    <div style='color: #888; font-size: 12px; margin-bottom: 5px;'>연간 에너지 밸런스 PV</div>
-                    <div style='color: #00ff88; font-size: 20px; font-weight: bold;'>{pv_base:,.1f} <small>kWp</small></div>
-                    <div style='color: #ccc; font-size: 11px; margin-top: 5px;'>1년 총 발전량과 총 수요량이 일치되는 기준점으로, 모든 시나리오 설계의 출발점입니다.</div>
-                </div>
-            </div>
-            <div style='margin-top: 20px; padding-top: 15px; border-top: 1px dashed #333; color: #aaa; font-size: 13px; line-height: 1.6;'>
-                위 데이터를 통해 확인되듯, <b>잉여 에너지를 부족한 시기로 이동(Energy Shifting)</b>시키는 것이 시스템 경제성의 핵심입니다. <br>
-                이 에너지를 <b>배터리</b>로만 옮길 것인지(시나리오 A), <b>수소</b>를 병용할 것인지(시나리오 B) 아래에서 비교합니다.
-            </div>
+        <div style='background: rgba(0, 212, 255, 0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(0,212,255,0.1); margin-top: 10px; color: #aaa; font-size: 13px; line-height: 1.6;'>
+            위 그래프의 <b>초록색 면적(Surplus)</b>을 <b>빨간색 면적(Deficit)</b> 시기로 옮기는 것이 설계의 핵심 목표입니다. <br>
+            이 막대한 에너지를 어떤 매체로 옮길지에 따라 아래의 시나리오 A와 B가 결정됩니다.
         </div>
         """, unsafe_allow_html=True)
 
