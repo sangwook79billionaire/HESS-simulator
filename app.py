@@ -747,8 +747,12 @@ elif st.session_state.step == 'result':
         </div>
         """, unsafe_allow_html=True)
         
-        # --- Section 2: Strategic Base Conditions ---
-        st.markdown("### 📋 2. 공통 전략 베이스 (Strategic Base Conditions)")
+        # --- Section 2: Step-by-Step Strategic Assessment ---
+        st.markdown("## 🔍 5단계 전략 분석 리포트 (Step-by-Step Strategic Assessment)")
+        
+        # Q1: Feasibility
+        st.markdown("### **Q1. 태양광만으로 전력 수요 전체를 대응할 수 있나?**")
+        st.info(f"**YES.** 이론적으로 가능합니다. 이 지역의 연간 전력 균형을 맞추기 위한 **이론적 최소 태양광 용량은 {pv_base:,.1f} kWp**입니다. (모든 에너지를 100% 효율로 이전할 수 있다는 전제)")
         
         # Calculate Base Metrics using simulated yields for consistency
         # Group by month and calculate average hourly yield for 1kWp
@@ -763,200 +767,100 @@ elif st.session_state.step == 'result':
         worst_daily_yield = monthly_daily_yield_1kw.min()
         best_daily_yield = monthly_daily_yield_1kw.max()
         
-        # 1. Theoretical PV to cover daily load during worst month without storage (Conservative Max)
-        # Sizing so that worst month daily yield = total_d
+        st.markdown("### **Q2. 저일사량 기간에 맞춰 태양광을 Over-spec 하려면 얼마나 필요한가?**")
         pv_for_worst = (total_d / worst_daily_yield) * 1.05 
+        # User requested 1-day battery for day/night intermittency
+        capex_q2 = (pv_for_worst * PRICE_PV) + (total_d * PRICE_BESS)
         
-        # Calculate Monthly Curtailment if sized for worst month
-        # Curtailment per month = (Daily Gen - Daily Load) * Days
-        monthly_curtailment_series = (monthly_daily_yield_1kw * pv_for_worst) - total_d
-        annual_waste_mwh = (monthly_curtailment_series * 30.4).sum() / 1000 # Approx MWh/year
-        
-        c_base1, c_base2, c_base3 = st.columns([1, 1, 1.5])
-        
-        with c_base1:
-            # Compact Insolation Chart
-            fig_ins = go.Figure()
-            colors = ['#38bdf8'] * 12
-            colors[worst_month-1] = '#ff4b4b'
-            fig_ins.add_trace(go.Bar(x=list(range(1, 13)), y=monthly_sim['Insolation'], marker_color=colors))
-            fig_ins.update_layout(
-                title="월별 일사량 지수", template="plotly_dark", height=250,
-                margin=dict(l=20, r=20, t=40, b=20), xaxis=dict(dtick=3), yaxis=dict(visible=False)
-            )
-            st.plotly_chart(fig_ins, use_container_width=True)
-            st.caption(f"📍 최저 구간: {worst_month}월 (평균 {monthly_sim['Insolation'].min():.1f} W/m²)")
-
-        with c_base2:
-            cost_delta = (pv_for_worst - pv_base) * PRICE_PV
-            st.markdown(f"""
-            <div style='display: flex; flex-direction: column; gap: 12px;'>
-                <div style='background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #38bdf8;'>
-                    <small style='color: #888;'>최저 일사량 대응 PV (Max)</small><br>
-                    <b style='color: #38bdf8; font-size: 22px;'>{pv_for_worst:,.1f} <small style='font-size: 14px;'>kWp</small></b>
-                    <span style='background: rgba(255,75,75,0.2); color: #ff4b4b; padding: 2px 6px; border-radius: 4px; font-size: 12px; margin-left: 5px; vertical-align: middle;'>
-                        +$ {cost_delta:,.0f} CAPEX
-                    </span><br>
-                    <span style='color: #777; font-size: 11px;'>저장 장치 없이 무정전을 위한 <b>가장 보수적인(최대)</b> 기준</span>
+        st.markdown(f"""
+        <div style='background: #0f172a; padding: 20px; border-radius: 10px; border-left: 5px solid #38bdf8;'>
+            <div style='display: flex; justify-content: space-between; align-items: center;'>
+                <div>
+                    <span style='color: #888; font-size: 14px;'>보수적 설계 PV 용량 (Max)</span><br>
+                    <b style='color: #fff; font-size: 24px;'>{pv_for_worst:,.1f} kWp</b>
                 </div>
-                <div style='background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #ff4b4b;'>
-                    <small style='color: #888;'>연간 총 잉여 전력량</small><br>
-                    <b style='color: #ff4b4b; font-size: 22px;'>{annual_waste_mwh:,.1f} <small style='font-size: 14px;'>MWh/y</small></b><br>
-                    <span style='color: #777; font-size: 11px;'>보수적 설계 시 버려지는 막대한 에너지 낭비 규모</span>
-                </div>
-                <div style='background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #00ff88;'>
-                    <small style='color: #888;'>연간 에너지 밸런스 PV (Min)</small><br>
-                    <b style='color: #00ff88; font-size: 22px;'>{pv_base:,.1f} <small style='font-size: 14px;'>kWp</small></b><br>
-                    <span style='color: #777; font-size: 11px;'>에너지 전이(Shifting)를 전제로 한 <b>이론상 최소</b> 설계 기준</span>
+                <div style='text-align: right;'>
+                    <span style='color: #888; font-size: 14px;'>추정 CAPEX (PV + 1일치 BESS)</span><br>
+                    <b style='color: #38bdf8; font-size: 24px;'>$ {capex_q2:,.0f}</b>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
-
-        with c_base3:
-            # Wasted Energy Visualization (Curtailment Only)
-            fig_curt = go.Figure()
-            fig_curt.add_trace(go.Scatter(
-                x=list(range(1, 13)), y=monthly_curtailment_series,
-                fill='tozeroy', mode='lines', name='Wasted Energy (잉여)', line=dict(color='#ff4b4b', width=2),
-                fillcolor='rgba(255, 75, 75, 0.2)'
-            ))
-            fig_curt.update_layout(
-                title="무정전 설계 시 발생하는 에너지 낭비(Curtailment)", template="plotly_dark", height=250,
-                margin=dict(l=20, r=20, t=40, b=20), xaxis=dict(dtick=1), yaxis=dict(title="Surplus Energy (kWh/d)"),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10))
-            )
-            st.plotly_chart(fig_curt, use_container_width=True)
-
-        st.markdown(f"""
-        <div style='background: rgba(255, 75, 75, 0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,75,75,0.1); margin-top: 10px; color: #aaa; font-size: 13px; line-height: 1.6;'>
-            위 그래프의 <b>빨간색 영역(Curtailment)</b>은 최저 일사량에 맞춰 태양광을 과도하게 설계했을 때 버려지는 에너지를 의미합니다. <br>
-            시나리오 A와 B는 이 <b>낭비되는 에너지를 효율적으로 저장</b>하여 PV 용량을 줄이고 전체 비용을 최적화하는 전략을 제안합니다.
+            <div style='color: #aaa; font-size: 13px; margin-top: 10px;'>
+                *밤낮 간헐성 대응을 위한 1일치 배터리({total_d:,.1f} kWh) 비용이 포함된 보수적 수치입니다.
+            </div>
         </div>
         """, unsafe_allow_html=True)
-
-        col_title, col_cta = st.columns([3, 1])
-        with col_title:
-            st.markdown("### 🏗️ 3. 시스템 아키텍처 비교 (System Architecture Comparison)")
-        with col_cta:
-            with st.popover("📖 설계 산출 로직 확인 (Design Rationale)", use_container_width=True):
-                st.markdown(f"""
-                <div style='background-color: #0f172a; padding: 20px; border-radius: 10px; color: #e2e8f0; font-size: 14px; line-height: 1.8;'>
-                    <h4 style='color: #38bdf8; margin-top: 0;'>💡 설계 산출 로직</h4>
-                    <div style='margin-bottom: 20px;'>
-                        <b style='color: #38bdf8;'>1. 데이터 분석</b><br>
-                        NASA 기상 데이터와 마을의 24시간 전력 사용 패턴을 결합하여 1시간 단위의 에너지 수지를 시뮬레이션합니다.
-                    </div>
-                    <div style='margin-bottom: 20px;'>
-                        <b style='color: #38bdf8;'>2. 시나리오 A 도출 (CAPEX 최적화)</b><br>
-                        태양광을 1.2~1.8배 과설계하여 값비싼 계절 비축용 배터리 용량을 최소화하는 최저 CAPEX 지점을 찾습니다.
-                    </div>
-                    <div style='margin-bottom: 20px;'>
-                        <b style='color: #38bdf8;'>3. 시나리오 B 도출</b><br>
-                        배터리는 단기 변동만 담당하고, 잉여 에너지를 <b>수소로 저장</b>해 장기적으로 꺼내 쓰는 '계절 이동' 원리를 적용합니다.
-                    </div>
-                    <div style='margin-bottom: 10px;'>
-                        <b style='color: #38bdf8;'>4. 경제성 최적화</b><br>
-                        두 시나리오 중 전체 투자비(CAPEX)와 운영 비용을 고려하여 가장 낮은 발전단가(LCOE)를 만드는 설비 조합을 선정합니다.
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-
-        c1, c2 = st.columns(2)
+        # Q3: Curtailment
+        st.markdown("### **Q3. 과설계 시 버려지는 에너지(Curtailment)는 얼마나 되나?**")
+        monthly_curtailment_series = (monthly_daily_yield_1kw * pv_for_worst) - total_d
+        annual_waste_mwh = (monthly_curtailment_series * 30.4).sum() / 1000
         
-        # Footprint Estimation
+        c_q3_1, c_q3_2 = st.columns([1, 2.5])
+        with c_q3_1:
+            st.markdown(f"""
+            <div style='background: rgba(255, 75, 75, 0.1); padding: 25px; border-radius: 10px; border: 1px solid rgba(255,75,75,0.2); text-align: center; height: 180px;'>
+                <span style='color: #888; font-size: 14px;'>연간 총 잉여 전력량</span><br>
+                <b style='color: #ff4b4b; font-size: 32px;'>{annual_waste_mwh:,.1f}</b><br>
+                <span style='color: #ff4b4b; font-size: 18px;'>MWh/year</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with c_q3_2:
+            fig_q3 = go.Figure()
+            fig_q3.add_trace(go.Scatter(x=list(range(1, 13)), y=monthly_curtailment_series, fill='tozeroy', line=dict(color='#ff4b4b', width=3), fillcolor='rgba(255, 75, 75, 0.2)'))
+            fig_q3.update_layout(height=180, template="plotly_dark", margin=dict(l=20,r=20,t=10,b=20), xaxis=dict(dtick=1), title="월간 에너지 낭비 규모 (kWh/d)")
+            st.plotly_chart(fig_q3, use_container_width=True)
+
+        # Q4 & Q5: Optimized Scenarios
+        st.markdown("### **Q4 & Q5. 에너지를 저장/이동할 때 CAPEX 관점에서 이점이 있나? 어느 쪽이 유리한가?**")
+        st.write("보수적 설계(Q2) 대비, 에너지를 저장하여 PV를 최적화했을 때의 경제성을 비교합니다.")
+        
+        c1, c2 = st.columns(2)
         area_a = (pv_ideal * 10) + (bess_a * 0.1)
         area_b = (pv_hybrid * 10) + (bess_b * 0.1) + (max(h2_stock) * 1.5) + 50
 
         with c1:
+            savings_a = capex_q2 - capex_a
             st.markdown(f"""
-            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #ff4b4b; min-height: 520px; color: #eee;'>
-                <h4 style='color: #ff4b4b; text-align: center; font-size: 20px; margin-bottom: 15px;'>Scenario A: Giant BESS Only</h4>
-                <div style='text-align: center; font-size: 40px; margin: 10px 0;'>☀️ ➡ 🔋 ➡ 🏠</div>
-                <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>거대 배터리 뱅크를 통해 계절적 불균형을 해소하는 단순 구조입니다.</p>
+            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #ff4b4b; min-height: 400px; color: #eee;'>
+                <h4 style='color: #ff4b4b; text-align: center;'>Scenario A: BESS Only</h4>
+                <p style='font-size: 14px; color: #ccc; text-align: center;'>배터리 최적화를 통한 에너지 이동</p>
                 <hr style='border-color: #444;'>
-                <ul style='list-style: none; padding: 0; font-size: 18px;'>
-                    <li style='margin-bottom: 15px;'>
-                        <span style='font-size: 17px; color: #aaa;'>PV 규모:</span>
-                        <div class="custom-tooltip"> ℹ️
-                            <div class="tooltiptext">
-                                <b style='color: #ff4b4b; font-size: 14px;'>📝 시나리오 A CAPEX 최적화 설계</b><br><br>
-                                단순히 연간 균형을 맞추는 데 그치지 않고, <b>투자비가 최소화</b>되는 지점을 찾습니다:<br><br>
-                                - <b>태양광 과설계:</b> 배터리보다 저렴한 태양광을 추가 설치하여 고가의 계절 비축 배터리 용량을 절감<br>
-                                - <b>최적 비율 도출:</b> 시뮬레이션을 통해 총 투자비(CAPEX)가 가장 낮은 PV/BESS 조합 선정
-                            </div>
-                        </div>
-                        <br>
-                        <b style='color: #fff; font-size: 22px;'>{pv_ideal:,.1f} kWp</b>
-                        <span style='background: rgba(255,75,75,0.2); color: #ff4b4b; padding: 2px 8px; border-radius: 4px; font-size: 14px; margin-left: 5px; vertical-align: middle;'>
-                            📈 {((pv_ideal/pv_base)-1)*100:+.1f}% vs Base
-                        </span>
-                    </li>
-                    <li style='margin-bottom: 15px;'>
-                        <span style='font-size: 17px; color: #aaa;'>BESS 용량:</span>
-                        <div class="custom-tooltip"> ℹ️
-                            <div class="tooltiptext">
-                                <b style='color: #ff4b4b; font-size: 14px;'>🔋 BESS 비축 용량 (Autonomy)</b><br><br>
-                                일일 평균 전력 수요 대비 배터리에 저장 가능한 전력량의 비율입니다.<br><br>
-                                시나리오 A에서는 태양광이 부족한 기간(우기/겨울)을 버티기 위해 필요한 <b>계절적 비축 일수</b>가 산출됩니다.
-                            </div>
-                        </div>
-                        <br><b style='color: #fff; font-size: 22px;'>{bess_a:,.1f} kWh</b> <span style='font-size: 16px; color: #ff4b4b; font-weight: bold;'>({bess_a/total_d:.1f}일분)</span>
-                    </li>
-                    <li style='margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;'>
-                        <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span>
-                        <div class="custom-tooltip"> ℹ️
-                            <div class="tooltiptext">
-                                <b style='color: #ffffff; font-size: 14px;'>📐 면적 산출 근거</b><br><br>
-                                설비 설치에 필요한 최소 부지 면적입니다:<br><br>
-                                - <b>Solar PV:</b> 10 m²/kWp (이격거리 포함)<br>
-                                - <b>BESS/H2:</b> 컨테이너 및 시스템 풋프린트 기반<br>
-                                - <b>기타:</b> 인프라 및 시공 여유 부지 포함
-                            </div>
-                        </div>
-                        <br>
-                        <b style='color: #fff; font-size: 20px;'>{area_a:,.0f} m²</b> <small style='color: #888;'>(약 {area_a/3.3058:,.1f}평)</small>
-                    </li>
+                <ul style='list-style: none; padding: 0;'>
+                    <li style='margin-bottom: 15px;'>PV: <b style='color: #fff;'>{pv_ideal:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 15px;'>BESS: <b style='color: #fff;'>{bess_a:,.1f} kWh</b> ({bess_a/total_d:.1f}일분)</li>
+                    <li style='margin-bottom: 15px; font-size: 18px;'><b>Total CAPEX: $ {capex_a:,.0f}</b></li>
                 </ul>
+                <div style='background: rgba(0,255,136,0.1); padding: 15px; border-radius: 8px; border: 1px solid #00ff88;'>
+                    <span style='color: #00ff88; font-weight: bold;'>이점:</span> 보수적 설계 대비<br>
+                    <b style='font-size: 20px; color: #00ff88;'>$ {max(0, savings_a):,.0f} 절감</b>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with c2:
+            savings_b = capex_q2 - capex_b
+            h2_days = (max(h2_stock) * 33.33 * H2_FC_EFF) / total_d
+            st.markdown(f"""
+            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; min-height: 400px; color: #eee;'>
+                <h4 style='color: #00d4ff; text-align: center;'>Scenario B: H2 Hybrid</h4>
+                <p style='font-size: 14px; color: #ccc; text-align: center;'>수소를 결합한 장기 에너지 이동</p>
+                <hr style='border-color: #444;'>
+                <ul style='list-style: none; padding: 0;'>
+                    <li style='margin-bottom: 15px;'>PV: <b style='color: #fff;'>{pv_hybrid:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 15px;'>H2 저장: <b style='color: #fff;'>{max(h2_stock):,.1f} kg</b> ({h2_days:.1f}일분)</li>
+                    <li style='margin-bottom: 15px; font-size: 18px;'><b>Total CAPEX: $ {capex_b:,.0f}</b></li>
+                </ul>
+                <div style='background: rgba(0,212,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #00d4ff;'>
+                    <span style='color: #00d4ff; font-weight: bold;'>이점:</span> 보수적 설계 대비<br>
+                    <b style='font-size: 20px; color: #00d4ff;'>$ {max(0, savings_b):,.0f} 절감</b>
+                </div>
             </div>
             """, unsafe_allow_html=True)
 
-        with c2:
-            h2_days = (max(h2_stock) * 33.33 * H2_FC_EFF) / total_d
-            pv_diff = (pv_hybrid / pv_ideal - 1) * 100
-            st.markdown(f"""
-            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; min-height: 520px; color: #eee;'>
-                <h4 style='color: #00d4ff; text-align: center; font-size: 20px; margin-bottom: 15px;'>Scenario B: BESS-HESS Hybrid</h4>
-                <div style='text-align: center; font-size: 40px; margin: 10px 0;'>☀️ ➡ 🔋 + 💧(H2) ➡ 🏠</div>
-                <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>배터리와 수소가 단기/장기 변동을 나누어 담당하여 효율을 극대화합니다.</p>
-                <hr style='border-color: #444;'>
-                <ul style='list-style: none; padding: 0; font-size: 18px;'>
-                    <li style='margin-bottom: 15px;'>
-                        <span style='font-size: 17px; color: #aaa;'>PV 규모:</span>
-                        <div class="custom-tooltip"> ℹ️
-                            <div class="tooltiptext">
-                                <b style='color: #00d4ff; font-size: 14px;'>📝 시나리오 B 하이브리드 최적화 로직</b><br><br>
-                                BESS와 수소(H2)의 역할을 분담하여 경제성을 극대화합니다:<br><br>
-                                1. <b>BESS 역할:</b> 일일 변동성 대응을 위해 1.5일분 고정 용량 산정<br>
-                                2. <b>수소 시스템 역할:</b> 장기(계절) 에너지 저장을 담당<br>
-                                3. <b>반복 연산(Iterative Solver):</b> 연간 수소 생산량과 소비량이 일치(Net-Zero)되는 최적의 태양광 및 수소 저장 용량을 정밀 도출
-                            </div>
-                        </div>
-                        <br>
-                        <b style='color: #fff; font-size: 28px;'>{pv_hybrid:,.1f} kWp</b>
-                        <span style='background: rgba(0,212,255,0.2); color: #00d4ff; padding: 2px 8px; border-radius: 4px; font-size: 14px; margin-left: 5px; vertical-align: middle;'>
-                            📈 {pv_diff:+.1f}% vs A
-                        </span>
-                    </li>
-                    <li style='margin-bottom: 20px;'>
-                        <span style='font-size: 17px; color: #aaa;'>에너지 저장 (Hybrid):</span>
-                        <div class="custom-tooltip"> ℹ️
-                            <div class="tooltiptext">
-                                <b style='color: #00d4ff; font-size: 14px;'>🔋 하이브리드 저장 시스템</b><br><br>
-                                배터리와 수소가 역할을 분담하는 구조입니다:<br><br>
-                                - <b>BESS:</b> 일일 변동 대응 (1.5일분 고정)<br>
-                                - <b>수소(H2):</b> 장기 계절 저장 (필요량에 따라 가변)
-                            </div>
-                        </div>
+        best_scenario = "A (배터리 Only)" if capex_a < capex_b else "B (수소 하이브리드)"
+        st.success(f"**최종 결론**: 이 지역에서는 **시나리오 {best_scenario}**가 보수적 설계 대비 가장 큰 CAPEX 이득을 제공합니다.")
+
+        # 3. 주요 운영 지표 시각화
+        st.markdown("### 📊 3. 상세 운영 지표 및 시스템 구성 (Operational Analysis)")
                         <br>
                         <div style='margin-top: 10px; padding-left: 10px; border-left: 2px solid #00d4ff;'>
                             <div style='font-size: 15px; color: #ccc; margin-bottom: 5px;'>▪️ BESS (배터리): <b style='color: #fff;'>{bess_b:,.1f} kWh</b> (1.5일분)</div>
