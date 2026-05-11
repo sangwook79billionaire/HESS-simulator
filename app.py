@@ -760,11 +760,9 @@ elif st.session_state.step == 'result':
         potential_gen_best = pv_for_worst * best_ghi
         max_curtailment = max(0, potential_gen_best - total_d)
         
-        # Calculate Monthly Net Balance for Shifting Visualization
-        monthly_yield = monthly_avg_ghi * 30 # Approx month days
-        # We use pv_base (Net Zero PV) to show the actual shift needed
-        monthly_gen = monthly_avg_ghi * pv_base
-        monthly_net = monthly_gen - total_d
+        # Calculate Monthly Curtailment if sized for worst month
+        monthly_gen_worst = monthly_avg_ghi * pv_for_worst
+        monthly_curtailment_series = monthly_gen_worst - total_d
         
         c_base1, c_base2, c_base3 = st.columns([1, 1, 1.5])
         
@@ -789,8 +787,8 @@ elif st.session_state.step == 'result':
                     <b style='color: #fff; font-size: 18px;'>{pv_for_worst:,.1f} kWp</b>
                 </div>
                 <div style='background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid #ff4b4b;'>
-                    <small style='color: #888;'>최고 시 잉여 전력</small><br>
-                    <b style='color: #ff4b4b; font-size: 18px;'>{max_curtailment:,.1f} kWh/d</b>
+                    <small style='color: #888;'>연간 총 잉여 전력량</small><br>
+                    <b style='color: #ff4b4b; font-size: 18px;'>{(monthly_curtailment_series.sum() * 30.4 / 1000):,.1f} MWh/y</b>
                 </div>
                 <div style='background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid #00ff88;'>
                     <small style='color: #888;'>연간 에너지 밸런스 PV</small><br>
@@ -800,29 +798,24 @@ elif st.session_state.step == 'result':
             """, unsafe_allow_html=True)
 
         with c_base3:
-            # Energy Shifting Visualization (Area Chart)
-            fig_shift = go.Figure()
-            # Surplus area
-            fig_shift.add_trace(go.Scatter(
-                x=list(range(1, 13)), y=[max(0, x) for x in monthly_net],
-                fill='tozeroy', mode='none', name='Surplus (충전 필요)', fillcolor='rgba(0, 255, 136, 0.3)'
+            # Wasted Energy Visualization (Curtailment Only)
+            fig_curt = go.Figure()
+            fig_curt.add_trace(go.Scatter(
+                x=list(range(1, 13)), y=monthly_curtailment_series,
+                fill='tozeroy', mode='lines', name='Wasted Energy (잉여)', line=dict(color='#ff4b4b', width=2),
+                fillcolor='rgba(255, 75, 75, 0.2)'
             ))
-            # Deficit area
-            fig_shift.add_trace(go.Scatter(
-                x=list(range(1, 13)), y=[min(0, x) for x in monthly_net],
-                fill='tozeroy', mode='none', name='Deficit (방전 필요)', fillcolor='rgba(255, 75, 75, 0.3)'
-            ))
-            fig_shift.update_layout(
-                title="에너지 이동(Shifting) 필요량 시각화", template="plotly_dark", height=250,
-                margin=dict(l=20, r=20, t=40, b=20), xaxis=dict(dtick=1), yaxis=dict(title="Net Balance (kWh/d)"),
+            fig_curt.update_layout(
+                title="무정전 설계 시 발생하는 에너지 낭비(Curtailment)", template="plotly_dark", height=250,
+                margin=dict(l=20, r=20, t=40, b=20), xaxis=dict(dtick=1), yaxis=dict(title="Surplus Energy (kWh/d)"),
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10))
             )
-            st.plotly_chart(fig_shift, use_container_width=True)
+            st.plotly_chart(fig_curt, use_container_width=True)
 
         st.markdown(f"""
-        <div style='background: rgba(0, 212, 255, 0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(0,212,255,0.1); margin-top: 10px; color: #aaa; font-size: 13px; line-height: 1.6;'>
-            위 그래프의 <b>초록색 면적(Surplus)</b>을 <b>빨간색 면적(Deficit)</b> 시기로 옮기는 것이 설계의 핵심 목표입니다. <br>
-            이 막대한 에너지를 어떤 매체로 옮길지에 따라 아래의 시나리오 A와 B가 결정됩니다.
+        <div style='background: rgba(255, 75, 75, 0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,75,75,0.1); margin-top: 10px; color: #aaa; font-size: 13px; line-height: 1.6;'>
+            위 그래프의 <b>빨간색 영역(Curtailment)</b>은 최저 일사량에 맞춰 태양광을 과도하게 설계했을 때 버려지는 에너지를 의미합니다. <br>
+            시나리오 A와 B는 이 <b>낭비되는 에너지를 효율적으로 저장</b>하여 PV 용량을 줄이고 전체 비용을 최적화하는 전략을 제안합니다.
         </div>
         """, unsafe_allow_html=True)
 
