@@ -906,21 +906,24 @@ elif st.session_state.step == 'result':
         
         # Sweet Spot Assessment
         st.markdown(f"""
-        <div style='background: rgba(0, 255, 136, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(0, 255, 136, 0.2); margin-bottom: 25px;'>
-            <h4 style='color: #00ff88; margin-top: 0;'>🎯 경제적 Sweet Spot 정밀 진단 (Amplitude & Duration)</h4>
-            <p style='font-size: 14px; color: #ccc;'>
-                에너지 전이의 경제성은 <b>편차(얼마나 차이나는가)</b>와 <b>지속성(얼마나 오래가는가)</b>의 조합으로 결정됩니다.
-            </p>
-            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;'>
-                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px;'>
-                    <b style='color: #38bdf8; font-size: 13px;'>📊 발전 편차 (Amplitude)</b><br>
-                    <span style='font-size: 18px; font-weight: bold; color: #fff;'>{ghi_variance_pct:.1f}%</span><br>
-                    <small style='color: #888;'>연중 최저/최고 월간 일사량 격차</small>
+        <div style='background: rgba(15, 23, 42, 0.6); padding: 30px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 30px;'>
+            <h3 style='color: #00ff88; margin-top: 0; margin-bottom: 20px; font-size: 20px;'>📊 경제성 정밀 진단 (Amplitude & Duration)</h3>
+            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 30px;'>
+                <!-- Amplitude -->
+                <div style='background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border-left: 5px solid #38bdf8;'>
+                    <span style='color: #38bdf8; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>발전 편차 (Amplitude)</span><br>
+                    <div style='margin-top: 10px;'>
+                        <b style='font-size: 36px; color: #ffffff; line-height: 1;'>{ghi_variance_pct:.1f}%</b>
+                    </div>
+                    <p style='color: #94a3b8; font-size: 13px; margin-top: 10px; margin-bottom: 0;'>연중 최저/최고 월간 일사량의 산술적 격차</p>
                 </div>
-                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px;'>
-                    <b style='color: #fbbf24; font-size: 13px;'>⏳ 부족 지속성 (Duration)</b><br>
-                    <span style='font-size: 18px; font-weight: bold; color: #fff;'>{lean_months}개월</span><br>
-                    <small style='color: #888;'>연평균 이하 일사량 지속 기간</small>
+                <!-- Duration -->
+                <div style='background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border-left: 5px solid #fbbf24;'>
+                    <span style='color: #fbbf24; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>부족 지속성 (Duration)</span><br>
+                    <div style='margin-top: 10px;'>
+                        <b style='font-size: 36px; color: #ffffff; line-height: 1;'>{lean_months}개월</b>
+                    </div>
+                    <p style='color: #94a3b8; font-size: 13px; margin-top: 10px; margin-bottom: 0;'>연평균 이하 일사량이 지속되는 계절적 기간</p>
                 </div>
             </div>
         </div>
