@@ -861,35 +861,6 @@ elif st.session_state.step == 'result':
 
         # 3. 주요 운영 지표 시각화
         st.markdown("### 📊 3. 상세 운영 지표 및 시스템 구성 (Operational Analysis)")
-                        <br>
-                        <div style='margin-top: 10px; padding-left: 10px; border-left: 2px solid #00d4ff;'>
-                            <div style='font-size: 15px; color: #ccc; margin-bottom: 5px;'>▪️ BESS (배터리): <b style='color: #fff;'>{bess_b:,.1f} kWh</b> (1.5일분)</div>
-                            <div style='font-size: 15px; color: #ccc; margin-bottom: 5px;'>▪️ 수전해기 (Electrolyzer): <b style='color: #00d4ff;'>{el_kw:,.1f} kW</b></div>
-                            <div style='font-size: 15px; color: #ccc; margin-bottom: 5px;'>▪️ 연료전지 (Fuel Cell): <b style='color: #00d4ff;'>{fc_kw:,.1f} kW</b></div>
-                            <div style='font-size: 15px; color: #ccc;'>
-                                ▪️ 수소저장 (H2 Storage): <b style='color: #00ff88;'>{max(h2_stock):,.1f} kg</b> 
-                                <span style='color: #00ff88; font-weight: bold; font-size: 18px; margin-left: 5px;'>({h2_days:.1f}일분)</span>
-                            </div>
-                        </div>
-                    </li>
-                    <li style='margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;'>
-                        <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span>
-                        <div class="custom-tooltip"> ℹ️
-                            <div class="tooltiptext">
-                                <b style='color: #ffffff; font-size: 14px;'>📐 면적 산출 근거</b><br><br>
-                                설비 설치에 필요한 최소 부지 면적입니다:<br><br>
-                                - <b>Solar PV:</b> 10 m²/kWp (이격거리 포함)<br>
-                                - <b>BESS/H2:</b> 컨테이너 및 시스템 풋프린트 기반<br>
-                                - <b>기타:</b> 인프라 및 시공 여유 부지 포함
-                            </div>
-                        </div>
-                        <br>
-                        <b style='color: #fff; font-size: 20px;'>{area_b:,.0f} m²</b> <small style='color: #888;'>(약 {area_b/3.3058:,.1f}평)</small>
-                    </li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-
 
 
         # 3. 주요 운영 지표 시각화
