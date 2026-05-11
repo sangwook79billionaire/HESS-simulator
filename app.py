@@ -783,19 +783,19 @@ elif st.session_state.step == 'result':
             st.markdown(f"""
             <div style='display: flex; flex-direction: column; gap: 12px;'>
                 <div style='background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #38bdf8;'>
-                    <small style='color: #888;'>최저 일사량 대응 PV</small><br>
+                    <small style='color: #888;'>최저 일사량 대응 PV (Max)</small><br>
                     <b style='color: #38bdf8; font-size: 22px;'>{pv_for_worst:,.1f} <small style='font-size: 14px;'>kWp</small></b><br>
-                    <span style='color: #777; font-size: 11px;'>최저 기간(Worst Month) 자립을 위한 용량</span>
+                    <span style='color: #777; font-size: 11px;'>저장 장치 없이 무정전을 위한 <b>가장 보수적인(최대)</b> 기준</span>
                 </div>
                 <div style='background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #ff4b4b;'>
                     <small style='color: #888;'>연간 총 잉여 전력량</small><br>
                     <b style='color: #ff4b4b; font-size: 22px;'>{(monthly_curtailment_series.sum() * 30.4 / 1000):,.1f} <small style='font-size: 14px;'>MWh/y</small></b><br>
-                    <span style='color: #777; font-size: 11px;'>최저 기준 설계 시 버려지는 전력 총량</span>
+                    <span style='color: #777; font-size: 11px;'>보수적 설계 시 버려지는 막대한 에너지 낭비 규모</span>
                 </div>
                 <div style='background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #00ff88;'>
-                    <small style='color: #888;'>연간 에너지 밸런스 PV</small><br>
+                    <small style='color: #888;'>연간 에너지 밸런스 PV (Min)</small><br>
                     <b style='color: #00ff88; font-size: 22px;'>{pv_base:,.1f} <small style='font-size: 14px;'>kWp</small></b><br>
-                    <span style='color: #777; font-size: 11px;'>연간 총 생산 = 소비가 되는 공학적 평형점</span>
+                    <span style='color: #777; font-size: 11px;'>에너지 전이(Shifting)를 전제로 한 <b>이론상 최소</b> 설계 기준</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
