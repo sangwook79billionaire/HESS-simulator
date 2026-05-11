@@ -843,9 +843,6 @@ elif st.session_state.step == 'result':
                     <p style='color: #666; font-size: 12px; margin-top: 10px;'>*연중 최악의 날(Worst Day)에도 100% 자립 가능한 규모</p>
                 </div>
             </div>
-            <div style='color: #aaa; font-size: 13px; margin-top: 15px; border-top: 1px solid #333; padding-top: 10px;'>
-                💡 <b>Insight:</b> 극한 보수 설계 시 비용이 <b>$ {capex_extreme - capex_q2:,.0f}</b> 더 발생합니다. 
-                이 거대한 CAPEX 격차가 바로 <b>'에너지 저장 및 전이'</b>가 필요한 경제적 이유입니다.
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -918,18 +915,14 @@ elif st.session_state.step == 'result':
                 <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px;'>
                     <b style='color: #38bdf8; font-size: 13px;'>📊 발전 편차 (Amplitude)</b><br>
                     <span style='font-size: 18px; font-weight: bold; color: #fff;'>{ghi_variance_pct:.1f}%</span><br>
-                    <small style='color: #888;'>최저/최고 발전 격차. 30% 이상 시 BESS 전이 검토 권장.</small>
+                    <small style='color: #888;'>연중 최저/최고 월간 일사량 격차</small>
                 </div>
                 <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px;'>
                     <b style='color: #fbbf24; font-size: 13px;'>⏳ 부족 지속성 (Duration)</b><br>
                     <span style='font-size: 18px; font-weight: bold; color: #fff;'>{lean_months}개월</span><br>
-                    <small style='color: #888;'>평균 이하 발전 지속 기간. 1개월 초과 시 수소(H2) 장기 저장 유리.</small>
+                    <small style='color: #888;'>연평균 이하 일사량 지속 기간</small>
                 </div>
             </div>
-            <p style='font-size: 13px; color: #aaa; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;'>
-                📍 <b>가이드라인:</b> 이 지역은 <b>{lean_months}개월</b>간의 저일사량 구간이 존재합니다. 
-                이 정도의 지속성은 단순 배터리 증설보다 <b>{ "수소 하이브리드(Scenario B)" if lean_months >= 2 else "배터리 최적화(Scenario A)" }</b>가 CAPEX 효율성 측면에서 더 유리할 가능성이 높습니다.
-            </p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1000,9 +993,6 @@ elif st.session_state.step == 'result':
                 </ul>
             </div>
             """, unsafe_allow_html=True)
-
-        best_scenario = "A (배터리 Only)" if capex_a < capex_b else "B (수소 하이브리드)"
-        st.success(f"**최종 결론**: 이 지역에서는 **시나리오 {best_scenario}**가 보수적 설계 대비 가장 큰 CAPEX 이득을 제공합니다.")
 
         # 3. 주요 운영 지표 시각화
         st.markdown("### 📊 3. 상세 운영 지표 및 시스템 구성 (Operational Analysis)")
