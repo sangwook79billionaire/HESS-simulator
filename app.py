@@ -905,7 +905,17 @@ elif st.session_state.step == 'result':
             st.markdown("<small style='color: #888;'>투자비 항목별 단가와 수량을 수정할 수 있습니다.</small>", unsafe_allow_html=True)
             capex_items = {
                 "구분": ["발전설비", "저장설비", "수소설비", "수소설비", "수소설비", "수소설비", "기타설비", "시공/인프라", "시공/인프라"],
-                "세부 항목": ["Solar PV System", "BESS (Battery)", "Electrolyzer (EL)", "Fuel Cell (FC)", "H2 Storage Tank", "H2 기자재/물류", "EMS & Control", "물류 및 시공 (Logistics)", "인프라 (Distribution)"],
+                "세부 항목": [
+                    "Solar PV System ($/kWp)", 
+                    "BESS (Battery) ($/kWh)", 
+                    "Electrolyzer (EL) ($/kW)", 
+                    "Fuel Cell (FC) ($/kW)", 
+                    "H2 Storage Tank ($/kg)", 
+                    "H2 기자재/물류 ($/job)", 
+                    "EMS & Control ($/set)", 
+                    "물류 및 시공 (Logistics) ($/job)", 
+                    "인프라 (Distribution) ($/hh)"
+                ],
                 "단가 ($)": [1000, 300, 550, 700, 650, 15000, 30000, 100000, 1500],
                 "수량": [int(pv_hybrid), int(bess_b), int(el_kw), int(fc_kw), int(max(h2_stock)), 1, 1, 1, int(hh)],
                 "총 금액 ($)": [0, 0, 0, 0, 0, 0, 0, 0, 0]
