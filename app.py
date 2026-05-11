@@ -755,6 +755,10 @@ elif st.session_state.step == 'result':
         monthly_daily_yield_1kw = monthly_sim['Gen_1kW'] * 24
         worst_month = monthly_daily_yield_1kw.idxmin()
         worst_daily_yield = monthly_daily_yield_1kw.min()
+        
+        # Duration metrics for risk assessment
+        avg_ghi = monthly_sim['Insolation'].mean()
+        lean_months = (monthly_sim['Insolation'] < avg_ghi).sum()
 
         # Q1: Insolation Variance Analysis
         st.markdown("### **Q1. 이 지역의 일사량 편차는?**")
@@ -899,9 +903,6 @@ elif st.session_state.step == 'result':
         st.markdown("### **Q4 & Q5. 에너지를 저장/이동할 때 CAPEX 관점에서 이점이 있나? 어느 쪽이 유리한가?**")
         
         # Sweet Spot Assessment
-        avg_ghi = monthly_sim['Insolation'].mean()
-        lean_months = (monthly_sim['Insolation'] < avg_ghi).sum()
-        
         st.markdown(f"""
         <div style='background: rgba(0, 255, 136, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(0, 255, 136, 0.2); margin-bottom: 25px;'>
             <h4 style='color: #00ff88; margin-top: 0;'>🎯 경제적 Sweet Spot 정밀 진단 (Amplitude & Duration)</h4>
