@@ -602,6 +602,7 @@ elif st.session_state.step == 'result':
     # ---------------------------------------------------------
     # We find the optimal PV/BESS ratio that minimizes total CAPEX
     # Increasing PV reduces the seasonal BESS requirement.
+    pv_base = pv_ideal # Store raw net-zero baseline for comparison
     best_capex_a = float('inf')
     best_pv_a = pv_ideal
     best_bess_a = 0
@@ -759,8 +760,8 @@ elif st.session_state.step == 'result':
                         NASA 기상 데이터와 마을의 24시간 전력 사용 패턴을 결합하여 1시간 단위의 에너지 수지를 시뮬레이션합니다.
                     </div>
                     <div style='margin-bottom: 20px;'>
-                        <b style='color: #38bdf8;'>2. 시나리오 A 도출</b><br>
-                        일조량이 가장 적은 기간에도 정전이 발생하지 않도록 오직 <b>배터리 용량만</b>을 늘려 설계합니다.
+                        <b style='color: #38bdf8;'>2. 시나리오 A 도출 (CAPEX 최적화)</b><br>
+                        태양광을 1.2~1.8배 과설계하여 값비싼 계절 비축용 배터리 용량을 최소화하는 최저 CAPEX 지점을 찾습니다.
                     </div>
                     <div style='margin-bottom: 20px;'>
                         <b style='color: #38bdf8;'>3. 시나리오 B 도출</b><br>
@@ -791,15 +792,17 @@ elif st.session_state.step == 'result':
                         <span style='font-size: 17px; color: #aaa;'>PV 규모:</span>
                         <div class="custom-tooltip"> ℹ️
                             <div class="tooltiptext">
-                                <b style='color: #ff4b4b; font-size: 14px;'>📝 시나리오 A 배터리 산출 공식</b><br><br>
-                                시나리오 A는 배터리만으로 365일 자립해야 하므로 다음 과정을 거칩니다:<br><br>
-                                1. <b>PV 사이즈 결정:</b> 연간 총 발전량과 수요량이 일치하도록 설계<br>
-                                2. <b>연간 SOC 시뮬레이션:</b> 8,760시간 동안 충/방전 시뮬레이션 수행<br>
-                                3. <b>계절적 변동폭 추출:</b> 일사량이 많은 시기(충전)와 적은 시기(방전)의 최대/최소 에너지 차이(Delta) 계산<br>
-                                4. <b>최종 용량 결정:</b> (계절적 변동폭) × 1.1 (여유율)로 산정
+                                <b style='color: #ff4b4b; font-size: 14px;'>📝 시나리오 A CAPEX 최적화 설계</b><br><br>
+                                단순히 연간 균형을 맞추는 데 그치지 않고, <b>투자비가 최소화</b>되는 지점을 찾습니다:<br><br>
+                                - <b>태양광 과설계:</b> 배터리보다 저렴한 태양광을 추가 설치하여 고가의 계절 비축 배터리 용량을 절감<br>
+                                - <b>최적 비율 도출:</b> 시뮬레이션을 통해 총 투자비(CAPEX)가 가장 낮은 PV/BESS 조합 선정
                             </div>
                         </div>
-                        <br><b style='color: #fff; font-size: 22px;'>{pv_ideal:,.1f} kWp</b>
+                        <br>
+                        <b style='color: #fff; font-size: 22px;'>{pv_ideal:,.1f} kWp</b>
+                        <span style='background: rgba(255,75,75,0.2); color: #ff4b4b; padding: 2px 8px; border-radius: 4px; font-size: 14px; margin-left: 5px; vertical-align: middle;'>
+                            📈 {((pv_ideal/pv_base)-1)*100:+.1f}% vs Base
+                        </span>
                     </li>
                     <li style='margin-bottom: 15px;'>
                         <span style='font-size: 17px; color: #aaa;'>BESS 용량:</span>
