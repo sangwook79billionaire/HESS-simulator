@@ -751,15 +751,44 @@ elif st.session_state.step == 'result':
         st.markdown("### 📋 2. 공통 전략 베이스 (Strategic Base Conditions)")
         
         # Calculate Base Metrics
-        # 1. PV for min insolation period (approximation using worst month)
         monthly_avg_ghi = df_h.groupby(df_h['Timestamp'].dt.month)['Insolation'].mean()
+        worst_month = monthly_avg_ghi.idxmin()
         worst_ghi = monthly_avg_ghi.min()
         best_ghi = monthly_avg_ghi.max()
         
-        # Theoretical PV to cover daily load during worst month without storage (12h day approx)
-        pv_for_worst = (total_d / worst_ghi) * 1.1 
+        # 📊 Visualization: Monthly Insolation Profile
+        fig_base = go.Figure()
+        # Bars with conditional color (Red for worst month)
+        colors = ['#38bdf8'] * 12
+        colors[worst_month-1] = '#ff4b4b'
         
-        # Potential Curtailment if sized for worst month
+        fig_base.add_trace(go.Bar(
+            x=list(range(1, 13)), y=monthly_avg_ghi,
+            marker_color=colors,
+            name="월간 평균 일사량",
+            hovertemplate="Month %{x}<br>Insolation: %{y:.2f} kWh/m²/d<extra></extra>"
+        ))
+        
+        # Add Horizontal Line for Energy Target
+        # To meet total_d with 1kWp of PV, we need total_d / yield. 
+        # But here we show it conceptually as "Demand vs Supply"
+        fig_base.update_layout(
+            title=dict(text=f"해당 지역의 월별 일사량 프로필 (최저 구간: {worst_month}월)", font=dict(size=18, color="#38bdf8")),
+            template="plotly_dark", height=350,
+            margin=dict(l=50, r=50, t=50, b=50),
+            xaxis=dict(title="Month", tickmode='linear', dtick=1),
+            yaxis=dict(title="Insolation (kWh/m²/d)")
+        )
+        # Highlight Worst Month with Annotation
+        fig_base.add_annotation(
+            x=worst_month, y=worst_ghi,
+            text="Minimum Point", showarrow=True, arrowhead=1,
+            ax=0, ay=-40, bgcolor="#ff4b4b"
+        )
+        st.plotly_chart(fig_base, use_container_width=True)
+
+        # Theoretical PV for worst month
+        pv_for_worst = (total_d / worst_ghi) * 1.1 
         potential_gen_best = pv_for_worst * best_ghi
         max_curtailment = max(0, potential_gen_best - total_d)
         
