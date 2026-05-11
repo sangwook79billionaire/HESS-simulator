@@ -233,7 +233,18 @@ if st.session_state.step == 'input':
                     geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v2")
                     loc = geolocator.geocode(address, timeout=10)
                     if loc:
-                        st.session_state.lat, st.session_state.lon, st.session_state.country = loc.latitude, loc.longitude, loc.address
+                        st.session_state.lat, st.session_state.lon = loc.latitude, loc.longitude
+                        # Perform reverse geocode to get consistent address with CountryCode
+                        try:
+                            rev = geolocator.reverse(f"{loc.latitude}, {loc.longitude}", timeout=5)
+                            if rev:
+                                c_code = rev.raw.get('address', {}).get('CountryCode', '')
+                                st.session_state.country = f"{rev.address} ({c_code})" if c_code else rev.address
+                            else:
+                                st.session_state.country = loc.address
+                        except:
+                            st.session_state.country = loc.address
+                            
                         st.session_state.loc_confirmed = True # Auto-confirm and match country
                         st.rerun()
                     else: st.error("검색 결과가 없습니다.")
