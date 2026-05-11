@@ -936,7 +936,7 @@ elif st.session_state.step == 'result':
             rev_opex_items = {
                 "구분": ["수익", "수익", "수익", "운영비", "운영비", "운영비", "운영비"],
                 "상세 항목": ["전기 판매 요금 (PPA)", "정부 운영 보조금 ($/yr)", "기타 판매 수익 ($/yr)", "일반 유지보수비 ($/yr)", "현지 운영비 ($/yr)", "BESS 교체 적립금", "H2 스택 교체 적립금"],
-                "금액 ($)": [ref_rate, 50000.0, 0.0, float(total_capex_fs * 0.012), 30000.0, float(bess_replace_annual), float(stack_replace_annual)]
+                "금액 ($)": [ref_rate, 0.0, 0.0, float(total_capex_fs * 0.012), 30000.0, float(bess_replace_annual), float(stack_replace_annual)]
             }
             df_rev_init = pd.DataFrame(rev_opex_items)
             edited_rev = st.data_editor(
