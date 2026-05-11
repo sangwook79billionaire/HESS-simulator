@@ -879,26 +879,48 @@ elif st.session_state.step == 'result':
 
         # Q4 & Q5: Optimized Scenarios
         st.markdown("### **Q4 & Q5. 에너지를 저장/이동할 때 CAPEX 관점에서 이점이 있나? 어느 쪽이 유리한가?**")
-        st.write("보수적 설계(Q2) 대비, 에너지를 저장하여 PV를 최적화했을 때의 경제성을 비교합니다.")
         
+        # Sweet Spot Assessment
+        is_shifting_viable = ghi_variance_pct > 25.0 # Basic threshold for shifting to make sense
+        st.markdown(f"""
+        <div style='background: rgba(0, 255, 136, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(0, 255, 136, 0.2); margin-bottom: 25px;'>
+            <h4 style='color: #00ff88; margin-top: 0;'>🎯 경제적 Sweet Spot 검토 결과</h4>
+            <p style='font-size: 14px; color: #ccc;'>
+                보수적 설계(Q2) 대비 PV 용량을 줄이고 저장 장치를 늘리는 <b>'에너지 전이'</b> 전략의 타당성을 검토합니다. 
+                이 지역의 일사량 편차는 <b>{ghi_variance_pct:.1f}%</b>로, 일반적으로 편차가 <b>25% 이상</b>일 때 저장 장치를 통한 PV 최적화가 경제적 우위에 서기 시작합니다.
+            </p>
+            <div style='display: flex; gap: 20px; margin-top: 10px;'>
+                <div style='flex: 1; font-size: 13px; color: #aaa;'>
+                    <b style='color: #fff;'>1) 배터리 (BESS) 전이</b><br>
+                    단기/중기 변동 대응에 유리하며, PV를 <b>{((pv_for_worst/pv_ideal)-1)*100:.1f}%</b> 절감할 수 있는 Sweet Spot을 제공합니다.
+                </div>
+                <div style='flex: 1; font-size: 13px; color: #aaa;'>
+                    <b style='color: #fff;'>2) 수소 (H2 Hybrid) 전이</b><br>
+                    계절적 편차가 <b>50% 이상</b>일 때 장기 저장 매체로서 CAPEX 효율이 극대화됩니다.
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
         c1, c2 = st.columns(2)
         area_a = (pv_ideal * 10) + (bess_a * 0.1)
         area_b = (pv_hybrid * 10) + (bess_b * 0.1) + (max(h2_stock) * 1.5) + 50
 
         with c1:
             savings_a = capex_q2 - capex_a
+            pv_reduction_a = ((pv_for_worst - pv_ideal) / pv_for_worst) * 100
             st.markdown(f"""
-            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #ff4b4b; min-height: 400px; color: #eee;'>
+            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #ff4b4b; min-height: 420px; color: #eee;'>
                 <h4 style='color: #ff4b4b; text-align: center;'>Scenario A: BESS Only</h4>
-                <p style='font-size: 14px; color: #ccc; text-align: center;'>배터리 최적화를 통한 에너지 이동</p>
+                <p style='font-size: 14px; color: #ccc; text-align: center;'>배터리 전이를 통한 <b>PV {pv_reduction_a:.1f}% 절감</b></p>
                 <hr style='border-color: #444;'>
                 <ul style='list-style: none; padding: 0;'>
-                    <li style='margin-bottom: 15px;'>PV: <b style='color: #fff;'>{pv_ideal:,.1f} kWp</b></li>
-                    <li style='margin-bottom: 15px;'>BESS: <b style='color: #fff;'>{bess_a:,.1f} kWh</b> ({bess_a/total_d:.1f}일분)</li>
+                    <li style='margin-bottom: 15px;'>PV 최적화: <b style='color: #fff;'>{pv_ideal:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 15px;'>BESS 저장: <b style='color: #fff;'>{bess_a:,.1f} kWh</b></li>
                     <li style='margin-bottom: 15px; font-size: 18px;'><b>Total CAPEX: $ {capex_a:,.0f}</b></li>
                 </ul>
                 <div style='background: rgba(0,255,136,0.1); padding: 15px; border-radius: 8px; border: 1px solid #00ff88;'>
-                    <span style='color: #00ff88; font-weight: bold;'>이점:</span> 보수적 설계 대비<br>
+                    <span style='color: #00ff88; font-weight: bold;'>경제적 이득:</span> Q2 대비<br>
                     <b style='font-size: 20px; color: #00ff88;'>$ {max(0, savings_a):,.0f} 절감</b>
                 </div>
             </div>
@@ -906,19 +928,20 @@ elif st.session_state.step == 'result':
             
         with c2:
             savings_b = capex_q2 - capex_b
+            pv_reduction_b = ((pv_for_worst - pv_hybrid) / pv_for_worst) * 100
             h2_days = (max(h2_stock) * 33.33 * H2_FC_EFF) / total_d
             st.markdown(f"""
-            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; min-height: 400px; color: #eee;'>
+            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; min-height: 420px; color: #eee;'>
                 <h4 style='color: #00d4ff; text-align: center;'>Scenario B: H2 Hybrid</h4>
-                <p style='font-size: 14px; color: #ccc; text-align: center;'>수소를 결합한 장기 에너지 이동</p>
+                <p style='font-size: 14px; color: #ccc; text-align: center;'>수소 장기 저장을 통한 <b>PV {pv_reduction_b:.1f}% 절감</b></p>
                 <hr style='border-color: #444;'>
                 <ul style='list-style: none; padding: 0;'>
-                    <li style='margin-bottom: 15px;'>PV: <b style='color: #fff;'>{pv_hybrid:,.1f} kWp</b></li>
-                    <li style='margin-bottom: 15px;'>H2 저장: <b style='color: #fff;'>{max(h2_stock):,.1f} kg</b> ({h2_days:.1f}일분)</li>
+                    <li style='margin-bottom: 15px;'>PV 최적화: <b style='color: #fff;'>{pv_hybrid:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 15px;'>H2 저장: <b style='color: #fff;'>{max(h2_stock):,.1f} kg</b></li>
                     <li style='margin-bottom: 15px; font-size: 18px;'><b>Total CAPEX: $ {capex_b:,.0f}</b></li>
                 </ul>
                 <div style='background: rgba(0,212,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #00d4ff;'>
-                    <span style='color: #00d4ff; font-weight: bold;'>이점:</span> 보수적 설계 대비<br>
+                    <span style='color: #00d4ff; font-weight: bold;'>경제적 이득:</span> Q2 대비<br>
                     <b style='font-size: 20px; color: #00d4ff;'>$ {max(0, savings_b):,.0f} 절감</b>
                 </div>
             </div>
