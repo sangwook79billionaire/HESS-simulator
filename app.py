@@ -695,6 +695,7 @@ elif st.session_state.step == 'result':
 
         with c2:
             h2_days = (max(h2_stock) * 33.33 * H2_FC_EFF) / total_d
+            pv_diff = (pv_hybrid / pv_ideal - 1) * 100
             st.markdown(f"""
             <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; min-height: 520px; color: #eee;'>
                 <h4 style='color: #00d4ff; text-align: center; font-size: 20px; margin-bottom: 15px;'>Scenario B: BESS-HESS Hybrid</h4>
@@ -702,13 +703,22 @@ elif st.session_state.step == 'result':
                 <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>배터리와 수소가 단기/장기 변동을 나누어 담당하여 효율을 극대화합니다.</p>
                 <hr style='border-color: #444;'>
                 <ul style='list-style: none; padding: 0; font-size: 18px;'>
-                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br><b style='color: #fff; font-size: 22px;'>{pv_hybrid:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 15px;'>
+                        <span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br>
+                        <b style='color: #fff; font-size: 28px;'>{pv_hybrid:,.1f} kWp</b>
+                        <span style='background: rgba(0,212,255,0.2); color: #00d4ff; padding: 2px 8px; border-radius: 4px; font-size: 14px; margin-left: 5px; vertical-align: middle;'>
+                            📈 {pv_diff:+.1f}% vs A
+                        </span>
+                    </li>
                     <li style='margin-bottom: 20px;'><span style='font-size: 17px; color: #aaa;'>에너지 저장 (Hybrid):</span> <br>
                         <div style='margin-top: 10px; padding-left: 10px; border-left: 2px solid #00d4ff;'>
                             <div style='font-size: 15px; color: #ccc; margin-bottom: 5px;'>▪️ BESS (배터리): <b style='color: #fff;'>{bess_b:,.1f} kWh</b> (1.5일분)</div>
                             <div style='font-size: 15px; color: #ccc; margin-bottom: 5px;'>▪️ 수전해기 (Electrolyzer): <b style='color: #00d4ff;'>{el_kw:,.1f} kW</b></div>
                             <div style='font-size: 15px; color: #ccc; margin-bottom: 5px;'>▪️ 연료전지 (Fuel Cell): <b style='color: #00d4ff;'>{fc_kw:,.1f} kW</b></div>
-                            <div style='font-size: 15px; color: #ccc;'>▪️ 수소저장 (H2 Storage): <b style='color: #00ff88;'>{max(h2_stock):,.1f} kg</b> <small style='color: #888;'>({h2_days:.1f}일분)</small></div>
+                            <div style='font-size: 15px; color: #ccc;'>
+                                ▪️ 수소저장 (H2 Storage): <b style='color: #00ff88;'>{max(h2_stock):,.1f} kg</b> 
+                                <span style='color: #00ff88; font-weight: bold; font-size: 18px; margin-left: 5px;'>({h2_days:.1f}일분)</span>
+                            </div>
                         </div>
                     </li>
                     <li style='margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;'>
