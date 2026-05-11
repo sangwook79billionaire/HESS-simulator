@@ -774,9 +774,29 @@ elif st.session_state.step == 'result':
                         </div>
                         <br><b style='color: #fff; font-size: 22px;'>{pv_ideal:,.1f} kWp</b>
                     </li>
-                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>BESS 용량:</span> <br><b style='color: #fff; font-size: 22px;'>{bess_a:,.1f} kWh</b> <span style='font-size: 16px; color: #ff4b4b; font-weight: bold;'>({bess_a/total_d:.1f}일분)</span></li>
+                    <li style='margin-bottom: 15px;'>
+                        <span style='font-size: 17px; color: #aaa;'>BESS 용량:</span>
+                        <div class="custom-tooltip"> ℹ️
+                            <div class="tooltiptext">
+                                <b style='color: #ff4b4b; font-size: 14px;'>🔋 BESS 비축 용량 (Autonomy)</b><br><br>
+                                일일 평균 전력 수요 대비 배터리에 저장 가능한 전력량의 비율입니다.<br><br>
+                                시나리오 A에서는 태양광이 부족한 기간(우기/겨울)을 버티기 위해 필요한 <b>계절적 비축 일수</b>가 산출됩니다.
+                            </div>
+                        </div>
+                        <br><b style='color: #fff; font-size: 22px;'>{bess_a:,.1f} kWh</b> <span style='font-size: 16px; color: #ff4b4b; font-weight: bold;'>({bess_a/total_d:.1f}일분)</span>
+                    </li>
                     <li style='margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;'>
-                        <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span><br>
+                        <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span>
+                        <div class="custom-tooltip"> ℹ️
+                            <div class="tooltiptext">
+                                <b style='color: #ffffff; font-size: 14px;'>📐 면적 산출 근거</b><br><br>
+                                설비 설치에 필요한 최소 부지 면적입니다:<br><br>
+                                - <b>Solar PV:</b> 10 m²/kWp (이격거리 포함)<br>
+                                - <b>BESS/H2:</b> 컨테이너 및 시스템 풋프린트 기반<br>
+                                - <b>기타:</b> 인프라 및 시공 여유 부지 포함
+                            </div>
+                        </div>
+                        <br>
                         <b style='color: #fff; font-size: 20px;'>{area_a:,.0f} m²</b> <small style='color: #888;'>(약 {area_a/3.3058:,.1f}평)</small>
                     </li>
                 </ul>
@@ -810,7 +830,17 @@ elif st.session_state.step == 'result':
                             📈 {pv_diff:+.1f}% vs A
                         </span>
                     </li>
-                    <li style='margin-bottom: 20px;'><span style='font-size: 17px; color: #aaa;'>에너지 저장 (Hybrid):</span> <br>
+                    <li style='margin-bottom: 20px;'>
+                        <span style='font-size: 17px; color: #aaa;'>에너지 저장 (Hybrid):</span>
+                        <div class="custom-tooltip"> ℹ️
+                            <div class="tooltiptext">
+                                <b style='color: #00d4ff; font-size: 14px;'>🔋 하이브리드 저장 시스템</b><br><br>
+                                배터리와 수소가 역할을 분담하는 구조입니다:<br><br>
+                                - <b>BESS:</b> 일일 변동 대응 (1.5일분 고정)<br>
+                                - <b>수소(H2):</b> 장기 계절 저장 (필요량에 따라 가변)
+                            </div>
+                        </div>
+                        <br>
                         <div style='margin-top: 10px; padding-left: 10px; border-left: 2px solid #00d4ff;'>
                             <div style='font-size: 15px; color: #ccc; margin-bottom: 5px;'>▪️ BESS (배터리): <b style='color: #fff;'>{bess_b:,.1f} kWh</b> (1.5일분)</div>
                             <div style='font-size: 15px; color: #ccc; margin-bottom: 5px;'>▪️ 수전해기 (Electrolyzer): <b style='color: #00d4ff;'>{el_kw:,.1f} kW</b></div>
@@ -822,7 +852,17 @@ elif st.session_state.step == 'result':
                         </div>
                     </li>
                     <li style='margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;'>
-                        <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span><br>
+                        <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span>
+                        <div class="custom-tooltip"> ℹ️
+                            <div class="tooltiptext">
+                                <b style='color: #ffffff; font-size: 14px;'>📐 면적 산출 근거</b><br><br>
+                                설비 설치에 필요한 최소 부지 면적입니다:<br><br>
+                                - <b>Solar PV:</b> 10 m²/kWp (이격거리 포함)<br>
+                                - <b>BESS/H2:</b> 컨테이너 및 시스템 풋프린트 기반<br>
+                                - <b>기타:</b> 인프라 및 시공 여유 부지 포함
+                            </div>
+                        </div>
+                        <br>
                         <b style='color: #fff; font-size: 20px;'>{area_b:,.0f} m²</b> <small style='color: #888;'>(약 {area_b/3.3058:,.1f}평)</small>
                     </li>
                 </ul>
