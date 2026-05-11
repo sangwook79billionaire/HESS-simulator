@@ -582,6 +582,19 @@ elif st.session_state.step == 'result':
     # BESS A must be large enough to cover this seasonal imbalance
     bess_a = (seasonal_swing / np.sqrt(BESS_EFF)) * 1.1 
     capex_a = (pv_ideal * PRICE_PV) + (bess_a * PRICE_BESS) + (hh * 1500)
+
+    # Re-run simulation for SOC trace display using finalized bess_a
+    soc = 50.0
+    net_trace = []
+    for i, row in df_a.iterrows():
+        bal = row['Net']
+        if bal > 0:
+            ch = min(bal, (95 - soc) * bess_a / 100)
+            soc += (ch * np.sqrt(BESS_EFF) / bess_a) * 100
+        else:
+            dis = min(abs(bal), (soc - 20) * bess_a / 100 / np.sqrt(BESS_EFF))
+            soc -= (dis * np.sqrt(BESS_EFF) / bess_a) * 100
+        net_trace.append(soc)
     
     # ---------------------------------------------------------
     # SCENARIO B: BESS-HESS Hybrid (Advanced Steady-State Solver)
