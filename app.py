@@ -991,12 +991,8 @@ elif st.session_state.step == 'result':
 </div>
 """, unsafe_allow_html=True)
 
-        # 3. 주요 운영 지표 시각화
-        st.markdown("### 📊 3. 상세 운영 지표 및 시스템 구성 (Operational Analysis)")
-
-
-        # 3. 주요 운영 지표 시각화
-        st.markdown("### 📊 3. 시나리오별 주요 지표 비교 (Operational Indicators)")
+        # 3. 주요 운영 지표 및 시나리오 비교
+        st.markdown("### 📊 3. 상세 운영 지표 및 시나리오 비교 (Detailed Analysis)")
         
         # Monthly Net Balance & Solar Data
         df_h['Month'] = df_h['Timestamp'].dt.month
