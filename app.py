@@ -611,7 +611,7 @@ elif st.session_state.step == 'result':
         test_pv = pv_ideal * factor
         df_test = df_h.copy()
         df_test['Gen'] = df_test['Gen_1kW'] * test_pv
-        df_test['Net'] = df_test['Gen'] - (total_d / 24) * norm_profile[df_test['Timestamp'].dt.hour]
+        df_test['Net'] = df_test['Gen'] - (total_d / 24) * df_test['Timestamp'].dt.hour.map(lambda h: norm_profile[h])
         
         # Calculate required seasonal storage for this PV size
         df_test['Cum_Net'] = df_test['Net'].cumsum()
@@ -631,7 +631,7 @@ elif st.session_state.step == 'result':
     # Re-run final simulation for SOC trace display
     df_a = df_h.copy()
     df_a['Gen'] = df_h['Gen_1kW'] * pv_ideal
-    df_a['Net'] = df_a['Gen'] - (total_d / 24) * norm_profile[df_a['Timestamp'].dt.hour]
+    df_a['Net'] = df_a['Gen'] - (total_d / 24) * df_a['Timestamp'].dt.hour.map(lambda h: norm_profile[h])
     soc = 50.0
     net_trace = []
     for i, row in df_a.iterrows():
