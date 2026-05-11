@@ -822,6 +822,41 @@ elif st.session_state.step == 'result':
             </div>
         </div>
         """, unsafe_allow_html=True)
+        
+        # Breakdown Metrics
+        c_q2_sub1, c_q2_sub2, c_q2_sub3 = st.columns(3)
+        with c_q2_sub1:
+            st.markdown(f"""
+            <div style='padding: 10px; border-top: 1px solid #333;'>
+                <small style='color: #888;'>💡 설계 근거 (Engineering Basis)</small><br>
+                <span style='font-size: 13px; color: #ccc;'>
+                    • 일일 수요: {total_d:,.1f} kWh/d<br>
+                    • 최저 발전: {worst_daily_yield:.2f} kWh/kWp/d
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
+        with c_q2_sub2:
+            pv_cost = pv_for_worst * PRICE_PV
+            st.markdown(f"""
+            <div style='padding: 10px; border-top: 1px solid #333;'>
+                <small style='color: #888;'>☀️ 태양광 내역 (PV Breakdown)</small><br>
+                <span style='font-size: 13px; color: #ccc;'>
+                    • 용량: {pv_for_worst:,.1f} kWp<br>
+                    • 비용: $ {pv_cost:,.0f} (@$1,200)
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
+        with c_q2_sub3:
+            bess_cost = total_d * PRICE_BESS
+            st.markdown(f"""
+            <div style='padding: 10px; border-top: 1px solid #333;'>
+                <small style='color: #888;'>🔋 배터리 내역 (BESS Breakdown)</small><br>
+                <span style='font-size: 13px; color: #ccc;'>
+                    • 용량: {total_d:,.1f} kWh (1일분)<br>
+                    • 비용: $ {bess_cost:,.0f} (@$350)
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
         # Q3: Curtailment
         st.markdown("### **Q3. 과설계 시 버려지는 에너지(Curtailment)는 얼마나 되나?**")
         monthly_curtailment_series = (monthly_daily_yield_1kw * pv_for_worst) - total_d
