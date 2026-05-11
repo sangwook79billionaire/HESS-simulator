@@ -773,7 +773,17 @@ elif st.session_state.step == 'result':
                 <hr style='border-color: #444;'>
                 <ul style='list-style: none; padding: 0; font-size: 18px;'>
                     <li style='margin-bottom: 15px;'>
-                        <span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br>
+                        <span style='font-size: 17px; color: #aaa;'>PV 규모:</span>
+                        <div class="custom-tooltip"> ℹ️
+                            <div class="tooltiptext">
+                                <b style='color: #00d4ff; font-size: 14px;'>📝 시나리오 B 하이브리드 최적화 로직</b><br><br>
+                                BESS와 수소(H2)의 역할을 분담하여 경제성을 극대화합니다:<br><br>
+                                1. <b>BESS 역할:</b> 일일 변동성 대응을 위해 1.5일분 고정 용량 산정<br>
+                                2. <b>수소 시스템 역할:</b> 장기(계절) 에너지 저장을 담당<br>
+                                3. <b>반복 연산(Iterative Solver):</b> 연간 수소 생산량과 소비량이 일치(Net-Zero)되는 최적의 태양광 및 수소 저장 용량을 정밀 도출
+                            </div>
+                        </div>
+                        <br>
                         <b style='color: #fff; font-size: 28px;'>{pv_hybrid:,.1f} kWp</b>
                         <span style='background: rgba(0,212,255,0.2); color: #00d4ff; padding: 2px 8px; border-radius: 4px; font-size: 14px; margin-left: 5px; vertical-align: middle;'>
                             📈 {pv_diff:+.1f}% vs A
@@ -1127,7 +1137,23 @@ elif st.session_state.step == 'result':
             m1, m2, m3 = st.columns(3)
             with m1: st.markdown(f"<div style='background: #111; padding: 20px; border-radius: 10px; border-left: 5px solid {'#00ff88' if npv > 0 else '#ff4b4b'};'><div style='color: #888; font-size: 13px;'>순현재가치 (NPV)</div><div style='color: #fff; font-size: 24px; font-weight: bold;'>${npv/1e6:.2f}M</div><div style='color: {'#00ff88' if npv > 0 else '#ff4b4b'}; font-size: 12px;'>{'✅ 사업성 확보' if npv > 0 else '⚠️ 수익성 개선 필요'}</div></div>", unsafe_allow_html=True)
             with m2: st.markdown(f"<div style='background: #111; padding: 20px; border-radius: 10px; border-left: 5px solid #ffd700;'><div style='color: #888; font-size: 13px;'>내부수익률 (IRR)</div><div style='color: #fff; font-size: 24px; font-weight: bold;'>{irr:.2f}%</div><div style='color: #ffd700; font-size: 12px;'>Target 대비 {irr - p_disc*100:+.1f}%</div></div>", unsafe_allow_html=True)
-            with m3: st.markdown(f"<div style='background: #111; padding: 20px; border-radius: 10px; border-left: 5px solid #00d4ff;'><div style='color: #888; font-size: 13px;'>발전단가 (LCOE)</div><div style='color: #fff; font-size: 24px; font-weight: bold;'>${lcoe_fs:.3f}</div><div style='color: #00d4ff; font-size: 12px;'>/kWh (HESS Hybrid)</div></div>", unsafe_allow_html=True)
+            with m3: st.markdown(f"""
+                <div style='background: #111; padding: 20px; border-radius: 10px; border-left: 5px solid #00d4ff;'>
+                    <div style='color: #888; font-size: 13px;'>
+                        발전단가 (LCOE)
+                        <div class="custom-tooltip"> ℹ️
+                            <div class="tooltiptext">
+                                <b style='color: #00d4ff; font-size: 14px;'>📝 LCOE (Levelized Cost of Energy)</b><br><br>
+                                에너지 생산에 들어가는 총 비용을 총 에너지 생산량으로 나눈 값입니다:<br><br>
+                                - <b>분자:</b> 초기 투자비(CAPEX) + 운영 유지비(OPEX) + 교체비<br>
+                                - <b>분모:</b> 프로젝트 기간 내 총 전력 판매량 (할인율 적용)
+                            </div>
+                        </div>
+                    </div>
+                    <div style='color: #fff; font-size: 24px; font-weight: bold;'>${lcoe_fs:.3f}</div>
+                    <div style='color: #00d4ff; font-size: 12px;'>/kWh (HESS Hybrid)</div>
+                </div>
+                """, unsafe_allow_html=True)
 
             st.divider()
 
