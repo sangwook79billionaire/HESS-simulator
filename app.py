@@ -831,6 +831,11 @@ elif st.session_state.step == 'result':
         </div>
         """, unsafe_allow_html=True)
         
+        # Calculate Absolute Worst Day for reference
+        df_daily_gen = df_h.groupby(df_h['Timestamp'].dt.date)['Gen_1kW'].sum()
+        abs_worst_yield = df_daily_gen.min()
+        pv_for_abs_worst = (total_d / abs_worst_yield) * 1.05 if abs_worst_yield > 0.1 else 9999
+        
         # Breakdown Metrics
         c_q2_sub1, c_q2_sub2, c_q2_sub3 = st.columns(3)
         with c_q2_sub1:
@@ -838,8 +843,8 @@ elif st.session_state.step == 'result':
             <div style='padding: 10px; border-top: 1px solid #333;'>
                 <small style='color: #888;'>💡 설계 근거 (Engineering Basis)</small><br>
                 <span style='font-size: 13px; color: #ccc;'>
-                    • 일일 수요: {total_d:,.1f} kWh/d<br>
-                    • 최저 발전: {worst_daily_yield:.2f} kWh/kWp/d
+                    • 설계 기준: 최저월 평균 ({worst_month}월)<br>
+                    • 일일 수요: {total_d:,.1f} kWh/d
                 </span>
             </div>
             """, unsafe_allow_html=True)
@@ -849,8 +854,8 @@ elif st.session_state.step == 'result':
             <div style='padding: 10px; border-top: 1px solid #333;'>
                 <small style='color: #888;'>☀️ 태양광 내역 (PV Breakdown)</small><br>
                 <span style='font-size: 13px; color: #ccc;'>
-                    • 용량: {pv_for_worst:,.1f} kWp<br>
-                    • 비용: $ {pv_cost:,.0f} (@$1,200)
+                    • 최저월 평균 기준: <b>{pv_for_worst:,.1f} kWp</b><br>
+                    • <span style='color: #ff4b4b;'>연중 최저일 기준: {pv_for_abs_worst:,.1f} kWp</span>
                 </span>
             </div>
             """, unsafe_allow_html=True)
