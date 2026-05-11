@@ -573,21 +573,14 @@ elif st.session_state.step == 'result':
     df_a['Load'] = [ (total_d / 24) * norm_profile[h] for h in df_a['Timestamp'].dt.hour ]
     df_a['Net'] = df_a['Gen'] - df_a['Load']
     
-    soc = 50.0
-    bess_a_cap = total_d * 5 # Estimator
-    net_trace = []
-    for i, row in df_a.iterrows():
-        bal = row['Gen'] - row['Load']
-        if bal > 0:
-            ch = min(bal, (95 - soc) * bess_a_cap / 100)
-            soc += (ch * np.sqrt(BESS_EFF) / bess_a_cap) * 100
-        else:
-            dis = min(abs(bal), (soc - 20) * bess_a_cap / 100 / np.sqrt(BESS_EFF))
-            soc -= (dis * np.sqrt(BESS_EFF) / bess_a_cap) * 100
-        net_trace.append(soc)
+    # Calculate Cumulative Net Energy to find required seasonal storage (Unconstrained)
+    df_a['Cum_Net'] = df_a['Net'].cumsum()
+    # The required capacity is the total swing from the deepest deficit to the highest surplus
+    seasonal_swing = (df_a['Cum_Net'].max() - df_a['Cum_Net'].min())
     
-    seasonal_deficit = (max(net_trace) - min(net_trace)) / 100 * bess_a_cap
-    bess_a = seasonal_deficit * 1.1
+    # Apply efficiency loss (round-trip) and safety margin
+    # BESS A must be large enough to cover this seasonal imbalance
+    bess_a = (seasonal_swing / np.sqrt(BESS_EFF)) * 1.1 
     capex_a = (pv_ideal * PRICE_PV) + (bess_a * PRICE_BESS) + (hh * 1500)
     
     # ---------------------------------------------------------
