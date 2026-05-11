@@ -1127,9 +1127,9 @@ elif st.session_state.step == 'result':
         # Consolidated CTA (Summary Card moved to CAPEX section)
         f_col1, f_col2 = st.columns([1, 1])
         with f_col1:
-            st.info("💡 **전략적 사업성 시뮬레이션:** 현지 전력 요금, 보조금 및 물류 할증이 반영된 상세 FS를 시작합니다.")
+            st.info("💡 **사업성 상세 검토:** 현지 전력 요금, 보조금 및 물류 할증이 반영된 상세 FS를 시작합니다.")
         with f_col2:
-            if st.button("🚀 전략 사업성 시뮬레이션", type="primary", use_container_width=True):
+            if st.button("🚀 사업성 상세 검토", type="primary", use_container_width=True):
                 show_fs_modal()
             st.caption("※ 보조금 및 벤치마크 에너지 원가 연동")
 
