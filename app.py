@@ -881,24 +881,31 @@ elif st.session_state.step == 'result':
         st.markdown("### **Q4 & Q5. 에너지를 저장/이동할 때 CAPEX 관점에서 이점이 있나? 어느 쪽이 유리한가?**")
         
         # Sweet Spot Assessment
-        is_shifting_viable = ghi_variance_pct > 25.0 # Basic threshold for shifting to make sense
+        avg_ghi = monthly_sim['Insolation'].mean()
+        lean_months = (monthly_sim['Insolation'] < avg_ghi).sum()
+        
         st.markdown(f"""
         <div style='background: rgba(0, 255, 136, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(0, 255, 136, 0.2); margin-bottom: 25px;'>
-            <h4 style='color: #00ff88; margin-top: 0;'>🎯 경제적 Sweet Spot 검토 결과</h4>
+            <h4 style='color: #00ff88; margin-top: 0;'>🎯 경제적 Sweet Spot 정밀 진단 (Amplitude & Duration)</h4>
             <p style='font-size: 14px; color: #ccc;'>
-                보수적 설계(Q2) 대비 PV 용량을 줄이고 저장 장치를 늘리는 <b>'에너지 전이'</b> 전략의 타당성을 검토합니다. 
-                이 지역의 일사량 편차는 <b>{ghi_variance_pct:.1f}%</b>로, 일반적으로 편차가 <b>25% 이상</b>일 때 저장 장치를 통한 PV 최적화가 경제적 우위에 서기 시작합니다.
+                에너지 전이의 경제성은 <b>편차(얼마나 차이나는가)</b>와 <b>지속성(얼마나 오래가는가)</b>의 조합으로 결정됩니다.
             </p>
-            <div style='display: flex; gap: 20px; margin-top: 10px;'>
-                <div style='flex: 1; font-size: 13px; color: #aaa;'>
-                    <b style='color: #fff;'>1) 배터리 (BESS) 전이</b><br>
-                    단기/중기 변동 대응에 유리하며, PV를 <b>{((pv_for_worst/pv_ideal)-1)*100:.1f}%</b> 절감할 수 있는 Sweet Spot을 제공합니다.
+            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;'>
+                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px;'>
+                    <b style='color: #38bdf8; font-size: 13px;'>📊 발전 편차 (Amplitude)</b><br>
+                    <span style='font-size: 18px; font-weight: bold; color: #fff;'>{ghi_variance_pct:.1f}%</span><br>
+                    <small style='color: #888;'>최저/최고 발전 격차. 30% 이상 시 BESS 전이 검토 권장.</small>
                 </div>
-                <div style='flex: 1; font-size: 13px; color: #aaa;'>
-                    <b style='color: #fff;'>2) 수소 (H2 Hybrid) 전이</b><br>
-                    계절적 편차가 <b>50% 이상</b>일 때 장기 저장 매체로서 CAPEX 효율이 극대화됩니다.
+                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px;'>
+                    <b style='color: #fbbf24; font-size: 13px;'>⏳ 부족 지속성 (Duration)</b><br>
+                    <span style='font-size: 18px; font-weight: bold; color: #fff;'>{lean_months}개월</span><br>
+                    <small style='color: #888;'>평균 이하 발전 지속 기간. 1개월 초과 시 수소(H2) 장기 저장 유리.</small>
                 </div>
             </div>
+            <p style='font-size: 13px; color: #aaa; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;'>
+                📍 <b>가이드라인:</b> 이 지역은 <b>{lean_months}개월</b>간의 저일사량 구간이 존재합니다. 
+                이 정도의 지속성은 단순 배터리 증설보다 <b>{ "수소 하이브리드(Scenario B)" if lean_months >= 2 else "배터리 최적화(Scenario A)" }</b>가 CAPEX 효율성 측면에서 더 유리할 가능성이 높습니다.
+            </p>
         </div>
         """, unsafe_allow_html=True)
 
