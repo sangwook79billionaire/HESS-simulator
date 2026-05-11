@@ -1045,22 +1045,8 @@ elif st.session_state.step == 'result':
 
             st.divider()
 
-            # 5. 사업성 확보를 위한 목표 요금 가이드
-            st.markdown("##### 💡 5. 사업성 확보 가이드 (Strategic Optimization Guide)")
-            pv_factor = [(1 / (1 + p_disc) ** y) for y in years]
-            pv_costs = sum(( (total_capex_fs if y==0 else 0) + opex_base[y] + replace_out[y] - edcf_flow[y]) * pv_factor[y] for y in years)
-            pv_ifa = sum(pv_factor[y] for y in years[1:])
-            req_tariff = (pv_costs - rev_vals[2]*pv_ifa - (rev_vals[1] * pv_ifa)) / (annual_demand * pv_ifa)
-            req_subsidy = (pv_costs - rev_vals[2]*pv_ifa - (rev_vals[0] * annual_demand * pv_ifa)) / pv_ifa
-            
-            g1, g2 = st.columns(2)
-            with g1: st.markdown(f"<div style='background: #0f172a; padding: 20px; border-radius: 12px; border: 1px solid #38bdf8;'><div style='color: #38bdf8; font-weight: bold; font-size: 14px;'>1. 필요한 최소 전기 요금</div><div style='color: #fff; font-size: 26px; font-weight: 800; margin: 8px 0;'>${req_tariff:.3f}/kWh</div><div style='color: #888; font-size: 12px;'>NPV를 0으로 맞추기 위한 목표 단가입니다.</div></div>", unsafe_allow_html=True)
-            with g2: st.markdown(f"<div style='background: #064e3b; padding: 20px; border-radius: 12px; border: 1px solid #34d399;'><div style='color: #34d399; font-weight: bold; font-size: 14px;'>2. 필요한 연간 보조금</div><div style='color: #fff; font-size: 26px; font-weight: 800; margin: 8px 0;'>${req_subsidy/1000:,.1f}k/yr</div><div style='color: #888; font-size: 12px;'>현재 요금 유지 시 정부의 연간 지원 필요액입니다.</div></div>", unsafe_allow_html=True)
-
-            st.divider()
-
-            # 6. 디젤 대비 LCOE 비교 (산출 근거는 팝업 처리)
-            st.markdown("##### ⛽ 6. 디젤 대비 경제성 분석 (LCOE Comparison)")
+            # 5. 디젤 대비 LCOE 비교 (산출 근거는 팝업 처리)
+            st.markdown("##### ⛽ 5. 디젤 대비 경제성 분석 (LCOE Comparison)")
             with st.popover("📊 디젤 발전 벤치마크 원가 산출 근거"):
                 d_c1, d_c2 = st.columns(2)
                 fuel_p = d_c1.number_input("디젤 가격 ($/L)", 0.5, 3.0, 1.85)
@@ -1075,6 +1061,21 @@ elif st.session_state.step == 'result':
             st.plotly_chart(fig_lcoe, use_container_width=True)
             
             st.success(f"💡 **종합 평가:** 본 하이브리드 시스템은 디젤 대비 약 **{abs((lcoe_fs - diesel_ref)/diesel_ref*100):.1f}%**의 높은 원가 경쟁력을 확보하고 있습니다.")
+
+            st.divider()
+
+            # 6. 사업성 확보를 위한 목표 요금 가이드
+            st.markdown("##### 💡 6. 사업성 확보 가이드 (Strategic Optimization Guide)")
+            pv_factor = [(1 / (1 + p_disc) ** y) for y in years]
+            pv_costs = sum(( (total_capex_fs if y==0 else 0) + opex_base[y] + replace_out[y] - edcf_flow[y]) * pv_factor[y] for y in years)
+            pv_ifa = sum(pv_factor[y] for y in years[1:])
+            req_tariff = (pv_costs - rev_vals[2]*pv_ifa - (rev_vals[1] * pv_ifa)) / (annual_demand * pv_ifa)
+            req_subsidy = (pv_costs - rev_vals[2]*pv_ifa - (rev_vals[0] * annual_demand * pv_ifa)) / pv_ifa
+            
+            g1, g2 = st.columns(2)
+            with g1: st.markdown(f"<div style='background: #0f172a; padding: 20px; border-radius: 12px; border: 1px solid #38bdf8;'><div style='color: #38bdf8; font-weight: bold; font-size: 14px;'>1. 필요한 최소 전기 요금</div><div style='color: #fff; font-size: 26px; font-weight: 800; margin: 8px 0;'>${req_tariff:.3f}/kWh</div><div style='color: #888; font-size: 12px;'>NPV를 0으로 맞추기 위한 목표 단가입니다.</div></div>", unsafe_allow_html=True)
+            with g2: st.markdown(f"<div style='background: #064e3b; padding: 20px; border-radius: 12px; border: 1px solid #34d399;'><div style='color: #34d399; font-weight: bold; font-size: 14px;'>2. 필요한 연간 보조금</div><div style='color: #fff; font-size: 26px; font-weight: 800; margin: 8px 0;'>${req_subsidy/1000:,.1f}k/yr</div><div style='color: #888; font-size: 12px;'>현재 요금 유지 시 정부의 연간 지원 필요액입니다.</div></div>", unsafe_allow_html=True)
+
             if st.button("✅ 시나리오 확정 및 닫기", use_container_width=True): st.rerun()
 
         # Consolidated CTA (Summary Card moved to CAPEX section)
