@@ -1055,22 +1055,51 @@ elif st.session_state.step == 'result':
 
             st.divider()
 
-            # 5. 디젤 대비 LCOE 비교 (산출 근거는 팝업 처리)
+            # 5. 디젤 대비 LCOE 비교
             st.markdown("##### ⛽ 5. 디젤 대비 경제성 분석 (LCOE Comparison)")
-            with st.popover("📊 디젤 발전 벤치마크 원가 산출 근거"):
-                d_c1, d_c2 = st.columns(2)
-                fuel_p = d_c1.number_input("디젤 가격 ($/L)", 0.5, 3.0, 1.85)
-                d_eff_val = d_c2.number_input("발전 효율 (kWh/L)", 1.0, 5.0, 3.3)
-                d_maint = st.slider("CAPEX/OM 할증 ($/kWh)", 0.05, 0.30, 0.06)
-                diesel_ref = (fuel_p / d_eff_val) + d_maint
-                st.info(f"디젤 LCOE 기준: **${diesel_ref:.3f}/kWh**")
             
+            with st.popover("📊 디젤 발전 원가 산출 상세 설정"):
+                d_c1, d_c2 = st.columns(2)
+                fuel_p = d_c1.number_input("현지 디젤 가격 ($/L)", 0.5, 3.0, 1.85)
+                d_eff_val = d_c2.number_input("발전 효율 (kWh/L)", 1.0, 5.0, 3.3)
+                d_maint = st.slider("운영 및 시공 할증 ($/kWh)", 0.05, 0.30, 0.06)
+                diesel_ref = (fuel_p / d_eff_val) + d_maint
+                
+                st.markdown(f"""
+                <div style='background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 13px;'>
+                    <b style='color: #ffd700;'>📝 산출 방식:</b><br>
+                    LCOE = (디젤 가격 ÷ 발전 효율) + 할증 비용<br>
+                    = (${fuel_p} ÷ {d_eff_val}) + ${d_maint}<br>
+                    = <span style='color: #00ff88; font-weight: bold;'>${diesel_ref:.3f} / kWh</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # Large LCOE Comparison Cards
+            l_c1, l_c2 = st.columns(2)
+            with l_c1:
+                st.markdown(f"""
+                <div style='background: #1e1e1e; padding: 25px; border-radius: 12px; border-top: 5px solid #888;'>
+                    <div style='color: #888; font-size: 14px; text-transform: uppercase;'>Benchmark (Diesel)</div>
+                    <div style='color: #fff; font-size: 32px; font-weight: 800; margin: 10px 0;'>${diesel_ref:.3f}<span style='font-size: 16px; font-weight: 400;'> /kWh</span></div>
+                    <div style='color: #666; font-size: 12px;'>격오지 디젤 발전 기준가</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with l_c2:
+                savings = (diesel_ref - lcoe_fs) / diesel_ref * 100
+                st.markdown(f"""
+                <div style='background: #0f172a; padding: 25px; border-radius: 12px; border-top: 5px solid #00d4ff;'>
+                    <div style='color: #00d4ff; font-size: 14px; text-transform: uppercase;'>HESS Hybrid (LCOE)</div>
+                    <div style='color: #fff; font-size: 32px; font-weight: 800; margin: 10px 0;'>${lcoe_fs:.3f}<span style='font-size: 16px; font-weight: 400;'> /kWh</span></div>
+                    <div style='color: #00ff88; font-size: 12px; font-weight: bold;'>📉 디젤 대비 {savings:.1f}% 절감</div>
+                </div>
+                """, unsafe_allow_html=True)
+
             fig_lcoe = go.Figure()
             fig_lcoe.add_trace(go.Bar(x=['Benchmark (Diesel)', 'HESS Hybrid (LCOE)'], y=[diesel_ref, lcoe_fs], marker_color=['#888', '#00d4ff'], width=0.4))
-            fig_lcoe.update_layout(template="plotly_dark", height=300, margin=dict(t=20, b=20))
+            fig_lcoe.update_layout(template="plotly_dark", height=300, margin=dict(t=20, b=20), yaxis_title="LCOE ($/kWh)")
             st.plotly_chart(fig_lcoe, use_container_width=True)
             
-            st.success(f"💡 **종합 평가:** 본 하이브리드 시스템은 디젤 대비 약 **{abs((lcoe_fs - diesel_ref)/diesel_ref*100):.1f}%**의 높은 원가 경쟁력을 확보하고 있습니다.")
+            st.success(f"💡 **종합 평가:** 본 하이브리드 시스템은 디젤 대비 약 **{abs(savings):.1f}%**의 높은 원가 경쟁력을 확보하고 있습니다.")
 
             st.divider()
 
