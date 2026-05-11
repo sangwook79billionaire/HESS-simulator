@@ -800,17 +800,25 @@ elif st.session_state.step == 'result':
         
         best_daily_yield = monthly_daily_yield_1kw.max()
         
+        # Q2: Over-spec PV Logic
         st.markdown("### **Q2. 저일사량 기간에 맞춰 태양광을 Over-spec 하려면 얼마나 필요한가?**")
         pv_for_worst = (total_d / worst_daily_yield) * 1.05 
         # User requested 1-day battery for day/night intermittency
         capex_q2 = (pv_for_worst * PRICE_PV) + (total_d * PRICE_BESS)
         
+        # Risk Assessment based on Duration
+        risk_level = "High" if lean_months >= 3 else "Medium" if lean_months >= 1 else "Low"
+        risk_color = "#ff4b4b" if risk_level == "High" else "#fbbf24" if risk_level == "Medium" else "#00ff88"
+
         st.markdown(f"""
-        <div style='background: #0f172a; padding: 20px; border-radius: 10px; border-left: 5px solid #38bdf8;'>
+        <div style='background: #0f172a; padding: 20px; border-radius: 10px; border-left: 5px solid #38bdf8; margin-bottom: 10px;'>
             <div style='display: flex; justify-content: space-between; align-items: center;'>
                 <div>
                     <span style='color: #888; font-size: 14px;'>보수적 설계 PV 용량 (Max)</span><br>
                     <b style='color: #fff; font-size: 24px;'>{pv_for_worst:,.1f} kWp</b>
+                    <span style='background: {risk_color}22; color: {risk_color}; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; border: 1px solid {risk_color}44;'>
+                        지속성 리스크: {risk_level}
+                    </span>
                 </div>
                 <div style='text-align: right;'>
                     <span style='color: #888; font-size: 14px;'>추정 CAPEX (PV + 1일치 BESS)</span><br>
@@ -818,7 +826,7 @@ elif st.session_state.step == 'result':
                 </div>
             </div>
             <div style='color: #aaa; font-size: 13px; margin-top: 10px;'>
-                *밤낮 간헐성 대응을 위한 1일치 배터리({total_d:,.1f} kWh) 비용이 포함된 보수적 수치입니다.
+                *저발전 구간이 <b>{lean_months}개월</b> 지속되는 지역입니다. PV만으로 대응 시 { "기상이변 대응력이 취약하며 비용 효율이 매우 낮습니다." if lean_months >= 2 else "비교적 짧은 주기로 대응이 가능합니다." }
             </div>
         </div>
         """, unsafe_allow_html=True)
