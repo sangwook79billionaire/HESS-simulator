@@ -500,6 +500,46 @@ elif st.session_state.step == 'result':
             setTimeout(scroll_to_top, 200);
         </script>
     """, height=0)
+
+    # Global CSS for Tooltips
+    st.markdown("""
+        <style>
+        .custom-tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            margin-left: 5px;
+            color: #ff4b4b;
+            font-weight: bold;
+        }
+        .custom-tooltip .tooltiptext {
+            visibility: hidden;
+            width: 320px;
+            background-color: #262626;
+            color: #fff;
+            text-align: left;
+            border-radius: 8px;
+            padding: 15px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -160px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid #ff4b4b;
+            font-size: 13px;
+            font-weight: normal;
+            line-height: 1.5;
+            box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
+        }
+        .custom-tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     st.title("📊 시나리오 비교 분석 및 최적화 설계")
     if st.button("⬅ 처음으로"): st.session_state.step = 'input'; st.rerun()
     
@@ -693,7 +733,20 @@ elif st.session_state.step == 'result':
                 <p style='font-size: 15px; color: #ccc; line-height: 1.5;'>거대 배터리 뱅크를 통해 계절적 불균형을 해소하는 단순 구조입니다.</p>
                 <hr style='border-color: #444;'>
                 <ul style='list-style: none; padding: 0; font-size: 18px;'>
-                    <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>PV 규모:</span> <br><b style='color: #fff; font-size: 22px;'>{pv_ideal:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 15px;'>
+                        <span style='font-size: 17px; color: #aaa;'>PV 규모:</span>
+                        <div class="custom-tooltip"> ℹ️
+                            <div class="tooltiptext">
+                                <b style='color: #ff4b4b; font-size: 14px;'>📝 시나리오 A 배터리 산출 공식</b><br><br>
+                                시나리오 A는 배터리만으로 365일 자립해야 하므로 다음 과정을 거칩니다:<br><br>
+                                1. <b>PV 사이즈 결정:</b> 연간 총 발전량과 수요량이 일치하도록 설계<br>
+                                2. <b>연간 SOC 시뮬레이션:</b> 8,760시간 동안 충/방전 시뮬레이션 수행<br>
+                                3. <b>계절적 변동폭 추출:</b> 일사량이 많은 시기(충전)와 적은 시기(방전)의 최대/최소 에너지 차이(Delta) 계산<br>
+                                4. <b>최종 용량 결정:</b> (계절적 변동폭) × 1.1 (여유율)로 산정
+                            </div>
+                        </div>
+                        <br><b style='color: #fff; font-size: 22px;'>{pv_ideal:,.1f} kWp</b>
+                    </li>
                     <li style='margin-bottom: 15px;'><span style='font-size: 17px; color: #aaa;'>BESS 용량:</span> <br><b style='color: #fff; font-size: 22px;'>{bess_a:,.1f} kWh</b> <span style='font-size: 16px; color: #ff4b4b; font-weight: bold;'>({bess_a/total_d:.1f}일분)</span></li>
                     <li style='margin-top: 15px; border-top: 1px dashed #444; padding-top: 15px;'>
                         <span style='font-size: 16px; color: #aaa;'>📐 점유 면적 추정 (Footprint):</span><br>
