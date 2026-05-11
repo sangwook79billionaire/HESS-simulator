@@ -781,18 +781,21 @@ elif st.session_state.step == 'result':
 
         with c_base2:
             st.markdown(f"""
-            <div style='display: flex; flex-direction: column; gap: 10px;'>
-                <div style='background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid #38bdf8;'>
+            <div style='display: flex; flex-direction: column; gap: 12px;'>
+                <div style='background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #38bdf8;'>
                     <small style='color: #888;'>최저 일사량 대응 PV</small><br>
-                    <b style='color: #fff; font-size: 18px;'>{pv_for_worst:,.1f} kWp</b>
+                    <b style='color: #38bdf8; font-size: 22px;'>{pv_for_worst:,.1f} <small style='font-size: 14px;'>kWp</small></b><br>
+                    <span style='color: #777; font-size: 11px;'>최저 기간(Worst Month) 자립을 위한 용량</span>
                 </div>
-                <div style='background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid #ff4b4b;'>
+                <div style='background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #ff4b4b;'>
                     <small style='color: #888;'>연간 총 잉여 전력량</small><br>
-                    <b style='color: #ff4b4b; font-size: 18px;'>{(monthly_curtailment_series.sum() * 30.4 / 1000):,.1f} MWh/y</b>
+                    <b style='color: #ff4b4b; font-size: 22px;'>{(monthly_curtailment_series.sum() * 30.4 / 1000):,.1f} <small style='font-size: 14px;'>MWh/y</small></b><br>
+                    <span style='color: #777; font-size: 11px;'>최저 기준 설계 시 버려지는 전력 총량</span>
                 </div>
-                <div style='background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid #00ff88;'>
+                <div style='background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #00ff88;'>
                     <small style='color: #888;'>연간 에너지 밸런스 PV</small><br>
-                    <b style='color: #00ff88; font-size: 18px;'>{pv_base:,.1f} kWp</b>
+                    <b style='color: #00ff88; font-size: 22px;'>{pv_base:,.1f} <small style='font-size: 14px;'>kWp</small></b><br>
+                    <span style='color: #777; font-size: 11px;'>연간 총 생산 = 소비가 되는 공학적 평형점</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
