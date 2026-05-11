@@ -800,42 +800,47 @@ elif st.session_state.step == 'result':
         
         best_daily_yield = monthly_daily_yield_1kw.max()
         
-        # Q2: Over-spec PV Logic
-        st.markdown("### **Q2. 저일사량 기간에 맞춰 태양광을 Over-spec 하려면 얼마나 필요한가?**")
-        pv_for_worst = (total_d / worst_daily_yield) * 1.05 
-        # User requested 1-day battery for day/night intermittency
-        capex_q2 = (pv_for_worst * PRICE_PV) + (total_d * PRICE_BESS)
+        # Calculate Absolute Worst Day and Extreme CAPEX
+        df_daily_gen = df_h.groupby(df_h['Timestamp'].dt.date)['Gen_1kW'].sum()
+        abs_worst_yield = df_daily_gen.min()
+        pv_for_abs_worst = (total_d / abs_worst_yield) * 1.05 if abs_worst_yield > 0.05 else pv_for_worst * 5
+        capex_extreme = (pv_for_abs_worst * PRICE_PV) + (total_d * PRICE_BESS)
         
         # Risk Assessment based on Duration
         risk_level = "High" if lean_months >= 3 else "Medium" if lean_months >= 1 else "Low"
         risk_color = "#ff4b4b" if risk_level == "High" else "#fbbf24" if risk_level == "Medium" else "#00ff88"
 
         st.markdown(f"""
-        <div style='background: #0f172a; padding: 20px; border-radius: 10px; border-left: 5px solid #38bdf8; margin-bottom: 10px;'>
-            <div style='display: flex; justify-content: space-between; align-items: center;'>
-                <div>
-                    <span style='color: #888; font-size: 14px;'>보수적 설계 PV 용량 (Max)</span><br>
-                    <b style='color: #fff; font-size: 24px;'>{pv_for_worst:,.1f} kWp</b>
-                    <span style='background: {risk_color}22; color: {risk_color}; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; border: 1px solid {risk_color}44;'>
-                        지속성 리스크: {risk_level}
-                    </span>
+        <div style='background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 25px;'>
+            <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;'>
+                <b style='font-size: 16px; color: #fff;'>보수적 설계 옵션 비교 (Conservative Options)</b>
+                <span style='background: {risk_color}22; color: {risk_color}; padding: 3px 10px; border-radius: 6px; font-size: 12px; border: 1px solid {risk_color}44;'>
+                    지속성 리스크: {risk_level}
+                </span>
+            </div>
+            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 20px;'>
+                <!-- Standard Conservative -->
+                <div style='background: #0f172a; padding: 20px; border-radius: 10px; border-top: 4px solid #38bdf8;'>
+                    <small style='color: #888;'>Option A: 표준 보수 설계 (최저월 평균 기준)</small><br>
+                    <b style='color: #fff; font-size: 24px;'>{pv_for_worst:,.1f} kWp</b><br>
+                    <span style='color: #38bdf8; font-size: 18px; font-weight: bold;'>$ {capex_q2:,.0f}</span>
+                    <p style='color: #666; font-size: 12px; margin-top: 10px;'>*최저 발전월({worst_month}월)의 일평균 발전량에 맞춰 설계</p>
                 </div>
-                <div style='text-align: right;'>
-                    <span style='color: #888; font-size: 14px;'>추정 CAPEX (PV + 1일치 BESS)</span><br>
-                    <b style='color: #38bdf8; font-size: 24px;'>$ {capex_q2:,.0f}</b>
+                <!-- Extreme Conservative -->
+                <div style='background: #0f172a; padding: 20px; border-radius: 10px; border-top: 4px solid #ff4b4b;'>
+                    <small style='color: #888;'>Option B: 극한 보수 설계 (최저일 기준)</small><br>
+                    <b style='color: #fff; font-size: 24px;'>{pv_for_abs_worst:,.1f} kWp</b><br>
+                    <span style='color: #ff4b4b; font-size: 18px; font-weight: bold;'>$ {capex_extreme:,.0f}</span>
+                    <p style='color: #666; font-size: 12px; margin-top: 10px;'>*연중 최악의 날(Worst Day)에도 100% 자립 가능한 규모</p>
                 </div>
             </div>
-            <div style='color: #aaa; font-size: 13px; margin-top: 10px;'>
-                *저발전 구간이 <b>{lean_months}개월</b> 지속되는 지역입니다. PV만으로 대응 시 { "기상이변 대응력이 취약하며 비용 효율이 매우 낮습니다." if lean_months >= 2 else "비교적 짧은 주기로 대응이 가능합니다." }
+            <div style='color: #aaa; font-size: 13px; margin-top: 15px; border-top: 1px solid #333; padding-top: 10px;'>
+                💡 <b>Insight:</b> 극한 보수 설계 시 비용이 <b>$ {capex_extreme - capex_q2:,.0f}</b> 더 발생합니다. 
+                이 거대한 CAPEX 격차가 바로 <b>'에너지 저장 및 전이'</b>가 필요한 경제적 이유입니다.
             </div>
         </div>
         """, unsafe_allow_html=True)
-        
-        # Calculate Absolute Worst Day for reference
-        df_daily_gen = df_h.groupby(df_h['Timestamp'].dt.date)['Gen_1kW'].sum()
-        abs_worst_yield = df_daily_gen.min()
-        pv_for_abs_worst = (total_d / abs_worst_yield) * 1.05 if abs_worst_yield > 0.1 else 9999
-        
+
         # Breakdown Metrics
         c_q2_sub1, c_q2_sub2, c_q2_sub3 = st.columns(3)
         with c_q2_sub1:
@@ -843,8 +848,8 @@ elif st.session_state.step == 'result':
             <div style='padding: 10px; border-top: 1px solid #333;'>
                 <small style='color: #888;'>💡 설계 근거 (Engineering Basis)</small><br>
                 <span style='font-size: 13px; color: #ccc;'>
-                    • 설계 기준: 최저월 평균 ({worst_month}월)<br>
-                    • 일일 수요: {total_d:,.1f} kWh/d
+                    • 일일 수요: {total_d:,.1f} kWh/d<br>
+                    • 최저 발전: {worst_daily_yield:.2f} kWh/kWp/d
                 </span>
             </div>
             """, unsafe_allow_html=True)
