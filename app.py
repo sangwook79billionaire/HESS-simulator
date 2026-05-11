@@ -750,9 +750,48 @@ elif st.session_state.step == 'result':
         # --- Section 2: Step-by-Step Strategic Assessment ---
         st.markdown("## 🔍 5단계 전략 분석 리포트 (Step-by-Step Strategic Assessment)")
         
-        # Q1: Feasibility
+        # Q1: Insolation Variance Analysis
         st.markdown("### **Q1. 태양광만으로 전력 수요 전체를 대응할 수 있나?**")
-        st.info(f"**YES.** 이론적으로 가능합니다. 이 지역의 연간 전력 균형을 맞추기 위한 **이론적 최소 태양광 용량은 {pv_base:,.1f} kWp**입니다. (모든 에너지를 100% 효율로 이전할 수 있다는 전제)")
+        
+        # Calculate Variance Metrics
+        max_ghi = monthly_sim['Insolation'].max()
+        min_ghi = monthly_sim['Insolation'].min()
+        ghi_variance_pct = ((max_ghi - min_ghi) / min_ghi) * 100
+        best_month_idx = monthly_sim['Insolation'].idxmax()
+        worst_month_idx = monthly_sim['Insolation'].idxmin()
+
+        c1_q1, c2_q1 = st.columns([2, 1])
+        with c1_q1:
+            # Monthly Insolation Chart
+            fig_q1 = go.Figure()
+            colors_q1 = ['#334155'] * 12
+            colors_q1[best_month_idx-1] = '#00d4ff'
+            colors_q1[worst_month_idx-1] = '#ff4b4b'
+            
+            fig_q1.add_trace(go.Bar(
+                x=list(range(1, 13)), y=monthly_sim['Insolation'],
+                marker_color=colors_q1,
+                text=[f"{v:.1f}" for v in monthly_sim['Insolation']],
+                textposition='auto'
+            ))
+            fig_q1.update_layout(
+                height=250, template="plotly_dark", margin=dict(l=0,r=0,t=20,b=20),
+                xaxis=dict(title="월 (Month)", dtick=1),
+                yaxis=dict(title="일사량 (kWh/m²/d)", showgrid=False)
+            )
+            st.plotly_chart(fig_q1, use_container_width=True)
+
+        with c2_q1:
+            st.markdown(f"""
+            <div style='background: rgba(255,255,255,0.05); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;'>
+                <span style='color: #888; font-size: 14px; margin-bottom: 10px;'>계절별 일사량 편차 (Seasonal Gap)</span>
+                <b style='color: #ff4b4b; font-size: 48px; line-height: 1;'>{ghi_variance_pct:.1f}%</b>
+                <span style='color: #aaa; font-size: 13px; margin-top: 15px;'>
+                    최고점({best_month_idx}월) 대비 최저점({worst_month_idx}월)의 발전 능력이 <b>{ghi_variance_pct:.1f}%</b>나 차이납니다. 
+                    <br><br>이 격차를 메우기 위한 <b>에너지 저장(Storage)</b>이 필수적입니다.
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
         
         # Calculate Base Metrics using simulated yields for consistency
         # Group by month and calculate average hourly yield for 1kWp
