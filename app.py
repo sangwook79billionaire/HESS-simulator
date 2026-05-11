@@ -938,43 +938,66 @@ elif st.session_state.step == 'result':
         area_b = (pv_hybrid * 10) + (bess_b * 0.1) + (max(h2_stock) * 1.5) + 50
 
         with c1:
-            savings_a = capex_q2 - capex_a
-            pv_reduction_a = ((pv_for_worst - pv_ideal) / pv_for_worst) * 100
+            # Metrics for Scenario A vs Standard
+            savings_a_std = capex_q2 - capex_a
+            pv_red_a_std = ((pv_for_worst - pv_ideal) / pv_for_worst) * 100
+            # Metrics for Scenario A vs Extreme
+            savings_a_ext = capex_extreme - capex_a
+            pv_red_a_ext = ((pv_for_abs_worst - pv_ideal) / pv_for_abs_worst) * 100
+            
             st.markdown(f"""
-            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #ff4b4b; min-height: 420px; color: #eee;'>
-                <h4 style='color: #ff4b4b; text-align: center;'>Scenario A: BESS Only</h4>
-                <p style='font-size: 14px; color: #ccc; text-align: center;'>배터리 전이를 통한 <b>PV {pv_reduction_a:.1f}% 절감</b></p>
-                <hr style='border-color: #444;'>
-                <ul style='list-style: none; padding: 0;'>
-                    <li style='margin-bottom: 15px;'>PV 최적화: <b style='color: #fff;'>{pv_ideal:,.1f} kWp</b></li>
-                    <li style='margin-bottom: 15px;'>BESS 저장: <b style='color: #fff;'>{bess_a:,.1f} kWh</b></li>
-                    <li style='margin-bottom: 15px; font-size: 18px;'><b>Total CAPEX: $ {capex_a:,.0f}</b></li>
-                </ul>
-                <div style='background: rgba(0,255,136,0.1); padding: 15px; border-radius: 8px; border: 1px solid #00ff88;'>
-                    <span style='color: #00ff88; font-weight: bold;'>경제적 이득:</span> Q2 대비<br>
-                    <b style='font-size: 20px; color: #00ff88;'>$ {max(0, savings_a):,.0f} 절감</b>
+            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #ff4b4b; min-height: 520px; color: #eee;'>
+                <h4 style='color: #ff4b4b; text-align: center; margin-bottom: 5px;'>Scenario A: BESS Only</h4>
+                <p style='font-size: 13px; color: #888; text-align: center; margin-bottom: 20px;'>배터리 전이 최적화</p>
+                
+                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
+                    <small style='color: #aaa;'>📉 vs 표준 보수 (최저월 평균)</small><br>
+                    <b style='color: #00ff88;'>PV {pv_red_a_std:.1f}% 절감</b> | <b style='color: #00ff88;'>$ {max(0, savings_a_std):,.0f} 아낌</b>
                 </div>
+                
+                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
+                    <small style='color: #aaa;'>🔥 vs 극한 보수 (최저일 기준)</small><br>
+                    <b style='color: #ff4b4b;'>PV {pv_red_a_ext:.1f}% 절감</b> | <b style='color: #ff4b4b;'>$ {max(0, savings_a_ext):,.0f} 방어</b>
+                </div>
+
+                <hr style='border-color: #333;'>
+                <ul style='list-style: none; padding: 0;'>
+                    <li style='margin-bottom: 10px; font-size: 14px;'>PV 최적 용량: <b style='color: #fff;'>{pv_ideal:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 10px; font-size: 14px;'>BESS 저장 용량: <b style='color: #fff;'>{bess_a:,.1f} kWh</b></li>
+                    <li style='margin-top: 20px; font-size: 20px; text-align: center;'><b>Total CAPEX: $ {capex_a:,.0f}</b></li>
+                </ul>
             </div>
             """, unsafe_allow_html=True)
             
         with c2:
-            savings_b = capex_q2 - capex_b
-            pv_reduction_b = ((pv_for_worst - pv_hybrid) / pv_for_worst) * 100
-            h2_days = (max(h2_stock) * 33.33 * H2_FC_EFF) / total_d
+            # Metrics for Scenario B vs Standard
+            savings_b_std = capex_q2 - capex_b
+            pv_red_b_std = ((pv_for_worst - pv_hybrid) / pv_for_worst) * 100
+            # Metrics for Scenario B vs Extreme
+            savings_b_ext = capex_extreme - capex_b
+            pv_red_b_ext = ((pv_for_abs_worst - pv_hybrid) / pv_for_abs_worst) * 100
+            
             st.markdown(f"""
-            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; min-height: 420px; color: #eee;'>
-                <h4 style='color: #00d4ff; text-align: center;'>Scenario B: H2 Hybrid</h4>
-                <p style='font-size: 14px; color: #ccc; text-align: center;'>수소 장기 저장을 통한 <b>PV {pv_reduction_b:.1f}% 절감</b></p>
-                <hr style='border-color: #444;'>
-                <ul style='list-style: none; padding: 0;'>
-                    <li style='margin-bottom: 15px;'>PV 최적화: <b style='color: #fff;'>{pv_hybrid:,.1f} kWp</b></li>
-                    <li style='margin-bottom: 15px;'>H2 저장: <b style='color: #fff;'>{max(h2_stock):,.1f} kg</b></li>
-                    <li style='margin-bottom: 15px; font-size: 18px;'><b>Total CAPEX: $ {capex_b:,.0f}</b></li>
-                </ul>
-                <div style='background: rgba(0,212,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #00d4ff;'>
-                    <span style='color: #00d4ff; font-weight: bold;'>경제적 이득:</span> Q2 대비<br>
-                    <b style='font-size: 20px; color: #00d4ff;'>$ {max(0, savings_b):,.0f} 절감</b>
+            <div style='background-color: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; min-height: 520px; color: #eee;'>
+                <h4 style='color: #00d4ff; text-align: center; margin-bottom: 5px;'>Scenario B: H2 Hybrid</h4>
+                <p style='font-size: 13px; color: #888; text-align: center; margin-bottom: 20px;'>수소 장기 저장 최적화</p>
+
+                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
+                    <small style='color: #aaa;'>📉 vs 표준 보수 (최저월 평균)</small><br>
+                    <b style='color: #00ff88;'>PV {pv_red_b_std:.1f}% 절감</b> | <b style='color: #00ff88;'>$ {max(0, savings_b_std):,.0f} 아낌</b>
                 </div>
+                
+                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
+                    <small style='color: #aaa;'>🔥 vs 극한 보수 (최저일 기준)</small><br>
+                    <b style='color: #00d4ff;'>PV {pv_red_b_ext:.1f}% 절감</b> | <b style='color: #00d4ff;'>$ {max(0, savings_b_ext):,.0f} 방어</b>
+                </div>
+
+                <hr style='border-color: #333;'>
+                <ul style='list-style: none; padding: 0;'>
+                    <li style='margin-bottom: 10px; font-size: 14px;'>PV 최적 용량: <b style='color: #fff;'>{pv_hybrid:,.1f} kWp</b></li>
+                    <li style='margin-bottom: 10px; font-size: 14px;'>H2 저장 용량: <b style='color: #fff;'>{max(h2_stock):,.1f} kg</b></li>
+                    <li style='margin-top: 20px; font-size: 20px; text-align: center;'><b>Total CAPEX: $ {capex_b:,.0f}</b></li>
+                </ul>
             </div>
             """, unsafe_allow_html=True)
 
