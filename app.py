@@ -488,8 +488,18 @@ if st.session_state.step == 'input':
 
 # --- UI: Result Step ---
 elif st.session_state.step == 'result':
-    # Force scroll to top on step change
-    st.components.v1.html("<script>window.parent.window.scrollTo(0,0);</script>", height=0)
+    # Force scroll to top on step change (more robust script)
+    st.components.v1.html("""
+        <script>
+            var scroll_to_top = function() {
+                window.parent.window.scrollTo(0,0);
+                window.scrollTo(0,0);
+                parent.window.scrollTo(0,0);
+            };
+            setTimeout(scroll_to_top, 50);
+            setTimeout(scroll_to_top, 200);
+        </script>
+    """, height=0)
     st.title("📊 시나리오 비교 분석 및 최적화 설계")
     if st.button("⬅ 처음으로"): st.session_state.step = 'input'; st.rerun()
     
