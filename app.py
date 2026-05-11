@@ -203,8 +203,8 @@ if st.session_state.step == 'input':
             st.markdown("<small style='color: #888;'>지명을 검색하거나 지도에서 핀을 이동하여 분석 지점을 확정하세요.</small>", unsafe_allow_html=True)
             
             with st.form("search_form"):
-                address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country, placeholder="e.g. Seoul, Bali, Nairobi...")
-                submitted = st.form_submit_button("위치 찾기", use_container_width=True)
+                address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country, placeholder="e.g. Seoul, Bali, Nairobi...", help="분석하고자 하는 지역의 지명이나 주소를 입력하세요. IEA/NASA 데이터와 자동 연동됩니다.")
+                submitted = st.form_submit_button("위치 찾기", use_container_width=True, help="입력한 주소의 위/경도 좌표를 찾아 지도를 이동합니다.")
                 
             if submitted:
                 try:
@@ -255,7 +255,7 @@ if st.session_state.step == 'input':
                 </div>
                 """, unsafe_allow_html=True)
                 
-                if st.button("📍 이 위치로 확정 및 국가 데이터 연동", type="primary", use_container_width=True):
+                if st.button("📍 이 위치로 확정 및 국가 데이터 연동", type="primary", use_container_width=True, help="선택한 위치의 일사량, 온도 데이터 및 해당 국가의 전력 통계를 불러옵니다."):
                     st.session_state.loc_confirmed = True
                     st.rerun()
             else:
@@ -264,7 +264,7 @@ if st.session_state.step == 'input':
                 
                 # Demand Configuration
                 d_c1, d_c2 = st.columns(2)
-                hh = d_c1.number_input("가구 수 (Households)", value=500, min_value=1)
+                hh = d_c1.number_input("가구 수 (Households)", value=500, min_value=1, help="마이크로그리드를 구축할 마을의 전체 가구 수를 입력하세요.")
                 st.session_state.hh = hh
                 
                 benchmark_list = list(COUNTRY_BENCHMARKS.keys())
@@ -272,7 +272,7 @@ if st.session_state.step == 'input':
                 try: default_idx = benchmark_list.index(detected_c)
                 except ValueError: default_idx = benchmark_list.index("Global Average")
                 
-                c_name = d_c2.selectbox("국가 레퍼런스 데이터 (IEA/WB)", benchmark_list, index=default_idx)
+                c_name = d_c2.selectbox("국가 레퍼런스 데이터 (IEA/WB)", benchmark_list, index=default_idx, help="에너지 사용 패턴과 단가를 참고할 국가를 선택하세요. 위치 검색 시 자동으로 매칭됩니다.")
                 avg_kwh = COUNTRY_BENCHMARKS[c_name]['demand']
                 total_daily_kwh = hh * avg_kwh
                 st.markdown(f"""
@@ -283,7 +283,7 @@ if st.session_state.step == 'input':
                 """, unsafe_allow_html=True)
                 
                 st.write("📈 **에너지 부하 특성 조합 (Load Mix)**")
-                mix_val = st.slider("주거용 🏠 vs 상업용 🏢 비중 조절", 0, 100, 50)
+                mix_val = st.slider("주거용 🏠 vs 상업용 🏢 비중 조절", 0, 100, 50, help="마을의 성격에 따라 에너지 사용 시간대를 조절합니다. 주거용은 저녁, 상업용은 낮 시간에 수요가 집중됩니다.")
                 
                 ratio_a = mix_val / 100.0
                 ratio_b = 1.0 - ratio_a
@@ -296,7 +296,7 @@ if st.session_state.step == 'input':
                 st.plotly_chart(fig_load, use_container_width=True)
                 
                 st.divider()
-                if st.button("🚀 시뮬레이션 및 최적 설계 시작", type="primary", use_container_width=True):
+                if st.button("🚀 시뮬레이션 및 최적 설계 시작", type="primary", use_container_width=True, help="기상 데이터와 기술 사양을 결합하여 최적의 태양광/BESS/수소 설비 용량을 산출합니다."):
                     with st.status("🚀 시뮬레이션 엔진 가동 중...", expanded=True) as status:
                         st.session_state.total_d = total_daily_kwh
                         st.session_state.load_profile = final_pattern
@@ -899,15 +899,15 @@ elif st.session_state.step == 'result':
             
             # 0. Global Financial Settings
             f_set1, f_set2, f_set3 = st.columns([1, 1, 2])
-            p_life = f_set1.number_input("운영 기간 (Year)", 10, 50, 30, key="fs_life")
-            p_disc = f_set2.number_input("할인율 (%)", 0.0, 20.0, 8.0, key="fs_disc") / 100
-            use_edcf = f_set3.toggle("🇰🇷 EDCF 차관 및 금융 패키지 활용 (40% 차관 + 보조금)", value=False, key="fs_edcf")
+            p_life = f_set1.number_input("운영 기간 (Year)", 10, 50, 30, key="fs_life", help="프로젝트가 수익을 창출하는 총 운영 기간(수명)을 설정합니다.")
+            p_disc = f_set2.number_input("할인율 (%)", 0.0, 20.0, 8.0, key="fs_disc", help="자본 비용 및 물가 상승률을 고려하여 미래의 현금 흐름을 현재 가치로 환산할 때 사용하는 비율입니다.")
+            use_edcf = f_set3.toggle("🇰🇷 EDCF 차관 및 금융 패키지 활용 (40% 차관 + 보조금)", value=False, key="fs_edcf", help="한국의 경제협력증진자금(EDCF) 금융 지원 조건을 적용합니다. 저금리 차관 및 일부 설비 보조가 포함됩니다.")
             
             st.divider()
 
             # 1-2. CAPEX/OPEX 세부 편집
             st.markdown("##### 🏗️ 1~2. 투자비 및 운영 수익 상세 (CAPEX / OPEX / Revenue)")
-            inc_desal = st.toggle("💧 해수 담수화 시스템 포함 (Desalination Unit)", value=False)
+            inc_desal = st.toggle("💧 해수 담수화 시스템 포함 (Desalination Unit)", value=False, help="식수 공급을 위해 태양광 에너지를 사용하는 해수 담수화 설비를 투자비에 추가합니다.")
             
             # CAPEX Breakdown Editor
             st.markdown("<small style='color: #888;'>투자비 항목별 단가와 수량을 수정할 수 있습니다.</small>", unsafe_allow_html=True)
@@ -1067,9 +1067,9 @@ elif st.session_state.step == 'result':
             
             with st.popover("📊 디젤 발전 원가 산출 상세 설정"):
                 d_c1, d_c2 = st.columns(2)
-                fuel_p = d_c1.number_input("현지 디젤 가격 ($/L)", 0.5, 3.0, 1.85)
-                d_eff_val = d_c2.number_input("발전 효율 (kWh/L)", 1.0, 5.0, 3.3)
-                d_maint = st.slider("운영 및 시공 할증 ($/kWh)", 0.05, 0.30, 0.06)
+                fuel_p = d_c1.number_input("현지 디젤 가격 ($/L)", 0.5, 3.0, 1.85, help="해당 지역의 실제 디젤 구매 가격을 입력하세요. 물류비가 포함된 가격이 권장됩니다.")
+                d_eff_val = d_c2.number_input("발전 효율 (kWh/L)", 1.0, 5.0, 3.3, help="디젤 발전기 1리터당 생산 가능한 전력량입니다. 통상 3.0~3.5 사이입니다.")
+                d_maint = st.slider("운영 및 시공 할증 ($/kWh)", 0.05, 0.30, 0.06, help="디젤 발전기 유지보수비 및 인프라 구축 비용을 전력량 단위로 환산한 가산금입니다.")
                 diesel_ref = (fuel_p / d_eff_val) + d_maint
                 
                 st.markdown(f"""
@@ -1129,7 +1129,7 @@ elif st.session_state.step == 'result':
         with f_col1:
             st.info("💡 **사업성 상세 검토:** 현지 전력 요금, 보조금 및 물류 할증이 반영된 상세 FS를 시작합니다.")
         with f_col2:
-            if st.button("🚀 사업성 상세 검토", type="primary", use_container_width=True):
+            if st.button("🚀 사업성 상세 검토", type="primary", use_container_width=True, help="투자비(CAPEX), 운영비(OPEX), 보조금 및 차관 조건을 상세히 설정하여 재무적 타당성을 시뮬레이션합니다."):
                 show_fs_modal()
             st.caption("※ 보조금 및 벤치마크 에너지 원가 연동")
 
