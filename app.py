@@ -749,7 +749,52 @@ elif st.session_state.step == 'result':
         
         col_title, col_cta = st.columns([3, 1])
         with col_title:
-            st.markdown("### 🏗️ 2. 시스템 아키텍처 비교 (System Architecture Comparison)")
+            # --- Section 2: Strategic Base Conditions ---
+        st.markdown("### 📋 2. 공통 전략 베이스 (Strategic Base Conditions)")
+        
+        # Calculate Base Metrics
+        # 1. PV for min insolation period (approximation using worst month)
+        monthly_avg_ghi = df_h.groupby(df_h['Timestamp'].dt.month)['Insolation'].mean()
+        worst_ghi = monthly_avg_ghi.min()
+        best_ghi = monthly_avg_ghi.max()
+        
+        # Theoretical PV to cover daily load during worst month without storage (12h day approx)
+        pv_for_worst = (total_d / worst_ghi) * 1.1 
+        
+        # Potential Curtailment if sized for worst month
+        potential_gen_best = pv_for_worst * best_ghi
+        max_curtailment = max(0, potential_gen_best - total_d)
+        
+        st.markdown(f"""
+        <div style='background: #0f172a; padding: 25px; border-radius: 15px; border: 1px solid #1e293b; margin-bottom: 30px;'>
+            <div style='color: #38bdf8; font-size: 16px; font-weight: bold; margin-bottom: 20px;'>💡 시나리오 설계의 공학적 배경</div>
+            <div style='display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;'>
+                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px;'>
+                    <div style='color: #888; font-size: 12px; margin-bottom: 5px;'>최저 일사량 대응 PV</div>
+                    <div style='color: #fff; font-size: 20px; font-weight: bold;'>{pv_for_worst:,.1f} <small>kWp</small></div>
+                    <div style='color: #ccc; font-size: 11px; margin-top: 5px;'>일사량이 가장 적은 기간에 배터리 없이 실시간 수요를 충족하기 위한 용량입니다.</div>
+                </div>
+                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px;'>
+                    <div style='color: #888; font-size: 12px; margin-bottom: 5px;'>최고 일사량 시 잉여 전력</div>
+                    <div style='color: #ff4b4b; font-size: 20px; font-weight: bold;'>{max_curtailment:,.1f} <small>kWh/d</small></div>
+                    <div style='color: #ccc; font-size: 11px; margin-top: 5px;'>최저 기간에 맞추어 PV를 설계할 경우, 최고 일사량 기간에 매일 버려지는 에너지량입니다.</div>
+                </div>
+                <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px;'>
+                    <div style='color: #888; font-size: 12px; margin-bottom: 5px;'>연간 에너지 밸런스 PV</div>
+                    <div style='color: #00ff88; font-size: 20px; font-weight: bold;'>{pv_base:,.1f} <small>kWp</small></div>
+                    <div style='color: #ccc; font-size: 11px; margin-top: 5px;'>1년 총 발전량과 총 수요량이 일치되는 기준점으로, 모든 시나리오 설계의 출발점입니다.</div>
+                </div>
+            </div>
+            <div style='margin-top: 20px; padding-top: 15px; border-top: 1px dashed #333; color: #aaa; font-size: 13px; line-height: 1.6;'>
+                위 데이터를 통해 확인되듯, <b>잉여 에너지를 부족한 시기로 이동(Energy Shifting)</b>시키는 것이 시스템 경제성의 핵심입니다. <br>
+                이 에너지를 <b>배터리</b>로만 옮길 것인지(시나리오 A), <b>수소</b>를 병용할 것인지(시나리오 B) 아래에서 비교합니다.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col_title, col_cta = st.columns([3, 1])
+        with col_title:
+            st.markdown("### 🏗️ 3. 시스템 아키텍처 비교 (System Architecture Comparison)")
         with col_cta:
             with st.popover("📖 설계 산출 로직 확인 (Design Rationale)", use_container_width=True):
                 st.markdown(f"""
