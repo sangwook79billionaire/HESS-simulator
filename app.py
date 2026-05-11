@@ -897,6 +897,14 @@ elif st.session_state.step == 'result':
             st.markdown(f"#### 🌍 {st.session_state.country} 전략적 사업성 검토")
             st.caption("격오지 마이크로그리드 구축을 위한 물류비, 보조금 모델 및 디젤 대체 원가 분석을 지원합니다.")
             
+            # 0. Global Financial Settings
+            f_set1, f_set2, f_set3 = st.columns([1, 1, 2])
+            p_life = f_set1.number_input("운영 기간 (Year)", 10, 50, 30, key="fs_life")
+            p_disc = f_set2.number_input("할인율 (%)", 0.0, 20.0, 8.0, key="fs_disc") / 100
+            use_edcf = f_set3.toggle("🇰🇷 EDCF 차관 및 금융 패키지 활용 (40% 차관 + 보조금)", value=False, key="fs_edcf")
+            
+            st.divider()
+
             # 1-2. CAPEX/OPEX 세부 편집
             st.markdown("##### 🏗️ 1~2. 투자비 및 운영 수익 상세 (CAPEX / OPEX / Revenue)")
             inc_desal = st.toggle("💧 해수 담수화 시스템 포함 (Desalination Unit)", value=False)
@@ -906,25 +914,26 @@ elif st.session_state.step == 'result':
             capex_items = {
                 "구분": ["발전설비", "저장설비", "수소설비", "수소설비", "수소설비", "수소설비", "기타설비", "시공/인프라", "시공/인프라"],
                 "세부 항목": [
-                    "Solar PV System ($/kWp)", 
-                    "BESS (Battery) ($/kWh)", 
-                    "Electrolyzer (EL) ($/kW)", 
-                    "Fuel Cell (FC) ($/kW)", 
-                    "H2 Storage Tank ($/kg)", 
-                    "H2 기자재/물류 ($/job)", 
-                    "EMS & Control ($/set)", 
-                    "물류 및 시공 (Logistics) ($/job)", 
-                    "인프라 (Distribution) ($/hh)"
+                    "Solar PV System ($/kWp)", "BESS (Battery) ($/kWh)", "Electrolyzer (EL) ($/kW)", "Fuel Cell (FC) ($/kW)", 
+                    "H2 Storage Tank ($/kg)", "H2 기자재/물류 ($/job)", "EMS & Control ($/set)", "물류 및 시공 (Logistics) ($/job)", "인프라 (Distribution) ($/hh)"
                 ],
                 "단가 ($)": [1000, 300, 550, 700, 650, 15000, 30000, 100000, 1500],
                 "수량": [int(pv_hybrid), int(bess_b), int(el_kw), int(fc_kw), int(max(h2_stock)), 1, 1, 1, int(hh)],
-                "총 금액 ($)": [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                "총 금액 ($)": [0] * 9
             }
+            
+            if use_edcf:
+                capex_items["구분"].append("금융지원")
+                capex_items["세부 항목"].append("EDCF 설비 보조금 (Grant Component)")
+                capex_items["단가 ($)"].append(-150000) # Example Grant amount
+                capex_items["수량"].append(1)
+                capex_items["총 금액 ($)"].append(0)
+
             df_capex = pd.DataFrame(capex_items)
             df_capex["총 금액 ($)"] = df_capex["단가 ($)"] * df_capex["수량"]
             
             edited_capex = st.data_editor(
-                df_capex, use_container_width=True, num_rows="fixed", key="capex_editor_v5",
+                df_capex, use_container_width=True, num_rows="fixed", key="capex_editor_v6",
                 column_config={
                     "단가 ($)": st.column_config.NumberColumn(format="$%,d"),
                     "수량": st.column_config.NumberColumn(format="%,d"),
@@ -943,14 +952,15 @@ elif st.session_state.step == 'result':
             bess_replace_annual = (bess_b * 300 * 0.7) / 10
             stack_replace_annual = ((el_kw * 550 + fc_kw * 700) * 0.5) / 8
             
+            subsidy_val = 30000.0 if use_edcf else 0.0
             rev_opex_items = {
                 "구분": ["수익", "수익", "수익", "운영비", "운영비", "운영비", "운영비"],
                 "상세 항목": ["전기 판매 요금 (PPA)", "정부 운영 보조금 ($/yr)", "기타 판매 수익 ($/yr)", "일반 유지보수비 ($/yr)", "현지 운영비 ($/yr)", "BESS 교체 적립금", "H2 스택 교체 적립금"],
-                "금액 ($)": [ref_rate, 0.0, 0.0, float(total_capex_fs * 0.012), 30000.0, float(bess_replace_annual), float(stack_replace_annual)]
+                "금액 ($)": [ref_rate, subsidy_val, 0.0, float(total_capex_fs * 0.012), 30000.0, float(bess_replace_annual), float(stack_replace_annual)]
             }
             df_rev_init = pd.DataFrame(rev_opex_items)
             edited_rev = st.data_editor(
-                df_rev_init, use_container_width=True, num_rows="fixed", key="rev_editor_v5",
+                df_rev_init, use_container_width=True, num_rows="fixed", key="rev_editor_v6",
                 column_config={
                     "금액 ($)": st.column_config.NumberColumn(format="$%,.2f")
                 }
@@ -977,12 +987,9 @@ elif st.session_state.step == 'result':
             
             st.divider()
 
-            # 3. 연간 Cash Flow (EDCF 차관 선택 포함)
+            # 3. 연간 Cash Flow (EDCF 차관 분석 포함)
             st.markdown("##### 📈 3. 연간 현금 흐름 및 차관 분석 (Annual Cash Flow)")
-            c_f1, c_f2, c_f3 = st.columns([1, 1, 2])
-            p_life = c_f1.number_input("운영 기간 (Project Life)", 10, 50, 30)
-            p_disc = c_f2.number_input("할인율 (%)", 0.0, 20.0, 8.0) / 100
-            use_edcf = c_f3.toggle("🇰🇷 EDCF 차관 활용 (40% CAPEX, 15년 거치 25년 상환, 금리 0.01%)", value=False)
+            st.caption(f"※ 설정된 금융 조건: {p_life}년 운영, 할인율 {p_disc*100:.1f}%, EDCF {'활용' if use_edcf else '미활용'}")
             
             # Financial Calculations
             loan_amt = total_capex_fs * 0.4 if use_edcf else 0
