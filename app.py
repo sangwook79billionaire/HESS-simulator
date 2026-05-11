@@ -750,19 +750,27 @@ elif st.session_state.step == 'result':
         # --- Section 2: Strategic Base Conditions ---
         st.markdown("### 📋 2. 공통 전략 베이스 (Strategic Base Conditions)")
         
-        # Calculate Base Metrics
-        monthly_avg_ghi = df_h.groupby(df_h['Timestamp'].dt.month)['Insolation'].mean()
-        worst_month = monthly_avg_ghi.idxmin()
-        worst_ghi = monthly_avg_ghi.min()
-        best_ghi = monthly_avg_ghi.max()
+        # Calculate Base Metrics using simulated yields for consistency
+        # Group by month and calculate average hourly yield for 1kWp
+        monthly_sim = df_h.groupby(df_h['Timestamp'].dt.month).agg({
+            'Gen_1kW': 'mean',
+            'Insolation': 'mean'
+        })
+        # Convert hourly average to Daily Yield (sum of 24h)
+        monthly_daily_yield_1kw = monthly_sim['Gen_1kW'] * 24
         
-        pv_for_worst = (total_d / worst_ghi) * 1.1 
-        potential_gen_best = pv_for_worst * best_ghi
-        max_curtailment = max(0, potential_gen_best - total_d)
+        worst_month = monthly_daily_yield_1kw.idxmin()
+        worst_daily_yield = monthly_daily_yield_1kw.min()
+        best_daily_yield = monthly_daily_yield_1kw.max()
+        
+        # 1. Theoretical PV to cover daily load during worst month without storage (Conservative Max)
+        # Sizing so that worst month daily yield = total_d
+        pv_for_worst = (total_d / worst_daily_yield) * 1.05 
         
         # Calculate Monthly Curtailment if sized for worst month
-        monthly_gen_worst = monthly_avg_ghi * pv_for_worst
-        monthly_curtailment_series = monthly_gen_worst - total_d
+        # Curtailment per month = (Daily Gen - Daily Load) * Days
+        monthly_curtailment_series = (monthly_daily_yield_1kw * pv_for_worst) - total_d
+        annual_waste_mwh = (monthly_curtailment_series * 30.4).sum() / 1000 # Approx MWh/year
         
         c_base1, c_base2, c_base3 = st.columns([1, 1, 1.5])
         
@@ -771,13 +779,13 @@ elif st.session_state.step == 'result':
             fig_ins = go.Figure()
             colors = ['#38bdf8'] * 12
             colors[worst_month-1] = '#ff4b4b'
-            fig_ins.add_trace(go.Bar(x=list(range(1, 13)), y=monthly_avg_ghi, marker_color=colors))
+            fig_ins.add_trace(go.Bar(x=list(range(1, 13)), y=monthly_sim['Insolation'], marker_color=colors))
             fig_ins.update_layout(
                 title="월별 일사량 지수", template="plotly_dark", height=250,
                 margin=dict(l=20, r=20, t=40, b=20), xaxis=dict(dtick=3), yaxis=dict(visible=False)
             )
             st.plotly_chart(fig_ins, use_container_width=True)
-            st.caption(f"📍 최저 구간: {worst_month}월 ({worst_ghi:.2f} kWh/m²/d)")
+            st.caption(f"📍 최저 구간: {worst_month}월 (평균 {monthly_sim['Insolation'].min():.1f} W/m²)")
 
         with c_base2:
             st.markdown(f"""
