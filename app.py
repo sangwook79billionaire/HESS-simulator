@@ -598,24 +598,40 @@ elif st.session_state.step == 'result':
     norm_profile = [ (v / profile_sum) * 24 for v in load_profile ]
     
     # ---------------------------------------------------------
-    # SCENARIO A: Giant BESS Only
+    # SCENARIO A: Giant BESS Only (CAPEX Optimization Engine)
     # ---------------------------------------------------------
-    df_a = df_h.copy()
-    df_a['Gen'] = df_a['Gen_1kW'] * pv_ideal
-    df_a['Load'] = [ (total_d / 24) * norm_profile[h] for h in df_a['Timestamp'].dt.hour ]
-    df_a['Net'] = df_a['Gen'] - df_a['Load']
+    # We find the optimal PV/BESS ratio that minimizes total CAPEX
+    # Increasing PV reduces the seasonal BESS requirement.
+    best_capex_a = float('inf')
+    best_pv_a = pv_ideal
+    best_bess_a = 0
     
-    # Calculate Cumulative Net Energy to find required seasonal storage (Unconstrained)
-    df_a['Cum_Net'] = df_a['Net'].cumsum()
-    # The required capacity is the total swing from the deepest deficit to the highest surplus
-    seasonal_swing = (df_a['Cum_Net'].max() - df_a['Cum_Net'].min())
-    
-    # Apply efficiency loss (round-trip) and safety margin
-    # BESS A must be large enough to cover this seasonal imbalance
-    bess_a = (seasonal_swing / np.sqrt(BESS_EFF)) * 1.1 
-    capex_a = (pv_ideal * PRICE_PV) + (bess_a * PRICE_BESS) + (hh * 1500)
+    # Iterate through PV over-provisioning factors (from 1.0 to 3.0)
+    for factor in np.linspace(1.0, 3.0, 21):
+        test_pv = pv_ideal * factor
+        df_test = df_h.copy()
+        df_test['Gen'] = df_test['Gen_1kW'] * test_pv
+        df_test['Net'] = df_test['Gen'] - (total_d / 24) * norm_profile[df_test['Timestamp'].dt.hour]
+        
+        # Calculate required seasonal storage for this PV size
+        df_test['Cum_Net'] = df_test['Net'].cumsum()
+        test_swing = (df_test['Cum_Net'].max() - df_test['Cum_Net'].min())
+        test_bess = (test_swing / np.sqrt(BESS_EFF)) * 1.05 # Tighter margin for optimized case
+        
+        test_capex = (test_pv * PRICE_PV) + (test_bess * PRICE_BESS)
+        if test_capex < best_capex_a:
+            best_capex_a = test_capex
+            best_pv_a = test_pv
+            best_bess_a = test_bess
 
-    # Re-run simulation for SOC trace display using finalized bess_a
+    pv_ideal = best_pv_a # Update to optimized PV
+    bess_a = best_bess_a # Update to optimized BESS
+    capex_a = best_capex_a + (hh * 1500)
+
+    # Re-run final simulation for SOC trace display
+    df_a = df_h.copy()
+    df_a['Gen'] = df_h['Gen_1kW'] * pv_ideal
+    df_a['Net'] = df_a['Gen'] - (total_d / 24) * norm_profile[df_a['Timestamp'].dt.hour]
     soc = 50.0
     net_trace = []
     for i, row in df_a.iterrows():
