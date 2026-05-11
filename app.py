@@ -788,16 +788,20 @@ elif st.session_state.step == 'result':
             st.caption(f"📍 최저 구간: {worst_month}월 (평균 {monthly_sim['Insolation'].min():.1f} W/m²)")
 
         with c_base2:
+            cost_delta = (pv_for_worst - pv_base) * PRICE_PV
             st.markdown(f"""
             <div style='display: flex; flex-direction: column; gap: 12px;'>
                 <div style='background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #38bdf8;'>
                     <small style='color: #888;'>최저 일사량 대응 PV (Max)</small><br>
-                    <b style='color: #38bdf8; font-size: 22px;'>{pv_for_worst:,.1f} <small style='font-size: 14px;'>kWp</small></b><br>
+                    <b style='color: #38bdf8; font-size: 22px;'>{pv_for_worst:,.1f} <small style='font-size: 14px;'>kWp</small></b>
+                    <span style='background: rgba(255,75,75,0.2); color: #ff4b4b; padding: 2px 6px; border-radius: 4px; font-size: 12px; margin-left: 5px; vertical-align: middle;'>
+                        +$ {cost_delta:,.0f} CAPEX
+                    </span><br>
                     <span style='color: #777; font-size: 11px;'>저장 장치 없이 무정전을 위한 <b>가장 보수적인(최대)</b> 기준</span>
                 </div>
                 <div style='background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #ff4b4b;'>
                     <small style='color: #888;'>연간 총 잉여 전력량</small><br>
-                    <b style='color: #ff4b4b; font-size: 22px;'>{(monthly_curtailment_series.sum() * 30.4 / 1000):,.1f} <small style='font-size: 14px;'>MWh/y</small></b><br>
+                    <b style='color: #ff4b4b; font-size: 22px;'>{annual_waste_mwh:,.1f} <small style='font-size: 14px;'>MWh/y</small></b><br>
                     <span style='color: #777; font-size: 11px;'>보수적 설계 시 버려지는 막대한 에너지 낭비 규모</span>
                 </div>
                 <div style='background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid #00ff88;'>
