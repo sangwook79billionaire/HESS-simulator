@@ -127,12 +127,33 @@ def calc_edcf_payment(amount, years=40, grace=15, rate=0.0001):
 if st.session_state.step == 'input':
     st.title("🌍 Universal Net-Zero Microgrid Optimizer")
     st.markdown("전 세계 격오지 재생에너지 전환을 위한 하이브리드 시스템 설계 솔루션")
-    st.markdown("""
-    <div style='background: rgba(0, 212, 255, 0.1); padding: 10px 15px; border-radius: 8px; border-left: 4px solid #00d4ff; margin-bottom: 20px;'>
-        <span style='color: #00d4ff; font-weight: bold;'>📖 시뮬레이터 사용법:</span> 
-        <span style='color: #ccc; margin-left: 10px;'>1. 위치 선정 ➜ 2. 수요 설정 ➜ 3. 에너지 부하 패턴 지정</span>
-    </div>
-    """, unsafe_allow_html=True)
+    with st.expander("📖 시뮬레이터 상세 사용 매뉴얼 (User Guide)", expanded=False):
+        st.markdown("""
+        ### 📗 글로벌 마이크로그리드 시뮬레이터 가이드
+        격오지 재생에너지 전환을 위한 시스템 설계 및 사업성 검토 과정을 안내합니다.
+        
+        ---
+        
+        #### 1️⃣ Phase 1: 위치 선정 및 데이터 동기화
+        *   **위치 검색**: 상단 검색창에 지명을 입력하거나 지도를 직접 클릭하세요.
+        *   **위치 확정**: 지점을 선택하는 즉시 NASA 기상 데이터 및 해당 국가의 IEA 통계 데이터가 자동으로 연동됩니다.
+        
+        #### 2️⃣ Phase 2: 에너지 수요 및 소비 패턴 설계
+        *   **가구 수 및 국가 데이터**: 마을 규모와 에너지 사용량을 설정합니다.
+        *   **부하 믹스(Load Mix)**: 슬라이더를 조절하여 주거 중심(저녁 피크) 혹은 상업 중심(낮 피크) 패턴을 선택하세요.
+        *   **최적 설계 시작**: 모든 설정이 완료되면 **[🚀 시뮬레이션 시작]** 버튼을 클릭합니다.
+        
+        #### 3️⃣ Phase 3: 시나리오 분석 및 산출 로직 확인
+        *   **비교 분석**: 거대 배터리(Scenario A)와 수소 하이브리드(Scenario B)의 장단점을 비교합니다.
+        *   **산출 로직**: 각 항목 옆의 **ℹ️ 아이콘**에 마우스를 올리면 상세한 공학적 산출 근거를 확인할 수 있습니다.
+        
+        #### 4️⃣ Phase 4: 전략적 사업성 검토 (Strategic FS)
+        *   **사업성 지표**: 리포트 하단의 버튼을 통해 NPV, IRR, LCOE 등 재무적 타당성을 검토합니다.
+        *   **금융 지원 연동**: EDCF 차관 등 실제 금융 지원 패키지를 적용하여 최적의 비즈니스 모델을 도출합니다.
+        
+        ---
+        <small style='color: #888;'>※ 본 매뉴얼을 숙지하신 후 아래 Phase 1부터 분석을 시작해 주세요.</small>
+        """, unsafe_allow_html=True)
 
     main_tabs = st.tabs(["📍 단일 지점 분석", "🚀 대량 배치 시뮬레이션"])
     
