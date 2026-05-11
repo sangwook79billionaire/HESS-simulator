@@ -204,7 +204,7 @@ if st.session_state.step == 'input':
             
             with st.form("search_form"):
                 address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country, placeholder="e.g. Seoul, Bali, Nairobi...", help="분석하고자 하는 지역의 지명이나 주소를 입력하세요. IEA/NASA 데이터와 자동 연동됩니다.")
-                submitted = st.form_submit_button("위치 찾기", use_container_width=True, help="입력한 주소의 위/경도 좌표를 찾아 지도를 이동합니다.")
+                submitted = st.form_submit_button("위치 확정", use_container_width=True, help="입력한 주소의 위/경도 좌표를 찾아 지도를 이동하고 국가 데이터를 즉시 연동합니다.")
                 
             if submitted:
                 try:
@@ -213,7 +213,7 @@ if st.session_state.step == 'input':
                     loc = geolocator.geocode(address, timeout=10)
                     if loc:
                         st.session_state.lat, st.session_state.lon, st.session_state.country = loc.latitude, loc.longitude, loc.address
-                        st.session_state.loc_confirmed = False # Reset confirmation on new search
+                        st.session_state.loc_confirmed = True # Auto-confirm and match country
                         st.rerun()
                     else: st.error("검색 결과가 없습니다.")
                 except: st.error("위치 서비스 응답 지연. 지도에서 직접 클릭해 주세요.")
@@ -236,7 +236,7 @@ if st.session_state.step == 'input':
                             c_code = rev.raw.get('address', {}).get('CountryCode', '')
                             st.session_state.country = f"{rev.address} ({c_code})" if c_code else rev.address
                     except: pass
-                    st.session_state.loc_confirmed = False
+                    st.session_state.loc_confirmed = True # Auto-confirm on map click
                     st.rerun()
             
         with col2:
