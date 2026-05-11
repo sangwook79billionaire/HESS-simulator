@@ -747,9 +747,7 @@ elif st.session_state.step == 'result':
         </div>
         """, unsafe_allow_html=True)
         
-        col_title, col_cta = st.columns([3, 1])
-        with col_title:
-            # --- Section 2: Strategic Base Conditions ---
+        # --- Section 2: Strategic Base Conditions ---
         st.markdown("### 📋 2. 공통 전략 베이스 (Strategic Base Conditions)")
         
         # Calculate Base Metrics
