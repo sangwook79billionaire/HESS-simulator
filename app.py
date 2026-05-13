@@ -908,6 +908,7 @@ elif st.session_state.step == 'result':
                         <table style='width: 100%; font-size: 12px; color: #aaa;'>
                             <tr><td>☀️ PV 패널</td><td style='text-align: right; color: #fff;'>$ {pv_for_worst * PRICE_PV:,.0f}</td></tr>
                             <tr><td>🔋 BESS ({autonomy_days}일치)</td><td style='text-align: right; color: #fff;'>$ {bess_cost_autonomy:,.0f}</td></tr>
+                            <tr><td style='padding-top: 5px; color: #38bdf8;'>📐 필요 부지 면적</td><td style='text-align: right; color: #38bdf8; font-weight: bold; padding-top: 5px;'>{pv_for_worst * 7:,.0f} m²</td></tr>
                             <tr><td colspan='2' style='font-size: 11px; color: #666; padding-top: 5px;'>*BESS 용량: {bess_cap_autonomy:,.1f} kWh</td></tr>
                         </table>
                     </div>
@@ -921,6 +922,7 @@ elif st.session_state.step == 'result':
                         <table style='width: 100%; font-size: 12px; color: #aaa;'>
                             <tr><td>☀️ PV 패널</td><td style='text-align: right; color: #fff;'>$ {pv_for_abs_worst * PRICE_PV:,.0f}</td></tr>
                             <tr><td>🔋 BESS ({autonomy_days}일치)</td><td style='text-align: right; color: #fff;'>$ {bess_cost_autonomy:,.0f}</td></tr>
+                            <tr><td style='padding-top: 5px; color: #ff4b4b;'>📐 필요 부지 면적</td><td style='text-align: right; color: #ff4b4b; font-weight: bold; padding-top: 5px;'>{pv_for_abs_worst * 7:,.0f} m²</td></tr>
                             <tr><td colspan='2' style='font-size: 11px; color: #666; padding-top: 5px;'>*BESS 용량: {bess_cap_autonomy:,.1f} kWh</td></tr>
                         </table>
                     </div>
@@ -1077,6 +1079,10 @@ elif st.session_state.step == 'result':
             <b style='color: #00ff88; font-size: 15px;'>- {pv_delta:,.1f} kWp</b>
         </div>
         <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
+            <span style='color: #aaa; font-size: 13px;'>📐 부지 면적 절감</span>
+            <b style='color: #00ff88; font-size: 15px;'>- {pv_delta * 7:,.0f} m²</b>
+        </div>
+        <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
             <span style='color: #aaa; font-size: 13px;'>📈 BESS 용량 증가</span>
             <b style='color: #ff4b4b; font-size: 15px;'>+ {bess_delta:,.1f} kWh</b>
         </div>
@@ -1092,6 +1098,7 @@ elif st.session_state.step == 'result':
     <ul style='list-style: none; padding: 0;'>
         <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>제안 PV 용량: <b style='color: #fff;'>{pv_ideal:,.1f} kWp</b></li>
         <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>필요 BESS 용량: <b style='color: #fff;'>{bess_a:,.1f} kWh</b></li>
+        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>필요 부지 면적: <b style='color: #fff;'>{pv_ideal * 7:,.0f} m²</b></li>
         <li style='margin-top: 30px; font-size: 22px; text-align: center; color: #fff;'><b>Total CAPEX: $ {capex_a:,.0f}</b></li>
     </ul>
 </div>
@@ -1112,6 +1119,10 @@ elif st.session_state.step == 'result':
             <b style='color: #00ff88; font-size: 15px;'>- {pv_delta_b:,.1f} kWp</b>
         </div>
         <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
+            <span style='color: #aaa; font-size: 13px;'>📐 부지 면적 절감</span>
+            <b style='color: #00ff88; font-size: 15px;'>- {pv_delta_b * 7:,.0f} m²</b>
+        </div>
+        <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
             <span style='color: #aaa; font-size: 13px;'>📦 수소 장기 저장</span>
             <b style='color: #00d4ff; font-size: 15px;'>+ {h2_cap:,.1f} kg</b>
         </div>
@@ -1127,6 +1138,7 @@ elif st.session_state.step == 'result':
     <ul style='list-style: none; padding: 0;'>
         <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>제안 PV 용량: <b style='color: #fff;'>{pv_hybrid:,.1f} kWp</b></li>
         <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>H2 탱크 용량: <b style='color: #fff;'>{h2_cap:,.1f} kg</b></li>
+        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>필요 부지 면적: <b style='color: #fff;'>{pv_hybrid * 7:,.0f} m²</b></li>
         <li style='margin-top: 30px; font-size: 22px; text-align: center; color: #fff;'><b>Total CAPEX: $ {capex_b:,.0f}</b></li>
     </ul>
 </div>
