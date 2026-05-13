@@ -950,25 +950,34 @@ elif st.session_state.step == 'result':
         status_text = "최적화 가능 (Optimization Possible)" if is_optimizable else "PV 확대 + ESS 최적 (Expansion Recommended)"
         
         st.markdown(f"""
-        <div style='background: rgba(15, 23, 42, 0.6); padding: 30px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 35px;'>
+        <div style='background: rgba(15, 23, 42, 0.8); padding: 35px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15); margin-bottom: 35px;'>
             <div style='display: flex; align-items: center; gap: 15px; margin-bottom: 25px;'>
-                <div style='width: 12px; height: 12px; background: {status_color}; border-radius: 50%; box-shadow: 0 0 10px {status_color};'></div>
-                <b style='font-size: 20px; color: {status_color};'>{status_text}</b>
+                <div style='width: 14px; height: 14px; background: {status_color}; border-radius: 50%; box-shadow: 0 0 15px {status_color};'></div>
+                <b style='font-size: 22px; color: {status_color};'>{status_text}</b>
             </div>
-            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 30px;'>
+            <div style='display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px;'>
                 <div>
-                    <small style='color: #888;'>검토 결과 (Diagnosis)</small>
-                    <p style='color: #eee; font-size: 14px; margin-top: 10px; line-height: 1.6;'>
-                        극한 보수 설계 시 발생하는 <b>$ {curtail_ext * 1000 * SITE_LCOE:,.0f}</b> 규모의 에너지 버림(Waste) 비용과 
-                        <b>$ {pv_saved_cost:,.0f}</b>의 추가 패널 CAPEX를 고려할 때, 
+                    <b style='color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;'>검토 결과 (Diagnosis)</b>
+                    <p style='color: #ffffff; font-size: 15px; margin-top: 12px; line-height: 1.7; font-weight: 400;'>
+                        극한 보수 설계 시 발생하는 <b style='color: {status_color};'>$ {curtail_ext * 1000 * SITE_LCOE:,.0f}</b> 규모의 기회비용과 
+                        <b style='color: {status_color};'>$ {pv_saved_cost:,.0f}</b>의 추가 패널 CAPEX를 고려할 때, 
                         에너지 저장 및 전이 시스템 도입이 경제적으로 {"유리합니다." if is_optimizable else "불리할 수 있습니다."}
                     </p>
                 </div>
-                <div style='background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px;'>
-                    <table style='width: 100%; color: #fff; font-size: 13px;'>
-                        <tr><td style='padding: 5px 0; color: #888;'>과설계 회피 가능액</td><td style='text-align: right; font-weight: 600;'>$ {pv_saved_cost:,.0f}</td></tr>
-                        <tr><td style='padding: 5px 0; color: #888;'>저장장치 구축 비용</td><td style='text-align: right; font-weight: 600;'>$ {capex_a - (pv_ideal * PRICE_PV):,.0f}</td></tr>
-                        <tr style='border-top: 1px solid #444;'><td style='padding: 10px 0; font-weight: bold;'>순 경제적 이득</td><td style='text-align: right; color: {status_color}; font-size: 16px; font-weight: 700;'>$ {max(0, capex_extreme - capex_a):,.0f}</td></tr>
+                <div style='background: rgba(255,255,255,0.05); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);'>
+                    <table style='width: 100%; color: #fff; font-size: 14px; border-collapse: collapse;'>
+                        <tr>
+                            <td style='padding: 8px 0; color: #94a3b8;'>과설계 회피 가능액</td>
+                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>$ {pv_saved_cost:,.0f}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px 0; color: #94a3b8;'>저장장치 구축 비용</td>
+                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>$ {capex_a - (pv_ideal * PRICE_PV):,.0f}</td>
+                        </tr>
+                        <tr style='border-top: 2px solid #334155;'>
+                            <td style='padding: 15px 0; font-weight: bold; color: #fff; font-size: 15px;'>순 경제적 이득</td>
+                            <td style='text-align: right; color: {status_color}; font-size: 20px; font-weight: 800;'>$ {max(0, capex_extreme - capex_a):,.0f}</td>
+                        </tr>
                     </table>
                 </div>
             </div>
