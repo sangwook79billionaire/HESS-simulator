@@ -116,6 +116,32 @@ def get_nasa_data(lat, lon):
         return df_h
     except: return None
 
+@st.cache_data
+def get_nasa_history(lat, lon):
+    end_date = datetime.date.today() - datetime.timedelta(days=2)
+    start_date = end_date - datetime.timedelta(days=365*20)
+    start_str = start_date.strftime('%Y%m%d')
+    end_str = end_date.strftime('%Y%m%d')
+    url = f"https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN&community=RE&longitude={lon}&latitude={lat}&format=JSON&start={start_str}&end={end_str}"
+    try:
+        res = requests.get(url, timeout=30).json()
+        ins_d = res['properties']['parameter']['ALLSKY_SFC_SW_DWN']
+        df_d = pd.DataFrame({'Date': pd.to_datetime(list(ins_d.keys()), format='%Y%m%d'), 'Insolation': list(ins_d.values())})
+        return df_d
+    except: return None
+
+def analyze_extreme_weather(df_d):
+    if df_d is None or df_d.empty: return None
+    mean_ins = df_d['Insolation'].mean()
+    threshold = mean_ins * 0.20 # 20% of average
+    
+    df_d['is_low'] = df_d['Insolation'] < threshold
+    df_d['streak'] = df_d['is_low'].groupby((df_d['is_low'] != df_d['is_low'].shift()).cumsum()).transform('size') * df_d['is_low']
+    
+    max_streak = int(df_d['streak'].max())
+    worst_period = df_d[df_d['streak'] == max_streak].iloc[0]['Date']
+    return {"max_streak": max_streak, "worst_date": worst_period, "threshold": threshold, "mean": mean_ins}
+
 def calc_edcf_payment(amount, years=40, grace=15, rate=0.0001):
     n = years - grace
     if amount == 0: return 0
@@ -333,10 +359,17 @@ if st.session_state.step == 'input':
                         st.session_state.total_d = total_daily_kwh
                         st.session_state.load_profile = final_pattern
                         import time
-                        time.sleep(0.5)
+                        time.sleep(0.3)
                         st.write("📍 기상 데이터 및 물리 엔진 연동 완료...")
+                        
+                        # NASA History Fetching
+                        st.write("📡 NASA POWER 20년 과거 데이터 호출 중 (장주기 리스크 분석)...")
+                        st.session_state.history_df = get_nasa_history(st.session_state.lat, st.session_state.lon)
+                        st.session_state.extreme_analysis = analyze_extreme_weather(st.session_state.history_df)
+                        st.write("✅ 기상 리스크 분석 완료.")
+                        
                         st.session_state.step = 'result'
-                        status.update(label="✅ 설계 완료!", state="complete", expanded=False)
+                        status.update(label="✅ 설계 및 분석 완료!", state="complete", expanded=False)
                         time.sleep(0.5)
                         st.rerun()
                 
@@ -759,6 +792,34 @@ elif st.session_state.step == 'result':
         # Duration metrics for risk assessment
         avg_ghi = monthly_sim['Insolation'].mean()
         lean_months = (monthly_sim['Insolation'] < avg_ghi).sum()
+
+        # --- NASA Historical Risk Diagnosis ---
+        if 'extreme_analysis' in st.session_state and st.session_state.extreme_analysis:
+            ext = st.session_state.extreme_analysis
+            st.markdown("### **🚨 NASA 과거 데이터 기반 극한 기상 리스크 진단**")
+            st.markdown(f"""
+            <div style='background: rgba(255, 75, 75, 0.1); padding: 30px; border-radius: 16px; border: 1px solid rgba(255, 75, 75, 0.3); margin-bottom: 30px;'>
+                <div style='display: flex; gap: 40px; align-items: center;'>
+                    <div style='flex: 1; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 20px;'>
+                        <b style='color: #ff4b4b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;'>최악의 저일사 지속 기간 (Worst Streak)</b>
+                        <div style='margin-top: 15px;'>
+                            <span style='font-size: 42px; font-weight: 800; color: #ffffff;'>{ext['max_streak']} <small style='font-size: 18px; font-weight: 400;'>일 연속</small></span>
+                        </div>
+                        <p style='color: #94a3b8; font-size: 13px; margin-top: 10px;'>기록상 최장 극저사량 발생 시점: {ext['worst_date'].strftime('%Y년 %m월')}</p>
+                    </div>
+                    <div style='flex: 2;'>
+                        <b style='color: #ffffff; font-size: 18px;'>PV + BESS(단기) 시스템의 위험성 평가</b>
+                        <p style='color: #cbd5e1; font-size: 14px; margin-top: 12px; line-height: 1.7;'>
+                            과거 20년 데이터를 전수 조사한 결과, 일사량이 평균의 20% 이하(<b style='color: #ff4b4b;'>{ext['threshold']:.1f} kWh/m²/d</b>)로 
+                            떨어지는 극한 상황이 <b>최대 {ext['max_streak']}일간 지속</b>된 기록이 확인되었습니다.<br><br>
+                            해당 구간에서 1일치 버퍼를 가진 배터리 시스템은 <b>운전 시작 24시간 이내에 방전</b>되며, 
+                            잔여 {ext['max_streak']-1}일 동안은 태양광 발전 부족으로 인한 <b>전체 마이크로그리드 블랙아웃(Blackout)</b>이 불가피합니다. 
+                            이는 장주기 에너지 저장 및 전이 시스템(H2) 도입이 필수적인 공학적 임계점입니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
         # Q1: Insolation Variance Analysis
         st.markdown("### **Q1. 이 지역의 일사량 편차는?**")
