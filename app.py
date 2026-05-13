@@ -1063,22 +1063,36 @@ elif st.session_state.step == 'result':
             st.markdown("### **Q5. 최적화 시스템 제안 (Optimized Scenarios)**")
             c1, c2 = st.columns(2)
             with c1:
+                pv_delta = pv_for_abs_worst - pv_ideal
+                bess_delta = bess_a - bess_cap_autonomy
                 savings_a_ext = capex_extreme - capex_a
-                pv_red_a_ext = ((pv_for_abs_worst - pv_ideal) / pv_for_abs_worst) * 100
+                
                 st.markdown(f"""
-<div style='background-color: #0f172a; padding: 25px; border-radius: 16px; border: 1px solid #ff4b4b; min-height: 480px;'>
-    <h4 style='color: #ff4b4b; text-align: center; margin-bottom: 5px;'>Scenario A: BESS Only</h4>
-    <p style='font-size: 13px; color: #888; text-align: center; margin-bottom: 25px;'>배터리 전이 최적화</p>
-    <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
-        <small style='color: #aaa;'>🔥 vs 극한 보수 대비</small><br>
-        <b style='color: #ff4b4b; font-size: 18px;'>PV {pv_red_a_ext:.1f}% 절감</b><br>
-        <b style='color: #fff; font-size: 18px;'>CAPEX $ {savings_a_ext:,.0f} 방어</b>
+<div style='background-color: #0f172a; padding: 25px; border-radius: 16px; border: 1px solid #ff4b4b; min-height: 520px;'>
+    <h4 style='color: #ff4b4b; text-align: center; margin-bottom: 5px;'>Scenario A: PV 최적화 & 대용량 BESS</h4>
+    <p style='font-size: 13px; color: #888; text-align: center; margin-bottom: 25px;'>태양광 규모 최소화 및 배터리 전이 시뮬레이션</p>
+    <div style='background: rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; margin-bottom: 25px;'>
+        <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
+            <span style='color: #aaa; font-size: 13px;'>📉 PV 용량 절감</span>
+            <b style='color: #00ff88; font-size: 15px;'>- {pv_delta:,.1f} kWp</b>
+        </div>
+        <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
+            <span style='color: #aaa; font-size: 13px;'>📈 BESS 용량 증가</span>
+            <b style='color: #ff4b4b; font-size: 15px;'>+ {bess_delta:,.1f} kWh</b>
+        </div>
+        <div style='margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; text-align: right;'>
+            <small style='color: #aaa;'>예상 CAPEX 절감: </small>
+            <b style='color: #fff; font-size: 18px;'>$ {savings_a_ext:,.0f}</b>
+        </div>
     </div>
+    <p style='color: #94a3b8; font-size: 13px; line-height: 1.6; margin-bottom: 25px;'>
+        극한 기상에 맞춰 패널을 늘리는 대신, <b>연간 수지 균형</b>에 맞춘 최소 PV 설비를 구축하고 대용량 배터리 뱅크를 통해 에너지를 전이하여 전력을 공급하는 시나리오입니다.
+    </p>
     <hr style='border-color: #334155; margin: 20px 0;'>
     <ul style='list-style: none; padding: 0;'>
-        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>PV 최적 용량: <b style='color: #fff;'>{pv_ideal:,.1f} kWp</b></li>
-        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>BESS 저장 용량: <b style='color: #fff;'>{bess_a:,.1f} kWh</b></li>
-        <li style='margin-top: 30px; font-size: 22px; text-align: center; color: #fff;'><b>Total: $ {capex_a:,.0f}</b></li>
+        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>제안 PV 용량: <b style='color: #fff;'>{pv_ideal:,.1f} kWp</b></li>
+        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>필요 BESS 용량: <b style='color: #fff;'>{bess_a:,.1f} kWh</b></li>
+        <li style='margin-top: 30px; font-size: 22px; text-align: center; color: #fff;'><b>Total CAPEX: $ {capex_a:,.0f}</b></li>
     </ul>
 </div>
 """, unsafe_allow_html=True)
