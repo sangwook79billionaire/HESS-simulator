@@ -905,32 +905,32 @@ elif st.session_state.step == 'result':
         
         # Comparison Table
         st.markdown(f"""
-        <div style='background: rgba(255, 75, 75, 0.03); padding: 25px; border-radius: 12px; border: 1px solid rgba(255, 75, 75, 0.1); margin-bottom: 25px;'>
-            <table style='width: 100%; color: #eee; border-collapse: collapse; font-size: 14px;'>
+        <div style='background: rgba(255, 75, 75, 0.05); padding: 30px; border-radius: 16px; border: 1px solid rgba(255, 75, 75, 0.1); margin-bottom: 30px;'>
+            <table style='width: 100%; color: #1e293b; border-collapse: collapse; font-size: 14px;'>
                 <thead>
-                    <tr style='border-bottom: 2px solid #444; color: #888;'>
-                        <th style='text-align: left; padding: 10px;'>설계 시나리오</th>
-                        <th style='text-align: right; padding: 10px;'>연간 버려지는 에너지</th>
-                        <th style='text-align: right; padding: 10px;'>손실 가치 (Diesel LCOE)</th>
-                        <th style='text-align: right; padding: 10px;'>손실 가치 (Site LCOE)</th>
+                    <tr style='border-bottom: 2px solid #cbd5e1; color: #334155;'>
+                        <th style='text-align: left; padding: 12px;'>설계 시나리오</th>
+                        <th style='text-align: right; padding: 12px;'>연간 버려지는 에너지</th>
+                        <th style='text-align: right; padding: 12px;'>손실 가치 (Diesel LCOE)</th>
+                        <th style='text-align: right; padding: 12px;'>손실 가치 (Site LCOE)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr style='border-bottom: 1px solid #333;'>
-                        <td style='padding: 15px 10px;'>표준 보수 (Option A)</td>
-                        <td style='text-align: right; color: #ff4b4b; font-weight: bold;'>{curtail_std:,.1f} MWh</td>
-                        <td style='text-align: right;'>$ {curtail_std * 1000 * DIESEL_LCOE:,.0f}</td>
-                        <td style='text-align: right;'>$ {curtail_std * 1000 * SITE_LCOE:,.0f}</td>
+                    <tr style='border-bottom: 1px solid #e2e8f0;'>
+                        <td style='padding: 18px 12px; color: #64748b;'>표준 보수 (Option A)</td>
+                        <td style='text-align: right; color: #ef4444; font-weight: 700; font-size: 16px;'>{curtail_std:,.1f} MWh</td>
+                        <td style='text-align: right; color: #0f172a; font-weight: 600; font-size: 16px;'>$ {curtail_std * 1000 * DIESEL_LCOE:,.0f}</td>
+                        <td style='text-align: right; color: #0f172a; font-weight: 600; font-size: 16px;'>$ {curtail_std * 1000 * SITE_LCOE:,.0f}</td>
                     </tr>
                     <tr>
-                        <td style='padding: 15px 10px;'>극한 보수 (Option B)</td>
-                        <td style='text-align: right; color: #ff4b4b; font-weight: bold;'>{curtail_ext:,.1f} MWh</td>
-                        <td style='text-align: right;'>$ {curtail_ext * 1000 * DIESEL_LCOE:,.0f}</td>
-                        <td style='text-align: right;'>$ {curtail_ext * 1000 * SITE_LCOE:,.0f}</td>
+                        <td style='padding: 18px 12px; color: #64748b;'>극한 보수 (Option B)</td>
+                        <td style='text-align: right; color: #ef4444; font-weight: 700; font-size: 16px;'>{curtail_ext:,.1f} MWh</td>
+                        <td style='text-align: right; color: #0f172a; font-weight: 600; font-size: 16px;'>$ {curtail_ext * 1000 * DIESEL_LCOE:,.0f}</td>
+                        <td style='text-align: right; color: #0f172a; font-weight: 600; font-size: 16px;'>$ {curtail_ext * 1000 * SITE_LCOE:,.0f}</td>
                     </tr>
                 </tbody>
             </table>
-            <div style='margin-top: 15px; font-size: 11px; color: #666; border-top: 1px solid #333; padding-top: 10px;'>
+            <div style='margin-top: 20px; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 12px; font-style: italic;'>
                 *손실 가치 산출 근거: 디젤 LCOE ($0.45/kWh), 사이트 추정 LCOE ($0.18/kWh, 무보조금 기준)
             </div>
         </div>
