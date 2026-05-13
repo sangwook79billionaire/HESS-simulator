@@ -981,6 +981,9 @@ elif st.session_state.step == 'result':
                     </table>
                 </div>
             </div>
+            <div style='margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: #64748b; font-style: italic;'>
+                *저장장치 구축 비용 산출 가정: BESS ($350/kWh), 수전해조 ($1,200/kW), 연료전지 ($2,000/kW), 수소탱크 ($500/kg)
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
