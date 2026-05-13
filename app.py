@@ -798,23 +798,24 @@ elif st.session_state.step == 'result':
             ext = st.session_state.extreme_analysis
             st.markdown("### **🚨 NASA 과거 데이터 기반 극한 기상 리스크 진단**")
             st.markdown(f"""
-            <div style='background: rgba(255, 75, 75, 0.1); padding: 30px; border-radius: 16px; border: 1px solid rgba(255, 75, 75, 0.3); margin-bottom: 30px;'>
-                <div style='display: flex; gap: 40px; align-items: center;'>
-                    <div style='flex: 1; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 20px;'>
-                        <b style='color: #ff4b4b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;'>최악의 저일사 지속 기간 (Worst Streak)</b>
-                        <div style='margin-top: 15px;'>
-                            <span style='font-size: 42px; font-weight: 800; color: #ffffff;'>{ext['max_streak']} <small style='font-size: 18px; font-weight: 400;'>일 연속</small></span>
+            <div style='background: #0f172a; padding: 35px; border-radius: 16px; border: 1px solid #ff4b4b; margin-bottom: 35px; box-shadow: 0 10px 30px rgba(255, 75, 75, 0.1);'>
+                <div style='display: flex; gap: 40px; align-items: flex-start;'>
+                    <div style='flex: 1; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 30px;'>
+                        <b style='color: #ff4b4b; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;'>최악의 저일사 지속 기간 (Worst Streak)</b>
+                        <div style='margin-top: 20px;'>
+                            <span style='font-size: 52px; font-weight: 900; color: #ffffff; line-height: 1;'>{ext['max_streak']} <small style='font-size: 20px; font-weight: 500; color: #94a3b8;'>일 연속</small></span>
                         </div>
-                        <p style='color: #94a3b8; font-size: 13px; margin-top: 10px;'>기록상 최장 극저사량 발생 시점: {ext['worst_date'].strftime('%Y년 %m월')}</p>
+                        <p style='color: #94a3b8; font-size: 14px; margin-top: 15px; font-weight: 500;'>기록상 최장 극저사량 발생 시점:<br><b style='color: #fff;'>{ext['worst_date'].strftime('%Y년 %m월')}</b></p>
                     </div>
                     <div style='flex: 2;'>
-                        <b style='color: #ffffff; font-size: 18px;'>PV + BESS(단기) 시스템의 위험성 평가</b>
-                        <p style='color: #cbd5e1; font-size: 14px; margin-top: 12px; line-height: 1.7;'>
-                            과거 20년 데이터를 전수 조사한 결과, 일사량이 평균의 20% 이하(<b style='color: #ff4b4b;'>{ext['threshold']:.1f} kWh/m²/d</b>)로 
+                        <b style='color: #ffffff; font-size: 20px; letter-spacing: -0.5px;'>PV + BESS(단기) 시스템의 위험성 평가</b>
+                        <div style='height: 2px; width: 50px; background: #ff4b4b; margin: 15px 0;'></div>
+                        <p style='color: #cbd5e1; font-size: 15px; margin-top: 15px; line-height: 1.8; font-weight: 400;'>
+                            과거 20년 데이터를 전수 조사한 결과, 일사량이 평균의 20% 이하(<b style='color: #ff4b4b; font-weight: 700;'>{ext['threshold']:.1f} kWh/m²/d</b>)로 
                             떨어지는 극한 상황이 <b>최대 {ext['max_streak']}일간 지속</b>된 기록이 확인되었습니다.<br><br>
-                            해당 구간에서 1일치 버퍼를 가진 배터리 시스템은 <b>운전 시작 24시간 이내에 방전</b>되며, 
-                            잔여 {ext['max_streak']-1}일 동안은 태양광 발전 부족으로 인한 <b>전체 마이크로그리드 블랙아웃(Blackout)</b>이 불가피합니다. 
-                            이는 장주기 에너지 저장 및 전이 시스템(H2) 도입이 필수적인 공학적 임계점입니다.
+                            해당 구간에서 1일치 버퍼를 가진 배터리 시스템은 <b style='color: #fff;'>운전 시작 24시간 이내에 방전</b>되며, 
+                            잔여 {ext['max_streak']-1}일 동안은 태양광 발전 부족으로 인한 <b style='color: #ff4b4b; font-weight: 700;'>전체 마이크로그리드 블랙아웃(Blackout)</b>이 불가피합니다.<br><br>
+                            이는 장주기 에너지 저장 및 전이 시스템(H2) 도입이 선택이 아닌 <b>필수적인 공학적 임계점</b>임을 시사합니다.
                         </p>
                     </div>
                 </div>
