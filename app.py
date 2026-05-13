@@ -1098,22 +1098,36 @@ elif st.session_state.step == 'result':
 """, unsafe_allow_html=True)
 
             with c2:
+                pv_delta_b = pv_for_abs_worst - pv_hybrid
+                h2_cap = max(h2_stock)
                 savings_b_ext = capex_extreme - capex_b
-                pv_red_b_ext = ((pv_for_abs_worst - pv_hybrid) / pv_for_abs_worst) * 100
+                
                 st.markdown(f"""
-<div style='background-color: #0f172a; padding: 25px; border-radius: 16px; border: 1px solid #00d4ff; min-height: 480px;'>
-    <h4 style='color: #00d4ff; text-align: center; margin-bottom: 5px;'>Scenario B: H2 Hybrid</h4>
-    <p style='font-size: 13px; color: #888; text-align: center; margin-bottom: 25px;'>수소 장기 저장 최적화</p>
-    <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-bottom: 20px;'>
-        <small style='color: #aaa;'>🔥 vs 극한 보수 대비</small><br>
-        <b style='color: #00d4ff; font-size: 18px;'>PV {pv_red_b_ext:.1f}% 절감</b><br>
-        <b style='color: #fff; font-size: 18px;'>CAPEX $ {savings_b_ext:,.0f} 방어</b>
+<div style='background-color: #0f172a; padding: 25px; border-radius: 16px; border: 1px solid #00d4ff; min-height: 520px;'>
+    <h4 style='color: #00d4ff; text-align: center; margin-bottom: 5px;'>Scenario B: PV 최적화 & 수소 하이브리드</h4>
+    <p style='font-size: 13px; color: #888; text-align: center; margin-bottom: 25px;'>에너지 전이(Seasonal Shifting) 및 하이브리드 저장</p>
+    <div style='background: rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; margin-bottom: 25px;'>
+        <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
+            <span style='color: #aaa; font-size: 13px;'>📉 PV 용량 절감</span>
+            <b style='color: #00ff88; font-size: 15px;'>- {pv_delta_b:,.1f} kWp</b>
+        </div>
+        <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
+            <span style='color: #aaa; font-size: 13px;'>📦 수소 장기 저장</span>
+            <b style='color: #00d4ff; font-size: 15px;'>+ {h2_cap:,.1f} kg</b>
+        </div>
+        <div style='margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; text-align: right;'>
+            <small style='color: #aaa;'>예상 CAPEX 절감: </small>
+            <b style='color: #fff; font-size: 18px;'>$ {savings_b_ext:,.0f}</b>
+        </div>
     </div>
+    <p style='color: #94a3b8; font-size: 13px; line-height: 1.6; margin-bottom: 25px;'>
+        태양광 패널을 극한으로 늘리는 대신, <b>에너지 밀도가 높은 수소</b>를 매개체로 활용하여 잉여 전력을 수개월간 장기 저장 및 전이(Energy Shifting)하는 하이브리드 방식입니다.
+    </p>
     <hr style='border-color: #334155; margin: 20px 0;'>
     <ul style='list-style: none; padding: 0;'>
-        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>PV 최적 용량: <b style='color: #fff;'>{pv_hybrid:,.1f} kWp</b></li>
-        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>H2 저장 용량: <b style='color: #fff;'>{max(h2_stock):,.1f} kg</b></li>
-        <li style='margin-top: 30px; font-size: 22px; text-align: center; color: #fff;'><b>Total: $ {capex_b:,.0f}</b></li>
+        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>제안 PV 용량: <b style='color: #fff;'>{pv_hybrid:,.1f} kWp</b></li>
+        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>H2 탱크 용량: <b style='color: #fff;'>{h2_cap:,.1f} kg</b></li>
+        <li style='margin-top: 30px; font-size: 22px; text-align: center; color: #fff;'><b>Total CAPEX: $ {capex_b:,.0f}</b></li>
     </ul>
 </div>
 """, unsafe_allow_html=True)
