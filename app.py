@@ -821,7 +821,7 @@ elif st.session_state.step == 'result':
 
         st.markdown(f"""
         <div style='background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 25px;'>
-            <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;'>
+            <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;'>
                 <b style='font-size: 16px; color: #fff;'>보수적 설계 옵션 비교 (Conservative Options)</b>
                 <span style='background: {risk_color}22; color: {risk_color}; padding: 3px 10px; border-radius: 6px; font-size: 12px; border: 1px solid {risk_color}44;'>
                     지속성 리스크: {risk_level}
@@ -830,19 +830,30 @@ elif st.session_state.step == 'result':
             <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 20px;'>
                 <!-- Standard Conservative -->
                 <div style='background: #0f172a; padding: 20px; border-radius: 10px; border-top: 4px solid #38bdf8;'>
-                    <small style='color: #888;'>Option A: 표준 보수 설계 (최저월 평균 기준)</small><br>
-                    <b style='color: #fff; font-size: 24px;'>{pv_for_worst:,.1f} kWp</b><br>
-                    <span style='color: #38bdf8; font-size: 18px; font-weight: bold;'>$ {capex_q2:,.0f}</span>
-                    <p style='color: #666; font-size: 12px; margin-top: 10px;'>*최저 발전월({worst_month}월)의 일평균 발전량에 맞춰 설계</p>
+                    <small style='color: #888;'>Option A: 표준 보수 설계 (최저월 평균)</small><br>
+                    <b style='color: #fff; font-size: 28px; line-height: 1.5;'>{pv_for_worst:,.1f} kWp</b><br>
+                    <span style='color: #38bdf8; font-size: 20px; font-weight: bold;'>$ {capex_q2:,.0f}</span>
+                    <div style='margin-top: 15px; padding-top: 10px; border-top: 1px solid #2d3748;'>
+                        <table style='width: 100%; font-size: 12px; color: #aaa;'>
+                            <tr><td>☀️ PV 패널</td><td style='text-align: right; color: #fff;'>$ {pv_for_worst * PRICE_PV:,.0f}</td></tr>
+                            <tr><td>🔋 BESS (1일치)</td><td style='text-align: right; color: #fff;'>$ {total_d * PRICE_BESS:,.0f}</td></tr>
+                            <tr><td colspan='2' style='font-size: 11px; color: #666; padding-top: 5px;'>*BESS 용량: {total_d:,.1f} kWh</td></tr>
+                        </table>
+                    </div>
                 </div>
                 <!-- Extreme Conservative -->
                 <div style='background: #0f172a; padding: 20px; border-radius: 10px; border-top: 4px solid #ff4b4b;'>
                     <small style='color: #888;'>Option B: 극한 보수 설계 (최저일 기준)</small><br>
-                    <b style='color: #fff; font-size: 24px;'>{pv_for_abs_worst:,.1f} kWp</b><br>
-                    <span style='color: #ff4b4b; font-size: 18px; font-weight: bold;'>$ {capex_extreme:,.0f}</span>
-                    <p style='color: #666; font-size: 12px; margin-top: 10px;'>*연중 최악의 날(Worst Day)에도 100% 자립 가능한 규모</p>
+                    <b style='color: #fff; font-size: 28px; line-height: 1.5;'>{pv_for_abs_worst:,.1f} kWp</b><br>
+                    <span style='color: #ff4b4b; font-size: 20px; font-weight: bold;'>$ {capex_extreme:,.0f}</span>
+                    <div style='margin-top: 15px; padding-top: 10px; border-top: 1px solid #2d3748;'>
+                        <table style='width: 100%; font-size: 12px; color: #aaa;'>
+                            <tr><td>☀️ PV 패널</td><td style='text-align: right; color: #fff;'>$ {pv_for_abs_worst * PRICE_PV:,.0f}</td></tr>
+                            <tr><td>🔋 BESS (1일치)</td><td style='text-align: right; color: #fff;'>$ {total_d * PRICE_BESS:,.0f}</td></tr>
+                            <tr><td colspan='2' style='font-size: 11px; color: #666; padding-top: 5px;'>*BESS 용량: {total_d:,.1f} kWh</td></tr>
+                        </table>
+                    </div>
                 </div>
-            </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
