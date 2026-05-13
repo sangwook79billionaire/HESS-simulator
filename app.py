@@ -900,8 +900,7 @@ elif st.session_state.step == 'result':
         curtail_std = max(0, (pv_for_worst * annual_gen_1kw - annual_load) / 1000) # MWh
         curtail_ext = max(0, (pv_for_abs_worst * annual_gen_1kw - annual_load) / 1000) # MWh
         
-        DIESEL_LCOE = 0.45
-        SITE_LCOE = 0.18
+        SITE_LCOE = 0.18 # USD/kWh
         
         # Comparison Table
         st.markdown(f"""
@@ -911,27 +910,24 @@ elif st.session_state.step == 'result':
                     <tr style='border-bottom: 2px solid #cbd5e1; color: #334155;'>
                         <th style='text-align: left; padding: 12px;'>설계 시나리오</th>
                         <th style='text-align: right; padding: 12px;'>연간 버려지는 에너지</th>
-                        <th style='text-align: right; padding: 12px;'>손실 가치 (Diesel LCOE)</th>
-                        <th style='text-align: right; padding: 12px;'>손실 가치 (Site LCOE)</th>
+                        <th style='text-align: right; padding: 12px;'>기회비용 (Site LCOE 기준)</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr style='border-bottom: 1px solid #e2e8f0;'>
                         <td style='padding: 18px 12px; color: #64748b;'>표준 보수 (Option A)</td>
                         <td style='text-align: right; color: #ef4444; font-weight: 700; font-size: 16px;'>{curtail_std:,.1f} MWh</td>
-                        <td style='text-align: right; color: #0f172a; font-weight: 600; font-size: 16px;'>$ {curtail_std * 1000 * DIESEL_LCOE:,.0f}</td>
                         <td style='text-align: right; color: #0f172a; font-weight: 600; font-size: 16px;'>$ {curtail_std * 1000 * SITE_LCOE:,.0f}</td>
                     </tr>
                     <tr>
                         <td style='padding: 18px 12px; color: #64748b;'>극한 보수 (Option B)</td>
                         <td style='text-align: right; color: #ef4444; font-weight: 700; font-size: 16px;'>{curtail_ext:,.1f} MWh</td>
-                        <td style='text-align: right; color: #0f172a; font-weight: 600; font-size: 16px;'>$ {curtail_ext * 1000 * DIESEL_LCOE:,.0f}</td>
                         <td style='text-align: right; color: #0f172a; font-weight: 600; font-size: 16px;'>$ {curtail_ext * 1000 * SITE_LCOE:,.0f}</td>
                     </tr>
                 </tbody>
             </table>
             <div style='margin-top: 20px; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 12px; font-style: italic;'>
-                *손실 가치 산출 근거: 디젤 LCOE ($0.45/kWh), 사이트 추정 LCOE ($0.18/kWh, 무보조금 기준)
+                *기회비용 산출 근거: 사이트 추정 LCOE ($0.18/kWh, 무보조금 기준)
             </div>
         </div>
         """, unsafe_allow_html=True)
