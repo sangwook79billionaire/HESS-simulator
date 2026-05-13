@@ -1053,97 +1053,62 @@ elif st.session_state.step == 'result':
 
             with c_net1:
                 st.plotly_chart(create_net_chart(monthly_net_a, monthly_ghi, "Scenario A: 월간 수지 & 일사량"), use_container_width=True)
-            with c_net2:
-                st.plotly_chart(create_net_chart(monthly_net_b, monthly_ghi, "Scenario B: 월간 수지 & 일사량"), use_container_width=True)
+            # 4. CAPEX 상세 내역 및 비교
+            st.markdown("---")
+            st.markdown("### 💰 4. 투자비 상세 내역 (CAPEX Breakdown)")
+            
+            # Breakdown Data Calculation
+            cost_pv_a = pv_ideal * PRICE_PV
+            cost_bess_a = bess_a * PRICE_BESS
+            cost_dist = hh * 1500
+            
+            cost_pv_b = pv_hybrid * PRICE_PV
+            cost_bess_b = bess_b * PRICE_BESS
+            cost_el = el_kw * PRICE_EL
+            cost_fc = fc_kw * PRICE_FC
+            cost_h2_tank = max(h2_stock) * 500
+            
+            # Stacked Bar Chart for Breakdown
+            fig_break = go.Figure()
+            # Scenario A
+            fig_break.add_trace(go.Bar(name='Solar PV', x=['Scenario A'], y=[cost_pv_a], marker_color='#FFD700', text=[f"${cost_pv_a/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='BESS (Battery)', x=['Scenario A'], y=[cost_bess_a], marker_color='#4CAF50', text=[f"${cost_bess_a/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='Distribution', x=['Scenario A'], y=[cost_dist], marker_color='#9E9E9E', text=[f"${cost_dist/1e6:.2f}M"], textposition='auto'))
+            
+            # Scenario B
+            fig_break.add_trace(go.Bar(name='Solar PV', x=['Scenario B'], y=[cost_pv_b], marker_color='#FFD700', showlegend=False, text=[f"${cost_pv_b/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='BESS (Battery)', x=['Scenario B'], y=[cost_bess_b], marker_color='#4CAF50', showlegend=False, text=[f"${cost_bess_b/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='Electrolyzer (EL)', x=['Scenario B'], y=[cost_el], marker_color='#2196F3', text=[f"${cost_el/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='Fuel Cell (FC)', x=['Scenario B'], y=[cost_fc], marker_color='#03A9F4', text=[f"${cost_fc/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='H2 Tank', x=['Scenario B'], y=[cost_h2_tank], marker_color='#00BCD4', text=[f"${cost_h2_tank/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='Distribution', x=['Scenario B'], y=[cost_dist], marker_color='#9E9E9E', showlegend=False, text=[f"${cost_dist/1e6:.2f}M"], textposition='auto'))
+            
+            # Scenario Totals
+            total_a = cost_pv_a + cost_bess_a + cost_dist
+            total_b = cost_pv_b + cost_bess_b + cost_el + cost_fc + cost_h2_tank + cost_dist
+
+            # Comparison Sign Annotation
+            sign = ">" if total_a > total_b else "<"
+            fig_break.add_annotation(x=0.5, y=max(total_a, total_b) * 0.8, xref="paper", yref="y", text=sign, showarrow=False, font=dict(size=50, color="#444", family="Arial Black"))
+
+            # Scenario A Total
+            fig_break.add_annotation(x='Scenario A', y=total_a, text=f"Total: ${total_a:,.0f}", showarrow=False, yshift=30, font=dict(size=22, color='#ff4b4b', family="Arial Black"))
+            
+            # Scenario B Total
+            fig_break.add_annotation(x='Scenario B', y=total_b, text=f"Total: ${total_b:,.0f}", showarrow=False, yshift=30, font=dict(size=22, color="#00d4ff", family="Arial Black"))
+            
+            # Winner Indicator
+            if total_b < total_a:
+                fig_break.add_annotation(x='Scenario B', y=total_b, text="🚀 사업성 있음 (Feasible)", showarrow=False, yshift=70, font=dict(size=14, color="#00ff88", family="Arial Black"), bgcolor="rgba(0,0,0,0.8)", bordercolor="#00ff88", borderwidth=1, borderpad=4)
+            
+            fig_break.update_layout(title="투자 비용 구성 항목 비교 (Cost Breakdown)", barmode='stack', template="plotly_dark", height=620, margin=dict(t=120, b=100), yaxis=dict(range=[0, max(total_a, total_b)*1.5]), legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5))
+            st.plotly_chart(fig_break, use_container_width=True)
 
         if is_optimizable:
             render_optimized_section()
         else:
             with st.expander("🔍 장주기 시나리오 비교해보기"):
                 render_optimized_section()
-
-        # 4. CAPEX 상세 내역 및 비교
-        st.markdown("### 💰 4. 투자비 상세 내역 (CAPEX Breakdown)")
-        
-        # Breakdown Data Calculation (Reinstated)
-        cost_pv_a = pv_ideal * PRICE_PV
-        cost_bess_a = bess_a * PRICE_BESS
-        cost_dist = hh * 1500
-        
-        cost_pv_b = pv_hybrid * PRICE_PV
-        cost_bess_b = bess_b * PRICE_BESS
-        cost_el = el_kw * PRICE_EL
-        cost_fc = fc_kw * PRICE_FC
-        cost_h2_tank = max(h2_stock) * 500
-        
-        # Stacked Bar Chart for Breakdown
-        fig_break = go.Figure()
-        # Scenario A
-        fig_break.add_trace(go.Bar(name='Solar PV', x=['Scenario A'], y=[cost_pv_a], marker_color='#FFD700', text=[f"${cost_pv_a/1e6:.2f}M"], textposition='auto'))
-        fig_break.add_trace(go.Bar(name='BESS (Battery)', x=['Scenario A'], y=[cost_bess_a], marker_color='#4CAF50', text=[f"${cost_bess_a/1e6:.2f}M"], textposition='auto'))
-        fig_break.add_trace(go.Bar(name='Distribution', x=['Scenario A'], y=[cost_dist], marker_color='#9E9E9E', text=[f"${cost_dist/1e6:.2f}M"], textposition='auto'))
-        
-        # Scenario B
-        fig_break.add_trace(go.Bar(name='Solar PV', x=['Scenario B'], y=[cost_pv_b], marker_color='#FFD700', showlegend=False, text=[f"${cost_pv_b/1e6:.2f}M"], textposition='auto'))
-        fig_break.add_trace(go.Bar(name='BESS (Battery)', x=['Scenario B'], y=[cost_bess_b], marker_color='#4CAF50', showlegend=False, text=[f"${cost_bess_b/1e6:.2f}M"], textposition='auto'))
-        fig_break.add_trace(go.Bar(name='Electrolyzer (EL)', x=['Scenario B'], y=[cost_el], marker_color='#2196F3', text=[f"${cost_el/1e6:.2f}M"], textposition='auto'))
-        fig_break.add_trace(go.Bar(name='Fuel Cell (FC)', x=['Scenario B'], y=[cost_fc], marker_color='#03A9F4', text=[f"${cost_fc/1e6:.2f}M"], textposition='auto'))
-        fig_break.add_trace(go.Bar(name='H2 Tank', x=['Scenario B'], y=[cost_h2_tank], marker_color='#00BCD4', text=[f"${cost_h2_tank/1e6:.2f}M"], textposition='auto'))
-        fig_break.add_trace(go.Bar(name='Distribution', x=['Scenario B'], y=[cost_dist], marker_color='#9E9E9E', showlegend=False, text=[f"${cost_dist/1e6:.2f}M"], textposition='auto'))
-        
-        # Scenario Totals for Annotations
-        total_a = cost_pv_a + cost_bess_a + cost_dist
-        total_b = cost_pv_b + cost_bess_b + cost_el + cost_fc + cost_h2_tank + cost_dist
-
-        # Comparison Sign Annotation (Middle)
-        sign = ">" if total_a > total_b else "<"
-        fig_break.add_annotation(
-            x=0.5, y=max(total_a, total_b) * 0.8,
-            xref="paper", yref="y",
-            text=sign,
-            showarrow=False,
-            font=dict(size=50, color="#444", family="Arial Black")
-        )
-
-        # Scenario A Total Annotation
-        fig_break.add_annotation(
-            x='Scenario A', y=total_a,
-            text=f"Total: ${total_a:,.0f}",
-            showarrow=False, yshift=30,
-            font=dict(size=22, color='#ff4b4b', family="Arial Black")
-        )
-        
-        # Scenario B Total Annotation
-        fig_break.add_annotation(
-            x='Scenario B', y=total_b,
-            text=f"Total: ${total_b:,.0f}",
-            showarrow=False, yshift=30,
-            font=dict(size=22, color="#00d4ff", family="Arial Black")
-        )
-        
-        # Highlight Annotation for Feasibility (Scenario B winner)
-        if total_b < total_a:
-            fig_break.add_annotation(
-                x='Scenario B', y=total_b,
-                text="🚀 사업성 있음 (Feasible)",
-                showarrow=False, yshift=70,
-                font=dict(size=14, color="#00ff88", family="Arial Black"),
-                bgcolor="rgba(0,0,0,0.8)",
-                bordercolor="#00ff88",
-                borderwidth=1,
-                borderpad=4
-            )
-        
-        fig_break.update_layout(
-            title="투자 비용 구성 항목 비교 (Cost Breakdown)", 
-            barmode='stack', 
-            template="plotly_dark", 
-            height=620, 
-            margin=dict(t=120, b=100), 
-            yaxis=dict(range=[0, max(total_a, total_b)*1.5]),
-            legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5)
-        )
-        st.plotly_chart(fig_break, use_container_width=True)
 
         # --- 4. Financial Feasibility Study (Indonesia Strategy Model) ---
         # --- 4. Financial Feasibility Study (Universal Strategy Model) ---
