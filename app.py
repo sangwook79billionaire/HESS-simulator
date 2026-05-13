@@ -1044,8 +1044,8 @@ elif st.session_state.step == 'result':
                             <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>$ {pv_saved_cost:,.0f}</td>
                         </tr>
                         <tr>
-                            <td style='padding: 8px 0; color: #94a3b8;'>저장장치 구축 비용</td>
-                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>$ {capex_a - (pv_ideal * PRICE_PV):,.0f}</td>
+                            <td style='padding: 8px 0; color: #94a3b8;'>저장장치 구축 비용 (BESS 전용)</td>
+                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>$ {bess_a * PRICE_BESS:,.0f}</td>
                         </tr>
                         <tr>
                             <td style='padding: 8px 0; color: #94a3b8;'>과설계 필요 면적</td>
