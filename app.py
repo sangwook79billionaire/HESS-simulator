@@ -1047,6 +1047,14 @@ elif st.session_state.step == 'result':
                             <td style='padding: 8px 0; color: #94a3b8;'>저장장치 구축 비용</td>
                             <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>$ {capex_a - (pv_ideal * PRICE_PV):,.0f}</td>
                         </tr>
+                        <tr>
+                            <td style='padding: 8px 0; color: #94a3b8;'>과설계 필요 면적</td>
+                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>{pv_for_abs_worst * 7:,.0f} m²</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px 0; color: #94a3b8;'>최적화 필요 면적</td>
+                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>{pv_ideal * 7:,.0f} m²</td>
+                        </tr>
                         <tr style='border-top: 2px solid #334155;'>
                             <td style='padding: 15px 0; font-weight: bold; color: #fff; font-size: 15px;'>순 경제적 이득</td>
                             <td style='text-align: right; color: {status_color}; font-size: 20px; font-weight: 800;'>$ {max(0, capex_extreme - capex_a):,.0f}</td>
@@ -1144,6 +1152,55 @@ elif st.session_state.step == 'result':
 </div>
 """, unsafe_allow_html=True)
 
+            # 4. 전체 시나리오 종합 비교 테이블 (Scenario Master Comparison)
+            st.markdown("---")
+            st.markdown("### 📋 전체 시나리오 핵심 지표 비교 (Scenario Master Comparison)")
+            st.markdown(f"""
+            <div style='background: rgba(255,255,255,0.03); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); overflow-x: auto;'>
+                <table style='width: 100%; border-collapse: collapse; color: #fff; font-size: 14px; min-width: 600px;'>
+                    <thead>
+                        <tr style='border-bottom: 2px solid #334155; color: #94a3b8;'>
+                            <th style='text-align: left; padding: 12px;'>시나리오 (Scenario)</th>
+                            <th style='text-align: right; padding: 12px;'>PV 용량 (kWp)</th>
+                            <th style='text-align: right; padding: 12px;'>저장장치 규모</th>
+                            <th style='text-align: right; padding: 12px;'>필요 면적 (m²)</th>
+                            <th style='text-align: right; padding: 12px;'>총 투자비 (CAPEX)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style='border-bottom: 1px solid #1e293b;'>
+                            <td style='padding: 12px; color: #38bdf8; font-weight: bold;'>Option A (표준 보수)</td>
+                            <td style='text-align: right; padding: 12px;'>{pv_for_worst:,.1f}</td>
+                            <td style='text-align: right; padding: 12px;'>BESS {bess_cap_autonomy:,.0f} kWh</td>
+                            <td style='text-align: right; padding: 12px;'>{pv_for_worst * 7:,.0f} m²</td>
+                            <td style='text-align: right; padding: 12px;'>$ {capex_q2:,.0f}</td>
+                        </tr>
+                        <tr style='border-bottom: 1px solid #1e293b;'>
+                            <td style='padding: 12px; color: #ff4b4b; font-weight: bold;'>Option B (극한 보수)</td>
+                            <td style='text-align: right; padding: 12px;'>{pv_for_abs_worst:,.1f}</td>
+                            <td style='text-align: right; padding: 12px;'>BESS {bess_cap_autonomy:,.0f} kWh</td>
+                            <td style='text-align: right; padding: 12px;'>{pv_for_abs_worst * 7:,.0f} m²</td>
+                            <td style='text-align: right; padding: 12px;'>$ {capex_extreme:,.0f}</td>
+                        </tr>
+                        <tr style='border-bottom: 1px solid #1e293b; background: rgba(0,255,136,0.03);'>
+                            <td style='padding: 12px; color: #00ff88; font-weight: bold;'>Scenario A (PV 최적화)</td>
+                            <td style='text-align: right; padding: 12px;'>{pv_ideal:,.1f}</td>
+                            <td style='text-align: right; padding: 12px;'>BESS {bess_a:,.0f} kWh</td>
+                            <td style='text-align: right; padding: 12px;'>{pv_ideal * 7:,.0f} m²</td>
+                            <td style='text-align: right; padding: 12px;'>$ {capex_a:,.0f}</td>
+                        </tr>
+                        <tr style='background: rgba(0,212,255,0.03);'>
+                            <td style='padding: 12px; color: #00d4ff; font-weight: bold;'>Scenario B (H2 하이브리드)</td>
+                            <td style='text-align: right; padding: 12px;'>{pv_hybrid:,.1f}</td>
+                            <td style='text-align: right; padding: 12px;'>H2 {h2_cap:,.0f} kg + BESS</td>
+                            <td style='text-align: right; padding: 12px;'>{pv_hybrid * 7:,.0f} m²</td>
+                            <td style='text-align: right; padding: 12px;'>$ {capex_b:,.0f}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            """, unsafe_allow_html=True)
+
             # 3. 상세 운영 지표 시각화
             st.markdown("---")
             st.markdown("### 📊 3. 상세 운영 지표 및 시나리오 비교 (Detailed Analysis)")
@@ -1218,11 +1275,8 @@ elif st.session_state.step == 'result':
             fig_break.update_layout(title="투자 비용 구성 항목 비교 (Cost Breakdown)", barmode='stack', template="plotly_dark", height=620, margin=dict(t=120, b=100), yaxis=dict(range=[0, max(total_a, total_b)*1.5]), legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5))
             st.plotly_chart(fig_break, use_container_width=True)
 
-        if is_optimizable:
-            render_optimized_section()
-        else:
-            with st.expander("🔍 장주기 시나리오 비교해보기"):
-                render_optimized_section()
+        # --- Q5: Optimized Scenarios (Always Visible for Comparison) ---
+        render_optimized_section()
 
         # --- 4. Financial Feasibility Study (Indonesia Strategy Model) ---
         # --- 4. Financial Feasibility Study (Universal Strategy Model) ---
