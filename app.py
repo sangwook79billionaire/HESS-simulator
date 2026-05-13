@@ -868,14 +868,23 @@ elif st.session_state.step == 'result':
         
         # Q2: Over-spec PV Logic
         st.markdown("### **Q2. 저일사량 기간에 맞춰 태양광을 Over-spec 하려면 얼마나 필요한가?**")
+        
+        # Calculate Autonomy Days from NASA History
+        autonomy_days = 1.0
+        if 'extreme_analysis' in st.session_state and st.session_state.extreme_analysis:
+            autonomy_days = round(st.session_state.extreme_analysis['max_streak'] * 1.2, 1)
+        
+        bess_cap_autonomy = total_d * autonomy_days
+        bess_cost_autonomy = bess_cap_autonomy * PRICE_BESS
+        
         pv_for_worst = (total_d / worst_daily_yield) * 1.05 
-        capex_q2 = (pv_for_worst * PRICE_PV) + (total_d * PRICE_BESS)
+        capex_q2 = (pv_for_worst * PRICE_PV) + bess_cost_autonomy
         
         # Calculate Absolute Worst Day and Extreme CAPEX
         df_daily_gen = df_h.groupby(df_h['Timestamp'].dt.date)['Gen_1kW'].sum()
         abs_worst_yield = df_daily_gen.min()
         pv_for_abs_worst = (total_d / abs_worst_yield) * 1.05 if abs_worst_yield > 0.05 else pv_for_worst * 5
-        capex_extreme = (pv_for_abs_worst * PRICE_PV) + (total_d * PRICE_BESS)
+        capex_extreme = (pv_for_abs_worst * PRICE_PV) + bess_cost_autonomy
         
         # Risk Assessment based on Duration
         risk_level = "High" if lean_months >= 3 else "Medium" if lean_months >= 1 else "Low"
@@ -898,8 +907,8 @@ elif st.session_state.step == 'result':
                     <div style='margin-top: 15px; padding-top: 10px; border-top: 1px solid #2d3748;'>
                         <table style='width: 100%; font-size: 12px; color: #aaa;'>
                             <tr><td>☀️ PV 패널</td><td style='text-align: right; color: #fff;'>$ {pv_for_worst * PRICE_PV:,.0f}</td></tr>
-                            <tr><td>🔋 BESS (1일치)</td><td style='text-align: right; color: #fff;'>$ {total_d * PRICE_BESS:,.0f}</td></tr>
-                            <tr><td colspan='2' style='font-size: 11px; color: #666; padding-top: 5px;'>*BESS 용량: {total_d:,.1f} kWh</td></tr>
+                            <tr><td>🔋 BESS ({autonomy_days}일치)</td><td style='text-align: right; color: #fff;'>$ {bess_cost_autonomy:,.0f}</td></tr>
+                            <tr><td colspan='2' style='font-size: 11px; color: #666; padding-top: 5px;'>*BESS 용량: {bess_cap_autonomy:,.1f} kWh</td></tr>
                         </table>
                     </div>
                 </div>
@@ -911,8 +920,8 @@ elif st.session_state.step == 'result':
                     <div style='margin-top: 15px; padding-top: 10px; border-top: 1px solid #2d3748;'>
                         <table style='width: 100%; font-size: 12px; color: #aaa;'>
                             <tr><td>☀️ PV 패널</td><td style='text-align: right; color: #fff;'>$ {pv_for_abs_worst * PRICE_PV:,.0f}</td></tr>
-                            <tr><td>🔋 BESS (1일치)</td><td style='text-align: right; color: #fff;'>$ {total_d * PRICE_BESS:,.0f}</td></tr>
-                            <tr><td colspan='2' style='font-size: 11px; color: #666; padding-top: 5px;'>*BESS 용량: {total_d:,.1f} kWh</td></tr>
+                            <tr><td>🔋 BESS ({autonomy_days}일치)</td><td style='text-align: right; color: #fff;'>$ {bess_cost_autonomy:,.0f}</td></tr>
+                            <tr><td colspan='2' style='font-size: 11px; color: #666; padding-top: 5px;'>*BESS 용량: {bess_cap_autonomy:,.1f} kWh</td></tr>
                         </table>
                     </div>
                 </div>
