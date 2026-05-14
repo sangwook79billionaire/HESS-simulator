@@ -680,6 +680,7 @@ elif st.session_state.step == 'result':
             dis = min(abs(bal), (soc - 20) * bess_a / 100 / np.sqrt(BESS_EFF))
             soc -= (dis * np.sqrt(BESS_EFF) / bess_a) * 100
         net_trace.append(soc)
+    df_a['SOC_A'] = net_trace
     
     # ---------------------------------------------------------
     # SCENARIO B: BESS-HESS Hybrid (Advanced Steady-State Solver)
@@ -1284,20 +1285,34 @@ elif st.session_state.step == 'result':
             monthly_ghi = df_h.groupby('Month')['Insolation'].mean()
             y_min = min(monthly_net_a.min(), monthly_net_b.min()) * 1.2
             y_max = max(monthly_net_a.max(), monthly_net_b.max()) * 1.2
-            c_net1, c_net2 = st.columns(2)
             
             def create_net_chart(net_data, ghi_data, title):
                 fig = make_subplots(specs=[[{"secondary_y": True}]])
                 colors = ['#00d4ff' if x > 0 else '#ff4b4b' for x in net_data.values]
                 fig.add_trace(go.Bar(x=net_data.index, y=net_data.values, name="Net Balance", marker_color=colors), secondary_y=False)
                 fig.add_trace(go.Scatter(x=ghi_data.index, y=ghi_data.values, name="평균 일사량", line=dict(color="#FFD700", width=3, dash='dot'), mode='lines+markers'), secondary_y=True)
-                fig.update_layout(title=dict(text=title, font=dict(size=18)), template="plotly_dark", height=350, margin=dict(l=60, r=60, t=60, b=50), showlegend=True)
+                fig.update_layout(title=dict(text=title, font=dict(size=16)), template="plotly_dark", height=320, margin=dict(l=40, r=40, t=40, b=40), showlegend=False)
                 fig.update_yaxes(title_text="순 수지 (kWh)", range=[y_min, y_max], secondary_y=False)
-                fig.update_yaxes(title_text="일사량 (kWh/m²/d)", secondary_y=True)
+                fig.update_yaxes(title_text="일사량", secondary_y=True)
                 return fig
 
-            with c_net1:
-                st.plotly_chart(create_net_chart(monthly_net_a, monthly_ghi, "Scenario A: 월간 수지 & 일사량"), use_container_width=True)
+            def create_storage_chart(data, col, title, color, unit):
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(x=data['Timestamp'], y=data[col], name=title, line=dict(color=color, width=2), fill='tozeroy'))
+                fig.update_layout(title=dict(text=title, font=dict(size=16)), template="plotly_dark", height=280, margin=dict(l=40, r=40, t=40, b=40), showlegend=False)
+                fig.update_yaxes(title_text=f"{unit}")
+                return fig
+
+            c_ana1, c_ana2 = st.columns(2)
+            with c_ana1:
+                st.markdown("<h4 style='text-align: center; color: #ff4b4b;'>Scenario A: 대용량 배터리 중심</h4>", unsafe_allow_html=True)
+                st.plotly_chart(create_net_chart(monthly_net_a, monthly_ghi, "S1: 월간 에너지 수지"), use_container_width=True)
+                st.plotly_chart(create_storage_chart(df_a, 'SOC_A', "배터리 충전 상태 (SOC %)", "#4CAF50", "%"), use_container_width=True)
+
+            with c_ana2:
+                st.markdown("<h4 style='text-align: center; color: #00d4ff;'>Scenario B: 수소 하이브리드</h4>", unsafe_allow_html=True)
+                st.plotly_chart(create_net_chart(monthly_net_b, monthly_ghi, "S2: 월간 에너지 수지"), use_container_width=True)
+                st.plotly_chart(create_storage_chart(df_h, 'H2_Stock', "수소 저장량 트렌드 (kg)", "#00d4ff", "kg"), use_container_width=True)
             # 4. CAPEX 상세 내역 및 비교
             st.markdown("---")
             st.markdown("### 💰 4. 투자비 상세 내역 (CAPEX Breakdown)")
