@@ -364,41 +364,28 @@ if st.session_state.step == 'input':
                 if st.button("📍 이 위치로 확정 및 국가 데이터 연동", type="primary", use_container_width=True, help="선택한 위치의 일사량, 온도 데이터 및 해당 국가의 전력 통계를 불러옵니다."):
                     st.session_state.loc_confirmed = True
                     st.rerun()
-            elif not st.session_state.get('market_intel_confirmed', False):
-                st.subheader("🔍 Market Intelligence Report")
+            else:
+                # --- Market Intelligence Context ---
                 country_key = find_country_match(st.session_state.country)
                 report = get_market_report(country_key)
                 
-                st.markdown(f"""
-                <div style='background: #0f172a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; margin-bottom: 25px;'>
-                    <h4 style='color: #00d4ff; margin-top: 0;'>📍 {country_key} 시장 환경 리포트</h4>
-                    <div style='display: grid; grid-template-columns: 1fr; gap: 15px; font-size: 14px;'>
-                        <div style='padding-bottom: 10px; border-bottom: 1px solid #1e293b;'>
-                            <b style='color: #888;'>1. 전력 공급 개요</b><br>
-                            <span style='color: #fff;'>{report['supply']}</span>
+                with st.expander(f"🔍 {country_key} Market Intelligence Report", expanded=True):
+                    st.markdown(f"""
+                    <div style='background: rgba(0, 212, 255, 0.05); padding: 20px; border-radius: 10px; border: 1px solid rgba(0, 212, 255, 0.2);'>
+                        <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 13px;'>
+                            <div><b style='color: #888;'>⚡ 전력 공급:</b> <span style='color: #fff;'>{report['supply']}</span></div>
+                            <div><b style='color: #888;'>🌍 자급 현황:</b> <span style='color: #fff;'>{report['self_sufficiency']}</span></div>
+                            <div><b style='color: #888;'>💰 전력 요금:</b> <span style='color: #fff;'>{report['rates']}</span></div>
+                            <div><b style='color: #888;'>🔌 계통 환경:</b> <span style='color: #fff;'>{report['grid']}</span></div>
                         </div>
-                        <div style='padding-bottom: 10px; border-bottom: 1px solid #1e293b;'>
-                            <b style='color: #888;'>2. 자급률 및 수입 현황</b><br>
-                            <span style='color: #fff;'>{report['self_sufficiency']}</span>
-                        </div>
-                        <div style='padding-bottom: 10px; border-bottom: 1px solid #1e293b;'>
-                            <b style='color: #888;'>3. 가구별 전력 사용량 및 요금</b><br>
-                            <span style='color: #fff;'>{report['rates']}</span>
-                        </div>
-                        <div>
-                            <b style='color: #888;'>4. 전력망 현황 (Isolated Area 유무)</b><br>
-                            <span style='color: #fff;'>{report['grid']}<br><small style='color: #00ff88;'>{report['microgrid']}</small></span>
+                        <div style='margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); color: #00ff88; font-size: 12px;'>
+                            💡 <b>Insight:</b> {report['microgrid']}
                         </div>
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                if st.button("✅ 시장 리포트 확인 및 시뮬레이션 설계 진행", type="primary", use_container_width=True):
-                    st.session_state.market_intel_confirmed = True
-                    st.rerun()
-            else:
+                    """, unsafe_allow_html=True)
+
                 st.subheader("⚡ Phase 2: 에너지 수요 및 패턴 설계")
-                st.success(" 위치 확정 완료: 국가별 통계 데이터가 활성화되었습니다.")
+                st.success(" 위치 및 시장 데이터 연동 완료")
                 
                 # Demand Configuration
                 d_c1, d_c2 = st.columns(2)
