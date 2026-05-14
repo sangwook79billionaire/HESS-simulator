@@ -966,45 +966,61 @@ elif st.session_state.step == 'result':
             </div>
             """, unsafe_allow_html=True)
         # Q3: Curtailment Comparison
-        # Q3: Curtailment Table
-        st.markdown("### **Q3. 잉여 에너지 및 기회비용 분석 (Curtailment & Opportunity Cost)**")
+        st.markdown("### **Q3. 과설계 시 버려지는 에너지(Curtailment)는 얼마나 되나?**")
+        
+        annual_gen_1kw = df_h['Gen_1kW'].sum()
+        annual_load = total_d * 365
+        curtail_std = max(0, (pv_for_worst * annual_gen_1kw - annual_load) / 1000) # MWh
+        curtail_ext = max(0, (pv_for_abs_worst * annual_gen_1kw - annual_load) / 1000) # MWh
+        
+        SITE_LCOE = 0.18 # USD/kWh
+        
+        # Comparison Table
         st.markdown(f"""
         <div style='background: rgba(255, 75, 75, 0.05); padding: 30px; border-radius: 16px; border: 1px solid rgba(255, 75, 75, 0.1); margin-bottom: 30px;'>
-            <table style='width: 100%; color: #fff; border-collapse: collapse; font-size: 14px;'>
+            <table style='width: 100%; color: #1e293b; border-collapse: collapse; font-size: 14px;'>
                 <thead>
-                    <tr style='border-bottom: 2px solid #334155; color: #94a3b8;'>
+                    <tr style='border-bottom: 2px solid #cbd5e1; color: #334155;'>
                         <th style='text-align: left; padding: 12px;'>설계 시나리오</th>
                         <th style='text-align: right; padding: 12px;'>연간 버려지는 에너지</th>
                         <th style='text-align: right; padding: 12px;'>기회비용 (Site LCOE 기준)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr style='border-bottom: 1px solid #1e293b;'>
-                        <td style='padding: 18px 12px; color: #94a3b8;'>표준 보수 (Option A)</td>
-                        <td style='text-align: right; color: #ff4b4b; font-weight: 700; font-size: 16px;'>{curtail_std:,.1f} MWh</td>
-                        <td style='text-align: right; color: #fff; font-weight: 600; font-size: 16px;'>$ {curtail_std * 1000 * SITE_LCOE:,.0f}</td>
+                    <tr style='border-bottom: 1px solid #e2e8f0;'>
+                        <td style='padding: 18px 12px; color: #64748b;'>표준 보수 (Option A)</td>
+                        <td style='text-align: right; color: #ef4444; font-weight: 700; font-size: 16px;'>{curtail_std:,.1f} MWh</td>
+                        <td style='text-align: right; color: #0f172a; font-weight: 600; font-size: 16px;'>$ {curtail_std * 1000 * SITE_LCOE:,.0f}</td>
                     </tr>
                     <tr>
-                        <td style='padding: 18px 12px; color: #94a3b8;'>극한 보수 (Option B)</td>
-                        <td style='text-align: right; color: #ff4b4b; font-weight: 700; font-size: 16px;'>{curtail_ext:,.1f} MWh</td>
-                        <td style='text-align: right; color: #fff; font-weight: 600; font-size: 16px;'>$ {curtail_ext * 1000 * SITE_LCOE:,.0f}</td>
+                        <td style='padding: 18px 12px; color: #64748b;'>극한 보수 (Option B)</td>
+                        <td style='text-align: right; color: #ef4444; font-weight: 700; font-size: 16px;'>{curtail_ext:,.1f} MWh</td>
+                        <td style='text-align: right; color: #0f172a; font-weight: 600; font-size: 16px;'>$ {curtail_ext * 1000 * SITE_LCOE:,.0f}</td>
                     </tr>
                 </tbody>
             </table>
-            <div style='margin-top: 20px; font-size: 12px; color: #64748b; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; font-style: italic;'>
+            <div style='margin-top: 20px; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 12px; font-style: italic;'>
                 *기회비용 산출 근거: 사이트 추정 LCOE ($0.18/kWh, 무보조금 기준)
             </div>
         </div>
         """, unsafe_allow_html=True)
 
+        # Monthly Curtailment Chart (Standard Case)
+        monthly_curtailment_series = (monthly_daily_yield_1kw * pv_for_worst) - total_d
+        fig_q3 = go.Figure()
+        fig_q3.add_trace(go.Scatter(x=list(range(1, 13)), y=monthly_curtailment_series.clip(lower=0), fill='tozeroy', line=dict(color='#ff4b4b', width=3), fillcolor='rgba(255, 75, 75, 0.2)'))
+        fig_q3.update_layout(title="월간 에너지 잉여 규모 (kWh/d, 표준보수 기준)", height=250, template="plotly_dark", margin=dict(l=20,r=20,t=40,b=20), xaxis=dict(dtick=1))
+        st.plotly_chart(fig_q3, use_container_width=True)
+
         # Q4: Feasibility Assessment
         st.markdown("### **Q4. 장주기 저장을 통해 PV 발전규모 최적화가 가능한가?**")
         
+        # Economic Logic: Is (Saved PV Cost) > (ESS Cost)?
         pv_saved_cost = (pv_for_abs_worst - pv_ideal) * PRICE_PV
-        is_optimizable = capex_b < capex_extreme
+        is_optimizable = capex_a < capex_extreme
         
         status_color = "#00ff88" if is_optimizable else "#fbbf24"
-        status_text = "하이브리드 최적화 권장 (H2 Hybrid Recommended)" if is_optimizable else "PV 확대 + ESS 최적 (Expansion Recommended)"
+        status_text = "최적화 가능 (Optimization Possible)" if is_optimizable else "PV 확대 + ESS 최적 (Expansion Recommended)"
         
         st.markdown(f"""
         <div style='background: rgba(15, 23, 42, 0.8); padding: 35px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15); margin-bottom: 35px;'>
@@ -1016,8 +1032,9 @@ elif st.session_state.step == 'result':
                 <div>
                     <b style='color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;'>검토 결과 (Diagnosis)</b>
                     <p style='color: #ffffff; font-size: 15px; margin-top: 12px; line-height: 1.7; font-weight: 400;'>
-                        극한 보수 설계 시 발생하는 부지 제약과 과도한 패널 CAPEX를 고려할 때, 
-                        에너지 밀도가 높은 <b>수소 하이브리드(Scenario 3)</b> 도입을 통한 시스템 최적화가 {"유리합니다." if is_optimizable else "불리할 수 있습니다."}
+                        극한 보수 설계 시 발생하는 <b style='color: {status_color};'>$ {curtail_ext * 1000 * SITE_LCOE:,.0f}</b> 규모의 기회비용과 
+                        <b style='color: {status_color};'>$ {pv_saved_cost:,.0f}</b>의 추가 패널 CAPEX를 고려할 때, 
+                        에너지 저장 및 전이 시스템 도입이 경제적으로 {"유리합니다." if is_optimizable else "불리할 수 있습니다."}
                     </p>
                 </div>
                 <div style='background: rgba(255,255,255,0.05); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);'>
@@ -1027,87 +1044,114 @@ elif st.session_state.step == 'result':
                             <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>$ {pv_saved_cost:,.0f}</td>
                         </tr>
                         <tr>
-                            <td style='padding: 8px 0; color: #94a3b8;'>하이브리드 전환 비용</td>
-                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>$ {capex_b - (pv_hybrid * PRICE_PV):,.0f}</td>
+                            <td style='padding: 8px 0; color: #94a3b8;'>저장장치 구축 비용 (BESS 전용)</td>
+                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>$ {bess_a * PRICE_BESS:,.0f}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px 0; color: #94a3b8;'>과설계 필요 면적</td>
+                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>{pv_for_abs_worst * 7:,.0f} m²</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px 0; color: #94a3b8;'>최적화 필요 면적</td>
+                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>{pv_ideal * 7:,.0f} m²</td>
                         </tr>
                         <tr style='border-top: 2px solid #334155;'>
                             <td style='padding: 15px 0; font-weight: bold; color: #fff; font-size: 15px;'>순 경제적 이득</td>
-                            <td style='text-align: right; color: {status_color}; font-size: 20px; font-weight: 800;'>$ {max(0, capex_extreme - capex_b):,.0f}</td>
+                            <td style='text-align: right; color: {status_color}; font-size: 20px; font-weight: 800;'>$ {max(0, capex_extreme - capex_a):,.0f}</td>
                         </tr>
                     </table>
                 </div>
             </div>
+            <div style='margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: #64748b; font-style: italic;'>
+                *저장장치 구축 비용 산출 가정: BESS ($350/kWh), 수전해조 ($1,200/kW), 연료전지 ($2,000/kW), 수소탱크 ($500/kg)
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
+        # Q5 & Detailed Analysis: Conditional Display
         def render_optimized_section():
-            st.markdown("### **Q5. 전략적 설계 시나리오 비교 (Strategic Scenario Comparison)**")
-            st.info("💡 모든 최적화 시나리오는 NASA 20년 과거 기상 데이터를 바탕으로 '연간 에너지 수지 0'를 달성하도록 설계되었습니다.")
-            
+            st.markdown("### **Q5. 최적화 시스템 제안 (Optimized Scenarios)**")
             c1, c2 = st.columns(2)
             with c1:
+                pv_delta = pv_for_abs_worst - pv_ideal
+                bess_delta = bess_a - bess_cap_autonomy
+                savings_a_ext = capex_extreme - capex_a
+                
                 st.markdown(f"""
-<div style='background-color: #0f172a; padding: 25px; border-radius: 16px; border: 1px solid #ff4b4b; min-height: 580px;'>
-    <h4 style='color: #ff4b4b; text-align: center; margin-bottom: 5px;'>Scenario 2: PV 최적화 & 대용량 BESS</h4>
-    <p style='font-size: 13px; color: #888; text-align: center; margin-bottom: 25px;'>고발전기 기준 PV 용량 + 연간 수지용 대용량 배터리</p>
+<div style='background-color: #0f172a; padding: 25px; border-radius: 16px; border: 1px solid #ff4b4b; min-height: 550px;'>
+    <h4 style='color: #ff4b4b; text-align: center; margin-bottom: 5px;'>Scenario A: PV 최적화 & 장기 배터리</h4>
+    <p style='font-size: 13px; color: #888; text-align: center; margin-bottom: 25px;'>연간 에너지 수지 0 달성을 위한 대용량 BESS 뱅크</p>
     <div style='background: rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; margin-bottom: 25px;'>
         <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
-            <span style='color: #aaa; font-size: 13px;'>📉 PV 용량 절감 (vs Baseline)</span>
-            <b style='color: #00ff88; font-size: 15px;'>- {pv_for_abs_worst - pv_ideal:,.1f} kWp</b>
+            <span style='color: #aaa; font-size: 13px;'>📉 PV 용량 절감</span>
+            <b style='color: #00ff88; font-size: 15px;'>- {pv_delta:,.1f} kWp</b>
         </div>
         <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
             <span style='color: #aaa; font-size: 13px;'>📈 BESS 용량 증가</span>
-            <b style='color: #ff4b4b; font-size: 15px;'>+ {bess_a - bess_cap_autonomy:,.1f} kWh</b>
+            <b style='color: #ff4b4b; font-size: 15px;'>+ {bess_delta:,.1f} kWh</b>
         </div>
         <div style='margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; text-align: right;'>
-            <small style='color: #aaa;'>총 투자비 (CAPEX): </small>
-            <b style='color: #fff; font-size: 18px;'>$ {capex_a:,.0f}</b>
+            <small style='color: #aaa;'>vs 극한 보수 대비 절감: </small>
+            <b style='color: #fff; font-size: 18px;'>$ {savings_a_ext:,.0f}</b>
         </div>
     </div>
     <p style='color: #94a3b8; font-size: 13px; line-height: 1.6; margin-bottom: 25px;'>
-        태양광은 연간 수지에 맞춰 최소화하고, 모든 에너지를 <b>배터리 뱅크</b>만으로 저장/전이하여 기상 리스크를 방어하는 방식입니다.
+        고발전기 효율을 반영하여 <b>연간 총 발전량과 부하의 균형</b>을 맞추는 최적 PV를 설치하고, 계절적 불균형을 대규모 배터리 뱅크로만 해소하는 시나리오입니다.
     </p>
     <hr style='border-color: #334155; margin: 20px 0;'>
     <ul style='list-style: none; padding: 0;'>
         <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>제안 PV 용량: <b style='color: #fff;'>{pv_ideal:,.1f} kWp</b></li>
         <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>필요 BESS 용량: <b style='color: #fff;'>{bess_a:,.1f} kWh</b></li>
         <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>필요 부지 면적: <b style='color: #fff;'>{pv_ideal * 7:,.0f} m²</b></li>
+        <li style='margin-top: 30px; font-size: 22px; text-align: center; color: #fff;'><b>Total CAPEX: $ {capex_a:,.0f}</b></li>
     </ul>
 </div>
 """, unsafe_allow_html=True)
 
             with c2:
+                # Fixed 1.5d BESS for H2 Hybrid
+                bess_b_fixed = total_d * 1.5
+                cost_bess_b_fixed = bess_b_fixed * PRICE_BESS
+                # PV hybrid logic: PV for balance + margin for H2 losses (approx 20%)
+                pv_hybrid_final = pv_ideal * 1.2
+                capex_b_final = (pv_hybrid_final * PRICE_PV) + cost_bess_b_fixed + (el_kw * PRICE_EL) + (fc_kw * PRICE_FC) + (max(h2_stock) * 500) + (hh * 1500)
+                
+                pv_delta_b = pv_for_abs_worst - pv_hybrid_final
                 h2_cap = max(h2_stock)
+                savings_b_ext = capex_extreme - capex_b_final
+                
                 st.markdown(f"""
-<div style='background-color: #0f172a; padding: 25px; border-radius: 16px; border: 1px solid #00d4ff; min-height: 580px;'>
-    <h4 style='color: #00d4ff; text-align: center; margin-bottom: 5px;'>Scenario 3: PV 최적화 & 수소 하이브리드</h4>
-    <p style='font-size: 13px; color: #888; text-align: center; margin-bottom: 25px;'>적정 PV + 수소 여유분 + 1.5일 BESS + H2 인프라</p>
+<div style='background-color: #0f172a; padding: 25px; border-radius: 16px; border: 1px solid #00d4ff; min-height: 550px;'>
+    <h4 style='color: #00d4ff; text-align: center; margin-bottom: 5px;'>Scenario B: 수소 하이브리드 Shifting</h4>
+    <p style='font-size: 13px; color: #888; text-align: center; margin-bottom: 25px;'>1.5일 BESS + 수소 장기 저장 시스템</p>
     <div style='background: rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; margin-bottom: 25px;'>
         <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
-            <span style='color: #aaa; font-size: 13px;'>📉 PV 용량 절감 (vs Baseline)</span>
-            <b style='color: #00ff88; font-size: 15px;'>- {pv_for_abs_worst - pv_hybrid:,.1f} kWp</b>
+            <span style='color: #aaa; font-size: 13px;'>📉 PV 용량 절감</span>
+            <b style='color: #00ff88; font-size: 15px;'>- {pv_delta_b:,.1f} kWp</b>
         </div>
         <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
             <span style='color: #aaa; font-size: 13px;'>📦 수소 장기 저장</span>
             <b style='color: #00d4ff; font-size: 15px;'>+ {h2_cap:,.1f} kg</b>
         </div>
         <div style='margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; text-align: right;'>
-            <small style='color: #aaa;'>총 투자비 (CAPEX): </small>
-            <b style='color: #fff; font-size: 18px;'>$ {capex_b:,.0f}</b>
+            <small style='color: #aaa;'>vs 극한 보수 대비 절감: </small>
+            <b style='color: #fff; font-size: 18px;'>$ {savings_b_ext:,.0f}</b>
         </div>
     </div>
     <p style='color: #94a3b8; font-size: 13px; line-height: 1.6; margin-bottom: 25px;'>
-        PV 여유분을 통해 수소를 생산하고, <b>1.5일 배터리</b>로 단기 변동성을 대응하며, 장기 에너지는 수소 탱크로 전이하는 방식입니다.
+        고발전기 기준 PV에 <b>수소 생산 여유 캐파</b>를 더하고, 단기 대응용 1.5일 BESS와 장기 대응용 수소 시스템을 결합하여 투자 효율을 극대화한 시나리오입니다.
     </p>
     <hr style='border-color: #334155; margin: 20px 0;'>
     <ul style='list-style: none; padding: 0;'>
-        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>제안 PV 용량: <b style='color: #fff;'>{pv_hybrid:,.1f} kWp</b></li>
-        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>필요 BESS 용량: <b style='color: #fff;'>1.5 Days ({bess_b:,.1f} kWh)</b></li>
-        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>필요 부지 면적: <b style='color: #fff;'>{pv_hybrid * 7:,.0f} m²</b></li>
+        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>제안 PV 용량: <b style='color: #fff;'>{pv_hybrid_final:,.1f} kWp</b></li>
+        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>배터리 용량: <b style='color: #fff;'>{bess_b_fixed:,.1f} kWh (1.5일)</b></li>
+        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>필요 부지 면적: <b style='color: #fff;'>{pv_hybrid_final * 7:,.0f} m²</b></li>
+        <li style='margin-top: 30px; font-size: 22px; text-align: center; color: #fff;'><b>Total CAPEX: $ {capex_b_final:,.0f}</b></li>
     </ul>
 </div>
 """, unsafe_allow_html=True)
 
+            # 4. 전체 시나리오 종합 비교 테이블 (Scenario Master Comparison)
             st.markdown("---")
             st.markdown("### 📋 전체 시나리오 핵심 지표 비교 (Scenario Master Comparison)")
             st.markdown(f"""
@@ -1117,38 +1161,124 @@ elif st.session_state.step == 'result':
                         <tr style='border-bottom: 2px solid #334155; color: #94a3b8;'>
                             <th style='text-align: left; padding: 12px;'>시나리오 (Scenario)</th>
                             <th style='text-align: right; padding: 12px;'>PV 용량 (kWp)</th>
-                            <th style='text-align: right; padding: 12px;'>저장장치 구성</th>
+                            <th style='text-align: right; padding: 12px;'>저장장치 규모</th>
                             <th style='text-align: right; padding: 12px;'>필요 면적 (m²)</th>
                             <th style='text-align: right; padding: 12px;'>총 투자비 (CAPEX)</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr style='border-bottom: 1px solid #1e293b;'>
-                            <td style='padding: 12px; color: #ff4b4b; font-weight: bold;'>시나리오 1 (극한보수)</td>
+                            <td style='padding: 12px; color: #38bdf8; font-weight: bold;'>Option A (표준 보수)</td>
+                            <td style='text-align: right; padding: 12px;'>{pv_for_worst:,.1f}</td>
+                            <td style='text-align: right; padding: 12px;'>BESS {bess_cap_autonomy:,.0f} kWh</td>
+                            <td style='text-align: right; padding: 12px;'>{pv_for_worst * 7:,.0f} m²</td>
+                            <td style='text-align: right; padding: 12px;'>$ {capex_q2:,.0f}</td>
+                        </tr>
+                        <tr style='border-bottom: 1px solid #1e293b;'>
+                            <td style='padding: 12px; color: #ff4b4b; font-weight: bold;'>Option B (극한 보수)</td>
                             <td style='text-align: right; padding: 12px;'>{pv_for_abs_worst:,.1f}</td>
                             <td style='text-align: right; padding: 12px;'>BESS {bess_cap_autonomy:,.0f} kWh</td>
                             <td style='text-align: right; padding: 12px;'>{pv_for_abs_worst * 7:,.0f} m²</td>
                             <td style='text-align: right; padding: 12px;'>$ {capex_extreme:,.0f}</td>
                         </tr>
-                        <tr style='border-bottom: 1px solid #1e293b;'>
-                            <td style='padding: 12px; color: #fbbf24; font-weight: bold;'>시나리오 2 (BESS Only)</td>
+                        <tr style='border-bottom: 1px solid #1e293b; background: rgba(0,255,136,0.03);'>
+                            <td style='padding: 12px; color: #00ff88; font-weight: bold;'>Scenario A (PV 최적화 & 장기 BESS)</td>
                             <td style='text-align: right; padding: 12px;'>{pv_ideal:,.1f}</td>
                             <td style='text-align: right; padding: 12px;'>BESS {bess_a:,.0f} kWh</td>
                             <td style='text-align: right; padding: 12px;'>{pv_ideal * 7:,.0f} m²</td>
                             <td style='text-align: right; padding: 12px;'>$ {capex_a:,.0f}</td>
                         </tr>
                         <tr style='background: rgba(0,212,255,0.03);'>
-                            <td style='padding: 12px; color: #00d4ff; font-weight: bold;'>시나리오 3 (H2 Hybrid)</td>
-                            <td style='text-align: right; padding: 12px;'>{pv_hybrid:,.1f}</td>
-                            <td style='text-align: right; padding: 12px;'>BESS 1.5d + H2 {h2_cap:,.0f}kg</td>
-                            <td style='text-align: right; padding: 12px;'>{pv_hybrid * 7:,.0f} m²</td>
-                            <td style='text-align: right; padding: 12px;'>$ {capex_b:,.0f}</td>
+                            <td style='padding: 12px; color: #00d4ff; font-weight: bold;'>Scenario B (수소 하이브리드)</td>
+                            <td style='text-align: right; padding: 12px;'>{pv_hybrid_final:,.1f}</td>
+                            <td style='text-align: right; padding: 12px;'>H2 {h2_cap:,.0f} kg + BESS (1.5d)</td>
+                            <td style='text-align: right; padding: 12px;'>{pv_hybrid_final * 7:,.0f} m²</td>
+                            <td style='text-align: right; padding: 12px;'>$ {capex_b_final:,.0f}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
             """, unsafe_allow_html=True)
 
+            # 3. 상세 운영 지표 시각화
+            st.markdown("---")
+            st.markdown("### 📊 3. 상세 운영 지표 및 시나리오 비교 (Detailed Analysis)")
+            df_h['Month'] = df_h['Timestamp'].dt.month
+            monthly_net_a = df_a.groupby(df_a['Timestamp'].dt.month)['Net'].sum()
+            monthly_net_b = df_h.groupby('Month').apply(lambda x: (x['Gen_B'] - x['Load_B']).sum())
+            monthly_ghi = df_h.groupby('Month')['Insolation'].mean()
+            y_min = min(monthly_net_a.min(), monthly_net_b.min()) * 1.2
+            y_max = max(monthly_net_a.max(), monthly_net_b.max()) * 1.2
+            c_net1, c_net2 = st.columns(2)
+            
+            def create_net_chart(net_data, ghi_data, title):
+                fig = make_subplots(specs=[[{"secondary_y": True}]])
+                colors = ['#00d4ff' if x > 0 else '#ff4b4b' for x in net_data.values]
+                fig.add_trace(go.Bar(x=net_data.index, y=net_data.values, name="Net Balance", marker_color=colors), secondary_y=False)
+                fig.add_trace(go.Scatter(x=ghi_data.index, y=ghi_data.values, name="평균 일사량", line=dict(color="#FFD700", width=3, dash='dot'), mode='lines+markers'), secondary_y=True)
+                fig.update_layout(title=dict(text=title, font=dict(size=18)), template="plotly_dark", height=350, margin=dict(l=60, r=60, t=60, b=50), showlegend=True)
+                fig.update_yaxes(title_text="순 수지 (kWh)", range=[y_min, y_max], secondary_y=False)
+                fig.update_yaxes(title_text="일사량 (kWh/m²/d)", secondary_y=True)
+                return fig
+
+            with c_net1:
+                st.plotly_chart(create_net_chart(monthly_net_a, monthly_ghi, "Scenario A: 월간 수지 & 일사량"), use_container_width=True)
+            # 4. CAPEX 상세 내역 및 비교
+            st.markdown("---")
+            st.markdown("### 💰 4. 투자비 상세 내역 (CAPEX Breakdown)")
+            
+            # Breakdown Data Calculation
+            cost_pv_a = pv_ideal * PRICE_PV
+            cost_bess_a = bess_a * PRICE_BESS
+            cost_dist = hh * 1500
+            
+            cost_pv_b = pv_hybrid * PRICE_PV
+            cost_bess_b = bess_b * PRICE_BESS
+            cost_el = el_kw * PRICE_EL
+            cost_fc = fc_kw * PRICE_FC
+            cost_h2_tank = max(h2_stock) * 500
+            
+            # Stacked Bar Chart for Breakdown
+            fig_break = go.Figure()
+            # Scenario A
+            fig_break.add_trace(go.Bar(name='Solar PV', x=['Scenario A'], y=[cost_pv_a], marker_color='#FFD700', text=[f"${cost_pv_a/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='BESS (Battery)', x=['Scenario A'], y=[cost_bess_a], marker_color='#4CAF50', text=[f"${cost_bess_a/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='Distribution', x=['Scenario A'], y=[cost_dist], marker_color='#9E9E9E', text=[f"${cost_dist/1e6:.2f}M"], textposition='auto'))
+            
+            # Scenario B
+            fig_break.add_trace(go.Bar(name='Solar PV', x=['Scenario B'], y=[cost_pv_b], marker_color='#FFD700', showlegend=False, text=[f"${cost_pv_b/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='BESS (Battery)', x=['Scenario B'], y=[cost_bess_b], marker_color='#4CAF50', showlegend=False, text=[f"${cost_bess_b/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='Electrolyzer (EL)', x=['Scenario B'], y=[cost_el], marker_color='#2196F3', text=[f"${cost_el/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='Fuel Cell (FC)', x=['Scenario B'], y=[cost_fc], marker_color='#03A9F4', text=[f"${cost_fc/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='H2 Tank', x=['Scenario B'], y=[cost_h2_tank], marker_color='#00BCD4', text=[f"${cost_h2_tank/1e6:.2f}M"], textposition='auto'))
+            fig_break.add_trace(go.Bar(name='Distribution', x=['Scenario B'], y=[cost_dist], marker_color='#9E9E9E', showlegend=False, text=[f"${cost_dist/1e6:.2f}M"], textposition='auto'))
+            
+            # Scenario Totals
+            total_a = cost_pv_a + cost_bess_a + cost_dist
+            total_b = cost_pv_b + cost_bess_b + cost_el + cost_fc + cost_h2_tank + cost_dist
+
+            # Comparison Sign Annotation
+            sign = ">" if total_a > total_b else "<"
+            fig_break.add_annotation(x=0.5, y=max(total_a, total_b) * 0.8, xref="paper", yref="y", text=sign, showarrow=False, font=dict(size=50, color="#444", family="Arial Black"))
+
+            # Scenario A Total
+            fig_break.add_annotation(x='Scenario A', y=total_a, text=f"Total: ${total_a:,.0f}", showarrow=False, yshift=30, font=dict(size=22, color='#ff4b4b', family="Arial Black"))
+            
+            # Scenario B Total
+            fig_break.add_annotation(x='Scenario B', y=total_b, text=f"Total: ${total_b:,.0f}", showarrow=False, yshift=30, font=dict(size=22, color="#00d4ff", family="Arial Black"))
+            
+            # Winner Indicator
+            if total_b < total_a:
+                fig_break.add_annotation(x='Scenario B', y=total_b, text="🚀 사업성 있음 (Feasible)", showarrow=False, yshift=70, font=dict(size=14, color="#00ff88", family="Arial Black"), bgcolor="rgba(0,0,0,0.8)", bordercolor="#00ff88", borderwidth=1, borderpad=4)
+            
+            fig_break.update_layout(title="투자 비용 구성 항목 비교 (Cost Breakdown)", barmode='stack', template="plotly_dark", height=620, margin=dict(t=120, b=100), yaxis=dict(range=[0, max(total_a, total_b)*1.5]), legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5))
+            st.plotly_chart(fig_break, use_container_width=True)
+
+        # --- Q5: Optimized Scenarios (Always Visible for Comparison) ---
+        render_optimized_section()
+
+        # --- 4. Financial Feasibility Study (Indonesia Strategy Model) ---
+        # --- 4. Financial Feasibility Study (Universal Strategy Model) ---
         st.markdown("### 💰 4. 글로벌 마이크로그리드 사업성 정밀 평가 (Financial Feasibility Study)")
         
         def calculate_fs_metrics(capex, annual_demand, rate, subsidy, other_rev, opex_total, life, discount):
