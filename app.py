@@ -1008,11 +1008,33 @@ elif st.session_state.step == 'result':
         </div>
         """, unsafe_allow_html=True)
 
-        # Monthly Curtailment Chart (Standard Case)
-        monthly_curtailment_series = (monthly_daily_yield_1kw * pv_for_worst) - total_d
+        # Monthly Curtailment Chart (Comparison)
+        curtail_std_series = (monthly_daily_yield_1kw * pv_for_worst) - total_d
+        curtail_ext_series = (monthly_daily_yield_1kw * pv_for_abs_worst) - total_d
+        
         fig_q3 = go.Figure()
-        fig_q3.add_trace(go.Scatter(x=list(range(1, 13)), y=monthly_curtailment_series.clip(lower=0), fill='tozeroy', line=dict(color='#ff4b4b', width=3), fillcolor='rgba(255, 75, 75, 0.2)'))
-        fig_q3.update_layout(title="월간 에너지 잉여 규모 (kWh/d, 표준보수 기준)", height=250, template="plotly_dark", margin=dict(l=20,r=20,t=40,b=20), xaxis=dict(dtick=1))
+        # Extreme Case (Dotted Area)
+        fig_q3.add_trace(go.Scatter(
+            x=list(range(1, 13)), y=curtail_ext_series.clip(lower=0), 
+            name="극한 보수 (Extreme)", fill='tozeroy', 
+            line=dict(color='#ff4b4b', width=2, dash='dot'), 
+            fillcolor='rgba(255, 75, 75, 0.1)'
+        ))
+        # Standard Case (Solid Area)
+        fig_q3.add_trace(go.Scatter(
+            x=list(range(1, 13)), y=curtail_std_series.clip(lower=0), 
+            name="표준 보수 (Standard)", fill='tozeroy', 
+            line=dict(color='#38bdf8', width=3), 
+            fillcolor='rgba(56, 189, 248, 0.2)'
+        ))
+        
+        fig_q3.update_layout(
+            title="월간 에너지 잉여 규모 비교 (kWh/d)", 
+            height=300, template="plotly_dark", 
+            margin=dict(l=20,r=20,t=40,b=20), 
+            xaxis=dict(dtick=1), showlegend=True,
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
         st.plotly_chart(fig_q3, use_container_width=True)
 
         # Q4: Feasibility Assessment
