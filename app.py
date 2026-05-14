@@ -191,21 +191,21 @@ if st.session_state.step == 'input':
         # Robust country detection helper (shared)
         def find_country_match(addr):
             if not addr: return "Global Average"
-            # Clean and tokenize (support both English space and potential Asian characters)
             addr_clean = addr.lower().replace(',', ' ').replace('.', ' ')
-            words = addr_clean.split()
             benchmark_keys = list(COUNTRY_BENCHMARKS.keys())
             
-            # 1. Comprehensive Alias & ISO Code Check (Multilingual & City-Level)
+            # 1. Direct key inclusion check (e.g. "South Korea" in "Seoul, South Korea")
+            for k in benchmark_keys:
+                if k.lower() in addr_clean:
+                    return k
+            
+            # 2. Comprehensive Alias & ISO Code Check
             aliases = {
-                # ISO 3-Letter Codes & English
                 "kor": "South Korea", "idn": "Indonesia", "vnm": "Vietnam", "phl": "Philippines",
                 "tha": "Thailand", "mys": "Malaysia", "usa": "United States", "can": "Canada",
                 "deu": "Germany", "ind": "India", "bgd": "Bangladesh", "jpn": "Japan",
                 "arg": "Argentina", "bra": "Brazil", "khm": "Cambodia", "eth": "Ethiopia",
                 "ken": "Kenya", "zaf": "South Africa", "gbr": "United Kingdom",
-                
-                # Extended Aliases
                 "uae": "United Arab Emirates", "emirates": "United Arab Emirates", "dubai": "United Arab Emirates",
                 "korea": "South Korea", "kr": "South Korea", "seoul": "South Korea",
                 "id": "Indonesia", "jakarta": "Indonesia", "bali": "Indonesia",
@@ -213,8 +213,6 @@ if st.session_state.step == 'input':
                 "berlin": "Germany", "de": "Germany",
                 "hanoi": "Vietnam", "vn": "Vietnam",
                 "manila": "Philippines", "ph": "Philippines",
-                
-                # Korean Support (Countries & Cities)
                 "대한민국": "South Korea", "한국": "South Korea", "남한": "South Korea", "서울": "South Korea", "부산": "South Korea", "인천": "South Korea",
                 "인도네시아": "Indonesia", "인니": "Indonesia", "자카르타": "Indonesia", "발리": "Indonesia",
                 "베트남": "Vietnam", "월남": "Vietnam", "하노이": "Vietnam", "호치민": "Vietnam",
@@ -226,7 +224,7 @@ if st.session_state.step == 'input':
                 "독일": "Germany", "베를린": "Germany", "인도": "India"
             }
             
-            # Check for direct alias/code match in any word
+            words = addr_clean.split()
             for word in words:
                 if word in aliases: return aliases[word]
             
