@@ -1102,6 +1102,63 @@ elif st.session_state.step == 'result':
         </div>
         """, unsafe_allow_html=True)
 
+        # 4. 전체 시나리오 종합 비교 테이블 (Scenario Master Comparison)
+        st.markdown("---")
+        st.markdown("### 📋 전체 시나리오 핵심 지표 비교 (Scenario Master Comparison)")
+        
+        # Calculate Scenario B CAPEX for comparison (Pre-calculate for table)
+        bess_b_fixed = total_d * 1.5
+        cost_bess_b_fixed = bess_b_fixed * PRICE_BESS
+        pv_hybrid_final = pv_ideal * 1.2
+        h2_cap_comp = max(h2_stock) if 'h2_stock' in locals() else 0
+        capex_b_final = (pv_hybrid_final * PRICE_PV) + cost_bess_b_fixed + (el_kw * PRICE_EL) + (fc_kw * PRICE_FC) + (h2_cap_comp * 500) + (hh * 1500)
+        
+        st.markdown(f"""
+        <div style='background: rgba(255,255,255,0.03); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); overflow-x: auto; margin-bottom: 35px;'>
+            <table style='width: 100%; border-collapse: collapse; color: #fff; font-size: 14px; min-width: 600px;'>
+                <thead>
+                    <tr style='border-bottom: 2px solid #334155; color: #94a3b8;'>
+                        <th style='text-align: left; padding: 12px;'>시나리오 (Scenario)</th>
+                        <th style='text-align: right; padding: 12px;'>PV 용량 (kWp)</th>
+                        <th style='text-align: right; padding: 12px;'>저장장치 규모</th>
+                        <th style='text-align: right; padding: 12px;'>필요 면적 (m²)</th>
+                        <th style='text-align: right; padding: 12px;'>총 투자비 (CAPEX)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style='border-bottom: 1px solid #1e293b;'>
+                        <td style='padding: 12px; color: #38bdf8; font-weight: bold;'>Option A (표준 보수)</td>
+                        <td style='text-align: right; padding: 12px;'>{pv_for_worst:,.1f}</td>
+                        <td style='text-align: right; padding: 12px;'>BESS {bess_cap_autonomy:,.0f} kWh</td>
+                        <td style='text-align: right; padding: 12px;'>{pv_for_worst * 7:,.0f}</td>
+                        <td style='text-align: right; padding: 12px;'>$ {capex_q2:,.0f}</td>
+                    </tr>
+                    <tr style='border-bottom: 1px solid #1e293b;'>
+                        <td style='padding: 12px; color: #ff4b4b; font-weight: bold;'>Option B (극한 보수)</td>
+                        <td style='text-align: right; padding: 12px;'>{pv_for_abs_worst:,.1f}</td>
+                        <td style='text-align: right; padding: 12px;'>BESS {bess_cap_autonomy:,.0f} kWh</td>
+                        <td style='text-align: right; padding: 12px;'>{pv_for_abs_worst * 7:,.0f}</td>
+                        <td style='text-align: right; padding: 12px;'>$ {capex_extreme:,.0f}</td>
+                    </tr>
+                    <tr style='border-bottom: 1px solid #1e293b; background: rgba(0,255,136,0.03);'>
+                        <td style='padding: 12px; color: #00ff88; font-weight: bold;'>Scenario A (PV 최적화 & 장기 BESS)</td>
+                        <td style='text-align: right; padding: 12px;'>{pv_ideal:,.1f}</td>
+                        <td style='text-align: right; padding: 12px;'>BESS {bess_a:,.0f} kWh</td>
+                        <td style='text-align: right; padding: 12px;'>{pv_ideal * 7:,.0f}</td>
+                        <td style='text-align: right; padding: 12px;'>$ {capex_a:,.0f}</td>
+                    </tr>
+                    <tr style='background: rgba(0,212,255,0.03);'>
+                        <td style='padding: 12px; color: #00d4ff; font-weight: bold;'>Scenario B (수소 하이브리드)</td>
+                        <td style='text-align: right; padding: 12px;'>{pv_hybrid_final:,.1f}</td>
+                        <td style='text-align: right; padding: 12px;'>H2 {h2_cap_comp:,.0f} kg + BESS (1.5d)</td>
+                        <td style='text-align: right; padding: 12px;'>{pv_hybrid_final * 7:,.0f}</td>
+                        <td style='text-align: right; padding: 12px;'>$ {capex_b_final:,.0f}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        """, unsafe_allow_html=True)
+
         # Q5 & Detailed Analysis: Conditional Display
         def render_optimized_section():
             st.markdown("### **Q5. 최적화 시스템 제안 (Optimized Scenarios)**")
