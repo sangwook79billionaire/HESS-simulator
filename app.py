@@ -1489,7 +1489,7 @@ elif st.session_state.step == 'result':
 
             # 3. 연간 Cash Flow (EDCF 차관 분석 포함)
             st.markdown("#####  3. 연간 현금 흐름 및 차관 분석 (Annual Cash Flow)")
-            st.caption(f"※ 설정된 금융 조건: {p_life}년 운영, 할인율 {p_disc*100:.1f}%, EDCF {'활용' if use_edcf else '미활용'}")
+            st.caption(f"※ 설정된 금융 조건: {p_life}년 운영, 할인율 {p_disc:.1f}%, EDCF {'활용' if use_edcf else '미활용'}")
             
             # Financial Calculations
             loan_amt = total_capex_fs * 0.4 if use_edcf else 0
@@ -1553,7 +1553,7 @@ elif st.session_state.step == 'result':
 
             # 4. NPV, IRR 핵심 지표
             st.markdown("#####  4. 핵심 수익성 및 사업성 지표 (NPV & IRR)")
-            npv, irr, payback, lcoe_fs = calculate_fs_metrics(total_capex_fs - loan_amt, annual_demand, rev_vals[0], rev_vals[1], rev_vals[2], sum(rev_vals[3:]), p_life, p_disc)
+            npv, irr, payback, lcoe_fs = calculate_fs_metrics(total_capex_fs - loan_amt, annual_demand, rev_vals[0], rev_vals[1], rev_vals[2], sum(rev_vals[3:]), p_life, p_disc/100)
             
             m1, m2, m3 = st.columns(3)
             with m1: st.markdown(f"<div style='background: #111; padding: 20px; border-radius: 10px; border-left: 5px solid {'#00ff88' if npv > 0 else '#ff4b4b'};'><div style='color: #888; font-size: 13px;'>순현재가치 (NPV)</div><div style='color: #fff; font-size: 24px; font-weight: bold;'>${npv/1e6:.2f}M</div><div style='color: {'#00ff88' if npv > 0 else '#ff4b4b'}; font-size: 12px;'>{' 사업성 확보' if npv > 0 else '⚠️ 수익성 개선 필요'}</div></div>", unsafe_allow_html=True)
@@ -1628,7 +1628,7 @@ elif st.session_state.step == 'result':
 
             # 6. 사업성 확보를 위한 목표 요금 가이드
             st.markdown("#####  6. 사업성 확보 가이드 (Strategic Optimization Guide)")
-            pv_factor = [(1 / (1 + p_disc) ** y) for y in years]
+            pv_factor = [(1 / (1 + p_disc/100) ** y) for y in years]
             pv_costs = sum(( (total_capex_fs if y==0 else 0) + opex_base[y] + replace_out[y] - edcf_flow[y]) * pv_factor[y] for y in years)
             pv_ifa = sum(pv_factor[y] for y in years[1:])
             req_tariff = (pv_costs - rev_vals[2]*pv_ifa - (rev_vals[1] * pv_ifa)) / (annual_demand * pv_ifa)
