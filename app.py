@@ -108,16 +108,23 @@ MARKET_REPORTS = {
         "rates": "가구용: 약 $0.08~0.10/kWh (2024년 10월 약 4.8% 인상)",
         "grid": "남북 장거리 송전망 중심, 급격한 산업화로 인한 계통 부하 가중",
         "microgrid": "산간 오지 및 도서 지역 독립형 마이크로그리드 시장 급성장 중"
+    },
+    "Philippines": {
+        "supply": "화석연료(78% - 석탄 63%, 천연가스 14%), 재생에너지(22%)",
+        "self_sufficiency": "화석연료 수입 의존도 매우 높음 (연료비 전가제로 요금 변동성 큼)",
+        "rates": "가구용: 동남아 최고 수준 ($0.18~0.22/kWh), 전가제(Pass-through) 적용",
+        "grid": "주요 섬(Luzon, Visayas, Mindanao) 간 연계망 구축 중이나 전력 예비율 부족",
+        "microgrid": "마이크로그리드법(Microgrid Systems Act) 기반 민간 참여 및 낙도 하이브리드 보급 활발"
     }
 }
 
 def get_market_report(country):
     base = MARKET_REPORTS.get(country, {
-        "supply": "정보 수집 중 (글로벌 평균 데이터 기반)",
-        "self_sufficiency": "수입 의존도 높음 (추정)",
-        "rates": "약 $0.15/kWh (Global Average)",
-        "grid": "중앙 집중형 계통 중심",
-        "microgrid": "분산형 전원 도입 검토 단계"
+        "supply": "기본 레퍼런스 데이터 적용 중 (IEA/WB 통계 기반)",
+        "self_sufficiency": "수입/자급 현황 분석 대기 중",
+        "rates": "약 $0.15/kWh (Global Average 기준)",
+        "grid": "표준 전력망 모델 적용",
+        "microgrid": "마이크로그리드 도입 가능성 검토 중"
     })
     return base
 
