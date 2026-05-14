@@ -1049,70 +1049,19 @@ elif st.session_state.step == 'result':
         # Q4: Feasibility Assessment
         st.markdown("### **Q4. 장주기 저장을 통해 PV 발전규모 최적화가 가능한가?**")
         
-        # Economic Logic: Is (Saved PV Cost) > (ESS Cost)?
+        # --- Q4 Analysis Logic ---
         pv_saved_cost = (pv_for_abs_worst - pv_ideal) * PRICE_PV
         is_optimizable = capex_a < capex_extreme
         
-        status_color = "#00ff88" if is_optimizable else "#fbbf24"
-        status_text = "최적화 가능 (Optimization Possible)" if is_optimizable else "PV 확대 + ESS 최적 (Expansion Recommended)"
-        
-        st.markdown(f"""
-        <div style='background: rgba(15, 23, 42, 0.8); padding: 35px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15); margin-bottom: 35px;'>
-            <div style='display: flex; align-items: center; gap: 15px; margin-bottom: 25px;'>
-                <div style='width: 14px; height: 14px; background: {status_color}; border-radius: 50%; box-shadow: 0 0 15px {status_color};'></div>
-                <b style='font-size: 22px; color: {status_color};'>{status_text}</b>
-            </div>
-            <div style='display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px;'>
-                <div>
-                    <b style='color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;'>검토 결과 (Diagnosis)</b>
-                    <p style='color: #ffffff; font-size: 15px; margin-top: 12px; line-height: 1.7; font-weight: 400;'>
-                        극한 보수 설계 시 발생하는 <b style='color: {status_color};'>$ {curtail_ext * 1000 * SITE_LCOE:,.0f}</b> 규모의 기회비용과 
-                        <b style='color: {status_color};'>$ {pv_saved_cost:,.0f}</b>의 추가 패널 CAPEX를 고려할 때, 
-                        에너지 저장 및 전이 시스템 도입이 경제적으로 {"유리합니다." if is_optimizable else "불리할 수 있습니다."}
-                    </p>
-                </div>
-                <div style='background: rgba(255,255,255,0.05); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);'>
-                    <table style='width: 100%; color: #fff; font-size: 14px; border-collapse: collapse;'>
-                        <tr>
-                            <td style='padding: 8px 0; color: #94a3b8;'>과설계 회피 가능액</td>
-                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>$ {pv_saved_cost:,.0f}</td>
-                        </tr>
-                        <tr>
-                            <td style='padding: 8px 0; color: #94a3b8;'>저장장치 구축 비용 (BESS 전용)</td>
-                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>$ {bess_a * PRICE_BESS:,.0f}</td>
-                        </tr>
-                        <tr>
-                            <td style='padding: 8px 0; color: #94a3b8;'>과설계 필요 면적</td>
-                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>{pv_for_abs_worst * 7:,.0f} m²</td>
-                        </tr>
-                        <tr>
-                            <td style='padding: 8px 0; color: #94a3b8;'>최적화 필요 면적</td>
-                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px;'>{pv_ideal * 7:,.0f} m²</td>
-                        </tr>
-                        <tr style='border-top: 2px solid #334155;'>
-                            <td style='padding: 15px 0; font-weight: bold; color: #fff; font-size: 15px;'>순 경제적 이득</td>
-                            <td style='text-align: right; color: {status_color}; font-size: 20px; font-weight: 800;'>$ {max(0, capex_extreme - capex_a):,.0f}</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-            <div style='margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: #64748b; font-style: italic;'>
-                *저장장치 구축 비용 산출 가정: BESS ($350/kWh), 수전해조 ($1,200/kW), 연료전지 ($2,000/kW), 수소탱크 ($500/kg)
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # 4. 전체 시나리오 종합 비교 테이블 (Scenario Master Comparison)
-        st.markdown("---")
-        st.markdown("### 📋 전체 시나리오 핵심 지표 비교 (Scenario Master Comparison)")
-        
-        # Calculate Scenario B CAPEX for comparison (Pre-calculate for table)
+        # Calculate Scenario B CAPEX for comparison
         bess_b_fixed = total_d * 1.5
         cost_bess_b_fixed = bess_b_fixed * PRICE_BESS
         pv_hybrid_final = pv_ideal * 1.2
         h2_cap_comp = max(h2_stock) if 'h2_stock' in locals() else 0
         capex_b_final = (pv_hybrid_final * PRICE_PV) + cost_bess_b_fixed + (el_kw * PRICE_EL) + (fc_kw * PRICE_FC) + (h2_cap_comp * 500) + (hh * 1500)
-        
+
+        # 1. Scenario Master Comparison Table (Moved to Top)
+        st.markdown("### 📋 4대 설계 시나리오 CAPEX 비교 (Scenario Master Comparison)")
         st.markdown(f"""
         <div style='background: rgba(255,255,255,0.03); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); overflow-x: auto; margin-bottom: 35px;'>
             <table style='width: 100%; border-collapse: collapse; color: #fff; font-size: 14px; min-width: 600px;'>
@@ -1141,7 +1090,7 @@ elif st.session_state.step == 'result':
                         <td style='text-align: right; padding: 12px;'>$ {capex_extreme:,.0f}</td>
                     </tr>
                     <tr style='border-bottom: 1px solid #1e293b; background: rgba(0,255,136,0.03);'>
-                        <td style='padding: 12px; color: #00ff88; font-weight: bold;'>Scenario A (PV 최적화 & 장기 BESS)</td>
+                        <td style='padding: 12px; color: #00ff88; font-weight: bold;'>Scenario A (최적화 & 장기 BESS)</td>
                         <td style='text-align: right; padding: 12px;'>{pv_ideal:,.1f}</td>
                         <td style='text-align: right; padding: 12px;'>BESS {bess_a:,.0f} kWh</td>
                         <td style='text-align: right; padding: 12px;'>{pv_ideal * 7:,.0f}</td>
@@ -1158,6 +1107,49 @@ elif st.session_state.step == 'result':
             </table>
         </div>
         """, unsafe_allow_html=True)
+
+        # 2. Diagnosis Block
+        status_color = "#00ff88" if is_optimizable else "#fbbf24"
+        status_text = "최적화 가능 (Scenario A/B 추천)" if is_optimizable else "보수적 설계 추천 (Option A/B 추천)"
+        
+        st.markdown(f"""
+        <div style='background: rgba(15, 23, 42, 0.8); padding: 35px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15); margin-bottom: 35px;'>
+            <div style='display: flex; align-items: center; gap: 15px; margin-bottom: 25px;'>
+                <div style='width: 14px; height: 14px; background: {status_color}; border-radius: 50%; box-shadow: 0 0 15px {status_color};'></div>
+                <b style='font-size: 22px; color: {status_color};'>{status_text}</b>
+            </div>
+            <div style='display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px;'>
+                <div>
+                    <b style='color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;'>경제성 진단 결과 (Financial Diagnosis)</b>
+                    <p style='color: #ffffff; font-size: 15px; margin-top: 12px; line-height: 1.7; font-weight: 400;'>
+                        극한 보수 설계(Option B) 대비 <b>Scenario A</b> 도입 시 <b style='color: {status_color};'>$ {max(0, capex_extreme - capex_a):,.0f}</b>의 비용 절감이 가능하며, 
+                        <b>Scenario B(수소)</b> 도입 시에는 <b style='color: #00d4ff;'>$ {max(0, capex_extreme - capex_b_final):,.0f}</b>의 절감이 예상됩니다.<br><br>
+                        필요 부지 면적 또한 최적화 시 최대 <b>{(pv_for_abs_worst - pv_ideal) * 7:,.0f} m²</b>를 확보할 수 있습니다.
+                    </p>
+                </div>
+                <div style='background: rgba(255,255,255,0.05); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);'>
+                    <table style='width: 100%; color: #fff; font-size: 14px; border-collapse: collapse;'>
+                        <tr>
+                            <td style='padding: 8px 0; color: #94a3b8;'>Scenario A 절감액 (vs Option B)</td>
+                            <td style='text-align: right; font-weight: 700; color: #00ff88; font-size: 16px;'>$ {max(0, capex_extreme - capex_a):,.0f}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px 0; color: #94a3b8;'>Scenario B 절감액 (vs Option B)</td>
+                            <td style='text-align: right; font-weight: 700; color: #00d4ff; font-size: 16px;'>$ {max(0, capex_extreme - capex_b_final):,.0f}</td>
+                        </tr>
+                        <tr style='border-top: 1px solid #334155;'>
+                            <td style='padding: 8px 0; color: #94a3b8; padding-top: 10px;'>최대 부지 절감 규모</td>
+                            <td style='text-align: right; font-weight: 700; color: #ffffff; font-size: 16px; padding-top: 10px;'>{(pv_for_abs_worst - pv_ideal) * 7:,.0f} m²</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div style='margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: #64748b; font-style: italic;'>
+                *저장장치 구축 비용 산출 가정: BESS ($350/kWh), 수전해조 ($1,200/kW), 연료전지 ($2,000/kW), 수소탱크 ($500/kg)
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
 
         # Q5 & Detailed Analysis: Conditional Display
         def render_optimized_section():
