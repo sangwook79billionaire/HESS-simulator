@@ -870,9 +870,9 @@ elif st.session_state.step == 'result':
         st.markdown("### **Q2. 저일사량 기간에 맞춰 태양광을 Over-spec 하려면 얼마나 필요한가?**")
         
         # Calculate Autonomy Days from NASA History
-        autonomy_days = 1.0
+        autonomy_days = 1.5
         if 'extreme_analysis' in st.session_state and st.session_state.extreme_analysis:
-            autonomy_days = round(st.session_state.extreme_analysis['max_streak'] * 1.2, 1)
+            autonomy_days = max(1.5, round(st.session_state.extreme_analysis['max_streak'] * 1.2, 1))
         
         bess_cap_autonomy = total_d * autonomy_days
         bess_cost_autonomy = bess_cap_autonomy * PRICE_BESS
@@ -891,39 +891,51 @@ elif st.session_state.step == 'result':
         risk_color = "#ff4b4b" if risk_level == "High" else "#fbbf24" if risk_level == "Medium" else "#00ff88"
 
         st.markdown(f"""
-        <div style='background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 25px;'>
-            <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;'>
-                <b style='font-size: 16px; color: #fff;'>보수적 설계 옵션 비교 (Conservative Options)</b>
-                <span style='background: {risk_color}22; color: {risk_color}; padding: 3px 10px; border-radius: 6px; font-size: 12px; border: 1px solid {risk_color}44;'>
+        <div style='background: rgba(255,255,255,0.03); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 25px;'>
+            <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;'>
+                <b style='font-size: 20px; color: #fff;'>보수적 설계 옵션 비교 (Conservative Options)</b>
+                <span style='background: {risk_color}22; color: {risk_color}; padding: 5px 15px; border-radius: 8px; font-size: 14px; border: 1px solid {risk_color}44;'>
                     지속성 리스크: {risk_level}
                 </span>
             </div>
-            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 20px;'>
+            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 25px;'>
                 <!-- Standard Conservative -->
-                <div style='background: #0f172a; padding: 20px; border-radius: 10px; border-top: 4px solid #38bdf8;'>
-                    <small style='color: #888;'>Option A: 표준 보수 설계 (최저월 평균)</small><br>
-                    <b style='color: #fff; font-size: 28px; line-height: 1.5;'>{pv_for_worst:,.1f} kWp</b><br>
-                    <span style='color: #38bdf8; font-size: 20px; font-weight: bold;'>$ {capex_q2:,.0f}</span>
-                    <div style='margin-top: 15px; padding-top: 10px; border-top: 1px solid #2d3748;'>
-                        <table style='width: 100%; font-size: 12px; color: #aaa;'>
-                            <tr><td>☀️ PV 패널</td><td style='text-align: right; color: #fff;'>$ {pv_for_worst * PRICE_PV:,.0f}</td></tr>
-                            <tr><td>🔋 BESS ({autonomy_days}일치)</td><td style='text-align: right; color: #fff;'>$ {bess_cost_autonomy:,.0f}</td></tr>
-                            <tr><td style='padding-top: 5px; color: #38bdf8;'>📐 필요 부지 면적</td><td style='text-align: right; color: #38bdf8; font-weight: bold; padding-top: 5px;'>{pv_for_worst * 7:,.0f} m²</td></tr>
-                            <tr><td colspan='2' style='font-size: 11px; color: #666; padding-top: 5px;'>*BESS 용량: {bess_cap_autonomy:,.1f} kWh</td></tr>
+                <div style='background: #0f172a; padding: 25px; border-radius: 12px; border-top: 5px solid #38bdf8;'>
+                    <span style='color: #888; font-size: 16px; font-weight: 500; display: block; margin-bottom: 10px;'>Option A: 표준 보수 설계 (최저월 평균)</span>
+                    <b style='color: #fff; font-size: 36px; line-height: 1.2;'>{pv_for_worst:,.1f} kWp</b><br>
+                    <span style='color: #38bdf8; font-size: 24px; font-weight: bold;'>$ {capex_q2:,.0f}</span>
+                    <div style='margin-top: 20px; padding-top: 15px; border-top: 1px solid #2d3748;'>
+                        <table style='width: 100%; font-size: 15px; color: #aaa; border-spacing: 0 8px; border-collapse: separate;'>
+                            <tr><td style='color: #ccc;'>☀️ PV 패널</td><td style='text-align: right; color: #fff;'>$ {pv_for_worst * PRICE_PV:,.0f}</td></tr>
+                            <tr><td style='color: #ccc;'>🔋 BESS ({autonomy_days}일치)</td><td style='text-align: right; color: #fff;'>$ {bess_cost_autonomy:,.0f}</td></tr>
+                            <tr>
+                                <td style='padding-top: 10px; color: #38bdf8; font-weight: 600;'>📐 필요 부지 면적</td>
+                                <td style='text-align: right; color: #38bdf8; font-weight: 900; padding-top: 10px;'>
+                                    {pv_for_worst * 7:,.0f} m²<br>
+                                    <small style='font-size: 12px; color: #64748b; font-weight: normal;'>(축구장 {(pv_for_worst * 7)/7140:.1f}개 분량)</small>
+                                </td>
+                            </tr>
+                            <tr><td colspan='2' style='font-size: 12px; color: #555; padding-top: 10px;'>*BESS 용량: {bess_cap_autonomy:,.1f} kWh</td></tr>
                         </table>
                     </div>
                 </div>
                 <!-- Extreme Conservative -->
-                <div style='background: #0f172a; padding: 20px; border-radius: 10px; border-top: 4px solid #ff4b4b;'>
-                    <small style='color: #888;'>Option B: 극한 보수 설계 (최저일 기준)</small><br>
-                    <b style='color: #fff; font-size: 28px; line-height: 1.5;'>{pv_for_abs_worst:,.1f} kWp</b><br>
-                    <span style='color: #ff4b4b; font-size: 20px; font-weight: bold;'>$ {capex_extreme:,.0f}</span>
-                    <div style='margin-top: 15px; padding-top: 10px; border-top: 1px solid #2d3748;'>
-                        <table style='width: 100%; font-size: 12px; color: #aaa;'>
-                            <tr><td>☀️ PV 패널</td><td style='text-align: right; color: #fff;'>$ {pv_for_abs_worst * PRICE_PV:,.0f}</td></tr>
-                            <tr><td>🔋 BESS ({autonomy_days}일치)</td><td style='text-align: right; color: #fff;'>$ {bess_cost_autonomy:,.0f}</td></tr>
-                            <tr><td style='padding-top: 5px; color: #ff4b4b;'>📐 필요 부지 면적</td><td style='text-align: right; color: #ff4b4b; font-weight: bold; padding-top: 5px;'>{pv_for_abs_worst * 7:,.0f} m²</td></tr>
-                            <tr><td colspan='2' style='font-size: 11px; color: #666; padding-top: 5px;'>*BESS 용량: {bess_cap_autonomy:,.1f} kWh</td></tr>
+                <div style='background: #0f172a; padding: 25px; border-radius: 12px; border-top: 5px solid #ff4b4b;'>
+                    <span style='color: #888; font-size: 16px; font-weight: 500; display: block; margin-bottom: 10px;'>Option B: 극한 보수 설계 (최저일 기준)</span>
+                    <b style='color: #fff; font-size: 36px; line-height: 1.2;'>{pv_for_abs_worst:,.1f} kWp</b><br>
+                    <span style='color: #ff4b4b; font-size: 24px; font-weight: bold;'>$ {capex_extreme:,.0f}</span>
+                    <div style='margin-top: 20px; padding-top: 15px; border-top: 1px solid #2d3748;'>
+                        <table style='width: 100%; font-size: 15px; color: #aaa; border-spacing: 0 8px; border-collapse: separate;'>
+                            <tr><td style='color: #ccc;'>☀️ PV 패널</td><td style='text-align: right; color: #fff;'>$ {pv_for_abs_worst * PRICE_PV:,.0f}</td></tr>
+                            <tr><td style='color: #ccc;'>🔋 BESS ({autonomy_days}일치)</td><td style='text-align: right; color: #fff;'>$ {bess_cost_autonomy:,.0f}</td></tr>
+                            <tr>
+                                <td style='padding-top: 10px; color: #ff4b4b; font-weight: 600;'>📐 필요 부지 면적</td>
+                                <td style='text-align: right; color: #ff4b4b; font-weight: 900; padding-top: 10px;'>
+                                    {pv_for_abs_worst * 7:,.0f} m²<br>
+                                    <small style='font-size: 12px; color: #64748b; font-weight: normal;'>(축구장 {(pv_for_abs_worst * 7)/7140:.1f}개 분량)</small>
+                                </td>
+                            </tr>
+                            <tr><td colspan='2' style='font-size: 12px; color: #555; padding-top: 10px;'>*BESS 용량: {bess_cap_autonomy:,.1f} kWh</td></tr>
                         </table>
                     </div>
                 </div>
