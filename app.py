@@ -1452,7 +1452,7 @@ elif st.session_state.step == 'result':
             bess_replace_annual = (bess_b * 300 * 0.7) / 10
             stack_replace_annual = ((el_kw * 550 + fc_kw * 700) * 0.5) / 8
             
-            subsidy_val = 30000.0 if use_edcf else 0.0
+            subsidy_val = 0.0
             rev_opex_items = {
                 "구분": ["수익", "수익", "수익", "운영비", "운영비", "운영비", "운영비"],
                 "상세 항목": ["전기 판매 요금 (PPA)", "정부 운영 보조금 ($/yr)", "기타 판매 수익 ($/yr)", "일반 유지보수비 ($/yr)", "현지 운영비 ($/yr)", "BESS 교체 적립금", "H2 스택 교체 적립금"],
