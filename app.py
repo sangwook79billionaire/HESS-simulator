@@ -118,7 +118,8 @@ def get_nasa_data(lat, lon):
 
 @st.cache_data
 def get_nasa_history(lat, lon):
-    end_date = datetime.date.today() - datetime.timedelta(days=2)
+    # System clock is in 2026, but NASA data has a lag. Use a safe historical window.
+    end_date = datetime.date(2023, 12, 31)
     start_date = end_date - datetime.timedelta(days=365*20)
     start_str = start_date.strftime('%Y%m%d')
     end_str = end_date.strftime('%Y%m%d')
@@ -127,6 +128,8 @@ def get_nasa_history(lat, lon):
         res = requests.get(url, timeout=30).json()
         ins_d = res['properties']['parameter']['ALLSKY_SFC_SW_DWN']
         df_d = pd.DataFrame({'Date': pd.to_datetime(list(ins_d.keys()), format='%Y%m%d'), 'Insolation': list(ins_d.values())})
+        # Filter out NASA missing value flags (-999)
+        df_d = df_d[df_d['Insolation'] >= 0]
         return df_d
     except: return None
 
