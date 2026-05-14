@@ -877,13 +877,13 @@ elif st.session_state.step == 'result':
         bess_cost_autonomy = bess_cap_autonomy * PRICE_BESS
         
         pv_for_worst = (total_d / worst_daily_yield) * 1.05 
-        capex_q2 = (pv_for_worst * PRICE_PV) + bess_cost_autonomy
+        capex_q2 = (pv_for_worst * PRICE_PV) + bess_cost_autonomy + (hh * 1500)
         
         # Calculate Absolute Worst Day and Extreme CAPEX
         df_daily_gen = df_h.groupby(df_h['Timestamp'].dt.date)['Gen_1kW'].sum()
         abs_worst_yield = df_daily_gen.min()
         pv_for_abs_worst = (total_d / abs_worst_yield) * 1.05 if abs_worst_yield > 0.05 else pv_for_worst * 5
-        capex_extreme = (pv_for_abs_worst * PRICE_PV) + bess_cost_autonomy
+        capex_extreme = (pv_for_abs_worst * PRICE_PV) + bess_cost_autonomy + (hh * 1500)
         
         # Risk Assessment based on Duration
         risk_level = "High" if lean_months >= 3 else "Medium" if lean_months >= 1 else "Low"
@@ -1315,64 +1315,61 @@ elif st.session_state.step == 'result':
             st.markdown("---")
             st.markdown("### 💰 4. 투자비 상세 내역 (CAPEX Breakdown)")
             
-            # Breakdown Data Calculation
-            cost_pv_a = pv_ideal * PRICE_PV
-            cost_bess_a = bess_a * PRICE_BESS
-            cost_dist = hh * 1500
+            # Breakdown Data Calculation (Synced with Master Table)
+            # Scenario A (S1)
+            c_pv_s1 = pv_ideal * PRICE_PV
+            c_bess_s1 = bess_a * PRICE_BESS
+            c_dist = hh * 1500
+            total_s1 = c_pv_s1 + c_bess_s1 + c_dist
             
-            # Extreme Conservative Option (Added)
-            pv_cons = total_d / worst_daily_yield if worst_daily_yield > 0 else pv_ideal
-            max_streak_days = st.session_state.extreme_analysis['max_streak'] if 'extreme_analysis' in st.session_state else 3
-            bess_cons = total_d * max_streak_days
-            cost_pv_cons = pv_cons * PRICE_PV
-            cost_bess_cons = bess_cons * PRICE_BESS
+            # Extreme Conservative (Option B)
+            c_pv_ext = pv_for_abs_worst * PRICE_PV
+            c_bess_ext = bess_cost_autonomy
+            total_ext = c_pv_ext + c_bess_ext + c_dist
             
-            cost_pv_b = pv_hybrid * PRICE_PV
-            cost_bess_b = bess_b * PRICE_BESS
-            cost_el = el_kw * PRICE_EL
-            cost_fc = fc_kw * PRICE_FC
-            cost_h2_tank = max(h2_stock) * 500
-            
-            total_a = cost_pv_a + cost_bess_a + cost_dist
-            total_cons = cost_pv_cons + cost_bess_cons + cost_dist
-            total_b = cost_pv_b + cost_bess_b + cost_el + cost_fc + cost_h2_tank + cost_dist
+            # Scenario B (S2)
+            c_pv_s2 = pv_hybrid_final * PRICE_PV
+            c_bess_s2 = cost_bess_b_fixed
+            c_el = el_kw * PRICE_EL
+            c_fc = fc_kw * PRICE_FC
+            c_h2_tank = h2_cap_comp * 500
+            total_s2 = c_pv_s2 + c_bess_s2 + c_el + c_fc + c_h2_tank + c_dist
 
             # Stacked Bar Chart for Breakdown
             fig_break = go.Figure()
             
-            # Helper to add bars with text
             def add_scenario_trace(name, x_val, y_val, color, show_legend=True):
                 fig_break.add_trace(go.Bar(
                     name=name, x=[x_val], y=[y_val], marker_color=color,
-                    showlegend=show_legend, text=[f"${y_val/1e6:.1f}M" if y_val > 1e5 else ""], textposition='inside'
+                    showlegend=show_legend, text=[f"${y_val/1e6:.1f}M" if y_val > 5e5 else ""], textposition='inside'
                 ))
 
-            # Scenario A
-            add_scenario_trace('Solar PV', 'Scenario A', cost_pv_a, '#FFD700')
-            add_scenario_trace('BESS (Battery)', 'Scenario A', cost_bess_a, '#4CAF50')
-            add_scenario_trace('Distribution', 'Scenario A', cost_dist, '#9E9E9E')
+            # S1: Scenario A
+            add_scenario_trace('Solar PV', 'Scenario A', c_pv_s1, '#FFD700')
+            add_scenario_trace('BESS (Battery)', 'Scenario A', c_bess_s1, '#4CAF50')
+            add_scenario_trace('Distribution', 'Scenario A', c_dist, '#9E9E9E')
 
-            # Extreme Conservative
-            add_scenario_trace('Solar PV', '극한 보수 옵션', cost_pv_cons, '#FFD700', False)
-            add_scenario_trace('BESS (Battery)', '극한 보수 옵션', cost_bess_cons, '#4CAF50', False)
-            add_scenario_trace('Distribution', '극한 보수 옵션', cost_dist, '#9E9E9E', False)
+            # Option B: Extreme Conservative
+            add_scenario_trace('Solar PV', '극한 보수 옵션', c_pv_ext, '#FFD700', False)
+            add_scenario_trace('BESS (Battery)', '극한 보수 옵션', c_bess_ext, '#4CAF50', False)
+            add_scenario_trace('Distribution', '극한 보수 옵션', c_dist, '#9E9E9E', False)
 
-            # Scenario B
-            add_scenario_trace('Solar PV', 'Scenario B', cost_pv_b, '#FFD700', False)
-            add_scenario_trace('BESS (Battery)', 'Scenario B', cost_bess_b, '#4CAF50', False)
-            add_scenario_trace('Electrolyzer (EL)', 'Scenario B', cost_el, '#2196F3')
-            add_scenario_trace('Fuel Cell (FC)', 'Scenario B', cost_fc, '#03A9F4')
-            add_scenario_trace('H2 Tank', 'Scenario B', cost_h2_tank, '#00BCD4')
-            add_scenario_trace('Distribution', 'Scenario B', cost_dist, '#9E9E9E', False)
+            # S2: Scenario B
+            add_scenario_trace('Solar PV', 'Scenario B', c_pv_s2, '#FFD700', False)
+            add_scenario_trace('BESS (Battery)', 'Scenario B', c_bess_s2, '#4CAF50', False)
+            add_scenario_trace('Electrolyzer (EL)', 'Scenario B', c_el, '#2196F3')
+            add_scenario_trace('Fuel Cell (FC)', 'Scenario B', c_fc, '#03A9F4')
+            add_scenario_trace('H2 Tank', 'Scenario B', c_h2_tank, '#00BCD4')
+            add_scenario_trace('Distribution', 'Scenario B', c_dist, '#9E9E9E', False)
             
             # Scenario Totals
-            fig_break.add_annotation(x='Scenario A', y=total_a, text=f"Total: ${total_a:,.0f}", showarrow=False, yshift=25, font=dict(size=14, color='#ff4b4b', family="Arial Black"))
-            fig_break.add_annotation(x='극한 보수 옵션', y=total_cons, text=f"Total: ${total_cons:,.0f}", showarrow=False, yshift=25, font=dict(size=14, color='#94a3b8', family="Arial Black"))
-            fig_break.add_annotation(x='Scenario B', y=total_b, text=f"Total: ${total_b:,.0f}", showarrow=False, yshift=25, font=dict(size=14, color="#00d4ff", family="Arial Black"))
+            fig_break.add_annotation(x='Scenario A', y=total_s1, text=f"Total: ${total_s1:,.0f}", showarrow=False, yshift=25, font=dict(size=14, color='#00ff88', family="Arial Black"))
+            fig_break.add_annotation(x='극한 보수 옵션', y=total_ext, text=f"Total: ${total_ext:,.0f}", showarrow=False, yshift=25, font=dict(size=14, color='#ff4b4b', family="Arial Black"))
+            fig_break.add_annotation(x='Scenario B', y=total_s2, text=f"Total: ${total_s2:,.0f}", showarrow=False, yshift=25, font=dict(size=14, color="#00d4ff", family="Arial Black"))
             
             fig_break.update_layout(
                 title="투자 비용 구성 항목 비교 (Cost Breakdown)", barmode='stack', template="plotly_dark", height=550,
-                margin=dict(t=80, b=100), yaxis=dict(range=[0, max(total_a, total_cons, total_b)*1.3]),
+                margin=dict(t=80, b=100), yaxis=dict(range=[0, max(total_s1, total_ext, total_s2)*1.3]),
                 legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
             )
             st.plotly_chart(fig_break, use_container_width=True)
