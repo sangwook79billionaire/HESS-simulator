@@ -783,8 +783,6 @@ elif st.session_state.step == 'result':
         </div>
         """, unsafe_allow_html=True)
         
-        # --- Section 2: Step-by-Step Strategic Assessment ---
-        st.markdown("## 🔍 5단계 전략 분석 리포트 (Step-by-Step Strategic Assessment)")
         
         # Calculate Base Metrics using simulated yields for consistency
         monthly_sim = df_h.groupby(df_h['Timestamp'].dt.month).agg({'Gen_1kW': 'mean', 'Insolation': 'mean'})
