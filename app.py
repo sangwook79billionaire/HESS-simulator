@@ -856,7 +856,6 @@ elif st.session_state.step == 'result':
                             떨어지는 극한 상황이 <b>최대 {ext['max_streak']}일간 지속</b>된 기록이 확인되었습니다.<br><br>
                             해당 구간에서 1일치 버퍼를 가진 배터리 시스템은 <b style='color: #fff;'>운전 시작 24시간 이내에 방전</b>되며, 
                             잔여 {ext['max_streak']-1}일 동안은 태양광 발전 부족으로 인한 <b style='color: #ff4b4b; font-weight: 700;'>전체 마이크로그리드 블랙아웃(Blackout)</b>이 불가피합니다.<br><br>
-                            이는 장주기 에너지 저장 및 전이 시스템(H2) 도입이 선택이 아닌 <b>필수적인 공학적 임계점</b>임을 시사합니다.
                         </p>
                     </div>
                 </div>
