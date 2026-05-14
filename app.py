@@ -86,11 +86,48 @@ H2_EL_EFF = 0.70 # Electrolyzer
 H2_FC_EFF = 0.50 # Fuel Cell
 INV_EFF = 0.95   # Inverter/System
 
+# --- Market Intelligence Data (Researched) ---
+MARKET_REPORTS = {
+    "South Korea": {
+        "supply": "화석연료(약 60%), 원자력(30~36%), 재생에너지(10%+)",
+        "self_sufficiency": "에너지 수입 의존도 매우 높음 (에너지 안보 핵심)",
+        "rates": "가구용: 약 $0.12/kWh (누진제 적용), 산업용: 최근 인상 추세",
+        "grid": "국가 단일 계통 (Isolated Island Grid), 계통 포화 및 송전 제약 존재",
+        "microgrid": "섬 지역 및 산업단지 중심의 지능형 마이크로그리드 실증 사업 활발"
+    },
+    "Indonesia": {
+        "supply": "석탄(54~68%), 천연가스 등 화석연료(82%), 재생에너지(14~18%)",
+        "self_sufficiency": "석탄/가스 자급 가능하나 재생에너지 전환 압박",
+        "rates": "가구용: 약 $0.07~0.11/kWh (보조금 적용 여부에 따라 상이)",
+        "grid": "군도형 전력망 (Archipelagic Grid), 지역별 독립 계통 다수",
+        "microgrid": "도서 지역(3T 지역) 전력 공급을 위한 소형 마이크로그리드 도입 필수 지역"
+    },
+    "Vietnam": {
+        "supply": "석탄(43~54%), 수력, 태양광/풍력(21%)",
+        "self_sufficiency": "석탄 수입 증가 추세, PDP8을 통한 에너지 자립 추진",
+        "rates": "가구용: 약 $0.08~0.10/kWh (2024년 10월 약 4.8% 인상)",
+        "grid": "남북 장거리 송전망 중심, 급격한 산업화로 인한 계통 부하 가중",
+        "microgrid": "산간 오지 및 도서 지역 독립형 마이크로그리드 시장 급성장 중"
+    }
+}
+
+def get_market_report(country):
+    base = MARKET_REPORTS.get(country, {
+        "supply": "정보 수집 중 (글로벌 평균 데이터 기반)",
+        "self_sufficiency": "수입 의존도 높음 (추정)",
+        "rates": "약 $0.15/kWh (Global Average)",
+        "grid": "중앙 집중형 계통 중심",
+        "microgrid": "분산형 전원 도입 검토 단계"
+    })
+    return base
+
 # --- Session State ---
 if 'step' not in st.session_state: st.session_state.step = 'input'
 if 'lat' not in st.session_state: st.session_state.lat = 0.0
 if 'lon' not in st.session_state: st.session_state.lon = 0.0
 if 'country' not in st.session_state: st.session_state.country = ''
+if 'loc_confirmed' not in st.session_state: st.session_state.loc_confirmed = False
+if 'market_intel_confirmed' not in st.session_state: st.session_state.market_intel_confirmed = False
 if 'country_benchmark' not in st.session_state: st.session_state.country_benchmark = 'Global Average'
 if 'mix_slider' not in st.session_state: st.session_state.mix_slider = 50
 
@@ -316,6 +353,38 @@ if st.session_state.step == 'input':
                 
                 if st.button("📍 이 위치로 확정 및 국가 데이터 연동", type="primary", use_container_width=True, help="선택한 위치의 일사량, 온도 데이터 및 해당 국가의 전력 통계를 불러옵니다."):
                     st.session_state.loc_confirmed = True
+                    st.rerun()
+            elif not st.session_state.get('market_intel_confirmed', False):
+                st.subheader("🔍 Market Intelligence Report")
+                country_key = find_country_match(st.session_state.country)
+                report = get_market_report(country_key)
+                
+                st.markdown(f"""
+                <div style='background: #0f172a; padding: 25px; border-radius: 12px; border: 1px solid #00d4ff; margin-bottom: 25px;'>
+                    <h4 style='color: #00d4ff; margin-top: 0;'>📍 {country_key} 시장 환경 리포트</h4>
+                    <div style='display: grid; grid-template-columns: 1fr; gap: 15px; font-size: 14px;'>
+                        <div style='padding-bottom: 10px; border-bottom: 1px solid #1e293b;'>
+                            <b style='color: #888;'>1. 전력 공급 개요</b><br>
+                            <span style='color: #fff;'>{report['supply']}</span>
+                        </div>
+                        <div style='padding-bottom: 10px; border-bottom: 1px solid #1e293b;'>
+                            <b style='color: #888;'>2. 자급률 및 수입 현황</b><br>
+                            <span style='color: #fff;'>{report['self_sufficiency']}</span>
+                        </div>
+                        <div style='padding-bottom: 10px; border-bottom: 1px solid #1e293b;'>
+                            <b style='color: #888;'>3. 가구별 전력 사용량 및 요금</b><br>
+                            <span style='color: #fff;'>{report['rates']}</span>
+                        </div>
+                        <div>
+                            <b style='color: #888;'>4. 전력망 현황 (Isolated Area 유무)</b><br>
+                            <span style='color: #fff;'>{report['grid']}<br><small style='color: #00ff88;'>{report['microgrid']}</small></span>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if st.button("✅ 시장 리포트 확인 및 시뮬레이션 설계 진행", type="primary", use_container_width=True):
+                    st.session_state.market_intel_confirmed = True
                     st.rerun()
             else:
                 st.subheader("⚡ Phase 2: 에너지 수요 및 패턴 설계")
