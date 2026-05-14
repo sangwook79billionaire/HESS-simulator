@@ -1357,9 +1357,7 @@ elif st.session_state.step == 'result':
             # Scenario B Total
             fig_break.add_annotation(x='Scenario B', y=total_b, text=f"Total: ${total_b:,.0f}", showarrow=False, yshift=30, font=dict(size=22, color="#00d4ff", family="Arial Black"))
             
-            # Winner Indicator
-            if total_b < total_a:
-                fig_break.add_annotation(x='Scenario B', y=total_b, text=" 사업성 있음 (Feasible)", showarrow=False, yshift=70, font=dict(size=14, color="#00ff88", family="Arial Black"), bgcolor="rgba(0,0,0,0.8)", bordercolor="#00ff88", borderwidth=1, borderpad=4)
+            # Winner Indicator removed
             
             fig_break.update_layout(title="투자 비용 구성 항목 비교 (Cost Breakdown)", barmode='stack', template="plotly_dark", height=620, margin=dict(t=120, b=100), yaxis=dict(range=[0, max(total_a, total_b)*1.5]), legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5))
             st.plotly_chart(fig_break, use_container_width=True)
