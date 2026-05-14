@@ -371,15 +371,29 @@ if st.session_state.step == 'input':
                 
                 with st.expander(f"🔍 {country_key} Market Intelligence Report", expanded=True):
                     st.markdown(f"""
-                    <div style='background: rgba(0, 212, 255, 0.05); padding: 20px; border-radius: 10px; border: 1px solid rgba(0, 212, 255, 0.2);'>
-                        <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 13px;'>
-                            <div><b style='color: #888;'>⚡ 전력 공급:</b> <span style='color: #fff;'>{report['supply']}</span></div>
-                            <div><b style='color: #888;'>🌍 자급 현황:</b> <span style='color: #fff;'>{report['self_sufficiency']}</span></div>
-                            <div><b style='color: #888;'>💰 전력 요금:</b> <span style='color: #fff;'>{report['rates']}</span></div>
-                            <div><b style='color: #888;'>🔌 계통 환경:</b> <span style='color: #fff;'>{report['grid']}</span></div>
+                    <div style='background: #0f172a; padding: 25px; border-radius: 12px; border: 1px solid rgba(0, 212, 255, 0.3);'>
+                        <h4 style='color: #00d4ff; margin-top: 0; margin-bottom: 20px; font-size: 18px;'>📍 {country_key} 시장 환경 리포트</h4>
+                        <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 14px;'>
+                            <div style='background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px;'>
+                                <b style='color: #94a3b8; font-size: 12px; text-transform: uppercase;'>⚡ 전력 공급</b><br>
+                                <span style='color: #ffffff; font-weight: 500;'>{report['supply']}</span>
+                            </div>
+                            <div style='background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px;'>
+                                <b style='color: #94a3b8; font-size: 12px; text-transform: uppercase;'>🌍 자급 현황</b><br>
+                                <span style='color: #ffffff; font-weight: 500;'>{report['self_sufficiency']}</span>
+                            </div>
+                            <div style='background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px;'>
+                                <b style='color: #94a3b8; font-size: 12px; text-transform: uppercase;'>💰 전력 요금</b><br>
+                                <span style='color: #ffffff; font-weight: 500;'>{report['rates']}</span>
+                            </div>
+                            <div style='background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px;'>
+                                <b style='color: #94a3b8; font-size: 12px; text-transform: uppercase;'>🔌 계통 환경</b><br>
+                                <span style='color: #ffffff; font-weight: 500;'>{report['grid']}</span>
+                            </div>
                         </div>
-                        <div style='margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); color: #00ff88; font-size: 12px;'>
-                            💡 <b>Insight:</b> {report['microgrid']}
+                        <div style='margin-top: 15px; padding: 12px; background: rgba(0, 255, 136, 0.05); border-radius: 8px; border: 1px solid rgba(0, 255, 136, 0.1);'>
+                            <span style='color: #00ff88; font-weight: bold;'>💡 Insight:</span> 
+                            <span style='color: #e2e8f0; font-size: 14px;'>{report['microgrid']}</span>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
