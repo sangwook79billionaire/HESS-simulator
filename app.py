@@ -1063,8 +1063,8 @@ elif st.session_state.step == 'result':
         # 1. Scenario Master Comparison Table (Moved to Top)
         st.markdown("### [Master Comparison] 4 Scenario CAPEX Comparison")
         tpl_master = """
-        <div style='background: rgba(255,255,255,0.03); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); overflow-x: auto; margin-bottom: 35px;'>
-            <table style='width: 100%; border-collapse: collapse; color: #fff; font-size: 14px; min-width: 600px;'>
+        <div style='background: #0f172a; padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); overflow-x: auto; margin-bottom: 35px;'>
+            <table style='width: 100%; border-collapse: collapse; color: #ffffff; font-size: 15px; min-width: 600px;'>
                 <thead>
                     <tr style='border-bottom: 2px solid #334155; color: #94a3b8;'>
                         <th style='text-align: left; padding: 12px;'>시나리오 (Scenario)</th>
@@ -1077,31 +1077,31 @@ elif st.session_state.step == 'result':
                 <tbody>
                     <tr style='border-bottom: 1px solid #1e293b;'>
                         <td style='padding: 12px; color: #38bdf8; font-weight: bold;'>Option A (표준 보수)</td>
-                        <td style='text-align: right; padding: 12px;'>__PV_A__</td>
-                        <td style='text-align: right; padding: 12px;'>BESS __BESS_A__ kWh</td>
-                        <td style='text-align: right; padding: 12px;'>__AREA_A__</td>
-                        <td style='text-align: right; padding: 12px;'>$ __CAPEX_A__</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>__PV_A__</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>BESS __BESS_A__ kWh</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>__AREA_A__</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>$ __CAPEX_A__</td>
                     </tr>
                     <tr style='border-bottom: 1px solid #1e293b;'>
                         <td style='padding: 12px; color: #ff4b4b; font-weight: bold;'>Option B (극한 보수)</td>
-                        <td style='text-align: right; padding: 12px;'>__PV_B__</td>
-                        <td style='text-align: right; padding: 12px;'>BESS __BESS_B__ kWh</td>
-                        <td style='text-align: right; padding: 12px;'>__AREA_B__</td>
-                        <td style='text-align: right; padding: 12px;'>$ __CAPEX_B__</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>__PV_B__</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>BESS __BESS_B__ kWh</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>__AREA_B__</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>$ __CAPEX_B__</td>
                     </tr>
-                    <tr style='border-bottom: 1px solid #1e293b; background: rgba(0,255,136,0.03);'>
+                    <tr style='border-bottom: 1px solid #1e293b; background: rgba(0,255,136,0.05);'>
                         <td style='padding: 12px; color: #00ff88; font-weight: bold;'>Scenario A (최적화 & 장기 BESS)</td>
-                        <td style='text-align: right; padding: 12px;'>__PV_S1__</td>
-                        <td style='text-align: right; padding: 12px;'>BESS __BESS_S1__ kWh</td>
-                        <td style='text-align: right; padding: 12px;'>__AREA_S1__</td>
-                        <td style='text-align: right; padding: 12px;'>$ __CAPEX_S1__</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>__PV_S1__</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>BESS __BESS_S1__ kWh</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>__AREA_S1__</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>$ __CAPEX_S1__</td>
                     </tr>
-                    <tr style='background: rgba(0,212,255,0.03);'>
+                    <tr style='background: rgba(0,212,255,0.05);'>
                         <td style='padding: 12px; color: #00d4ff; font-weight: bold;'>Scenario B (수소 하이브리드)</td>
-                        <td style='text-align: right; padding: 12px;'>__PV_S2__</td>
-                        <td style='text-align: right; padding: 12px;'>H2 __H2_S2__ kg + BESS (1.5d)</td>
-                        <td style='text-align: right; padding: 12px;'>__AREA_S2__</td>
-                        <td style='text-align: right; padding: 12px;'>$ __CAPEX_S2__</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>__PV_S2__</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>H2 __H2_S2__ kg + BESS (1.5d)</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>__AREA_S2__</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>$ __CAPEX_S2__</td>
                     </tr>
                 </tbody>
             </table>
