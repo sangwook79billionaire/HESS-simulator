@@ -1204,10 +1204,20 @@ elif st.session_state.step == 'result':
             .replace("__AREA_S2__", f"{pv_hybrid_final * 7:,.0f}")
             .replace("__CAPEX_S2__", f"{capex_b_final:,.0f}"), unsafe_allow_html=True)
 
-        # 2. Diagnosis Block
-        status_color = "#00ff88" if is_optimizable else "#fbbf24"
-        status_text = "최적화 가능 (Scenario A/B 추천)" if is_optimizable else "보수적 설계 추천 (Option A/B 추천)"
+        # --- Diagnosis Text Generation ---
+        sav_a = capex_extreme - capex_a
+        sav_b = capex_extreme - capex_b_final
         
+        if sav_a <= 0 and sav_b <= 0:
+            status_color = "#fbbf24"
+            status_text = "보수적 설계 유지 권고 (Option B)"
+            diag_result_text = "설비투자비 측면에서는 경제성 확보가 어려움"
+        else:
+            status_color = "#00ff88"
+            status_text = "최적화 가능 (Scenario A/B 추천)"
+            best_scen = "Scenario A" if sav_a >= sav_b else "Scenario B"
+            diag_result_text = f"극한 보수적 태양광 구축 (옵션 B)에 비해 장주기 저장체제로 전환 시 (시나리오 A/B) <b>{best_scen}</b>가 경제적인 이점이 있을 것으로 추정됨"
+
         tpl_diag = """
         <div style='background: rgba(15, 23, 42, 0.8); padding: 35px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15); margin-bottom: 35px;'>
             <div style='display: flex; align-items: center; gap: 15px; margin-bottom: 25px;'>
@@ -1217,9 +1227,8 @@ elif st.session_state.step == 'result':
             <div style='display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px;'>
                 <div>
                     <b style='color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;'>경제성 진단 결과 (Financial Diagnosis)</b>
-                    <p style='color: #ffffff; font-size: 15px; margin-top: 12px; line-height: 1.7; font-weight: 400;'>
-                        극한 보수 설계(Option B) 대비 <b>Scenario A</b> 도입 시 <b style='color: __COLOR__;'>$ __SAV_A__</b>의 비용 절감이 가능하며, 
-                        <b>Scenario B(수소)</b> 도입 시에는 <b style='color: #00d4ff;'>$ __SAV_B__</b>의 절감이 예상됩니다.<br><br>
+                    <p style='color: #ffffff; font-size: 16px; margin-top: 15px; line-height: 1.8; font-weight: 400;'>
+                        __RESULT_TEXT__<br><br>
                         필요 부지 면적 또한 최적화 시 최대 <b>__AREA_SAV__ m^2</b>를 확보할 수 있습니다.
                     </p>
                 </div>
@@ -1248,8 +1257,9 @@ elif st.session_state.step == 'result':
         st.markdown(tpl_diag
             .replace("__COLOR__", status_color)
             .replace("__TEXT__", status_text)
-            .replace("__SAV_A__", f"{max(0, capex_extreme - capex_a):,.0f}")
-            .replace("__SAV_B__", f"{max(0, capex_extreme - capex_b_final):,.0f}")
+            .replace("__RESULT_TEXT__", diag_result_text)
+            .replace("__SAV_A__", f"{max(0, sav_a):,.0f}")
+            .replace("__SAV_B__", f"{max(0, sav_b):,.0f}")
             .replace("__AREA_SAV__", f"{(pv_for_abs_worst - pv_ideal) * 7:,.0f}"), unsafe_allow_html=True)
 
 
