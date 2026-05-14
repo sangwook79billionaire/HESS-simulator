@@ -333,7 +333,7 @@ if st.session_state.step == 'input':
                 try: default_idx = benchmark_list.index(detected_c)
                 except ValueError: default_idx = benchmark_list.index("Global Average")
                 
-                c_name = d_c2.selectbox("국가 레퍼런스 데이터 (IEA/WB)", benchmark_list, index=default_idx, help="에너지 사용 패턴과 단가를 참고할 국가를 선택하세요. 위치 검색 시 자동으로 매칭됩니다.")
+                c_name = d_c2.selectbox("국가 레퍼런스 데이터 (IEA/WB)", benchmark_list, index=default_idx, key="selected_benchmark", help="에너지 사용 패턴과 단가를 참고할 국가를 선택하세요. 위치 검색 시 자동으로 매칭됩니다.")
                 avg_kwh = COUNTRY_BENCHMARKS[c_name]['demand']
                 total_daily_kwh = hh * avg_kwh
                 st.markdown(f"""
@@ -1447,8 +1447,9 @@ elif st.session_state.step == 'result':
 
             # Revenue & OPEX Editor
             st.markdown("<small style='color: #888;'>연간 운영 수익 및 고정 비용 항목입니다.</small>", unsafe_allow_html=True)
-            matched = next((c for c in COUNTRY_BENCHMARKS.keys() if c.lower() in st.session_state.country.lower()), "Global Average")
-            ref_rate = COUNTRY_BENCHMARKS[matched]['rate']
+            # Use the explicitly selected benchmark country if available
+            matched = st.session_state.selected_benchmark if 'selected_benchmark' in st.session_state else "Global Average"
+            ref_rate = COUNTRY_BENCHMARKS.get(matched, COUNTRY_BENCHMARKS["Global Average"])['rate']
             bess_replace_annual = (bess_b * 300 * 0.7) / 10
             stack_replace_annual = ((el_kw * 550 + fc_kw * 700) * 0.5) / 8
             
