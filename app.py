@@ -1641,7 +1641,7 @@ elif st.session_state.step == 'result':
             fig_cf.add_trace(go.Bar(x=years, y=edcf_repay, name='EDCF Repayment', marker_color='#4a148c'), secondary_y=False)
             
             # Cumulative Balance
-            fig_cf.add_trace(go.Scatter(x=years, y=cum_flow, name='Cumulative Balance', line=dict(color='#ffffff', width=3, dash='dot')), secondary_y=True)
+            fig_cf.add_trace(go.Scatter(x=years, y=cum_flow, name='Cumulative Balance', line=dict(color='#FFD700', width=4, dash='dash')), secondary_y=True)
             
             fig_cf.update_layout(
                 template="plotly_dark", height=450, barmode='relative', 
