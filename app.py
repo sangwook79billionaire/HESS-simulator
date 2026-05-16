@@ -295,11 +295,11 @@ if st.session_state.step == 'input':
 
         with col1:
             st.subheader("📍 Phase 1: 위치 선정 및 데이터 연동")
-            st.markdown("<small style='color: #888;'>지명을 검색하거나 지도에서 핀을 이동하여 분석 지점을 확정하세요.</small>", unsafe_allow_html=True)
+            st.markdown("<small style='color: #888;'>지명을 검색하거나 지도에서 정확한 사업 지점을 클릭하여 분석 기준점을 확정하세요.</small>", unsafe_allow_html=True)
             
             with st.form("search_form"):
                 address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country, placeholder="e.g. Seoul, Bali, Nairobi...", help="분석하고자 하는 지역의 지명이나 주소를 입력하세요. IEA/NASA 데이터와 자동 연동됩니다.")
-                submitted = st.form_submit_button("위치 확정", use_container_width=True, help="입력한 주소의 위/경도 좌표를 찾아 지도를 이동하고 국가 데이터를 즉시 연동합니다.")
+                submitted = st.form_submit_button("검색 및 이동", use_container_width=True, help="입력한 주소의 위/경도 좌표를 찾아 지도를 이동합니다.")
                 
             if submitted:
                 try:
@@ -318,16 +318,22 @@ if st.session_state.step == 'input':
                                 st.session_state.country = loc.address
                         except:
                             st.session_state.country = loc.address
-                            
-                        st.session_state.loc_confirmed = True # Auto-confirm and match country
                         st.rerun()
                     else: st.error("검색 결과가 없습니다.")
                 except: st.error("위치 서비스 응답 지연. 지도에서 직접 클릭해 주세요.")
             
             m = folium.Map(location=[st.session_state.lat, st.session_state.lon], zoom_start=10)
-            folium.Marker([st.session_state.lat, st.session_state.lon], draggable=True, tooltip="이 핀을 움직여 위치를 조정할 수 있습니다.").add_to(m)
+            folium.Marker([st.session_state.lat, st.session_state.lon], tooltip="현재 선택된 분석 기준점").add_to(m)
             
             map_out = st_folium(m, height=400, use_container_width=True, key="location_map_v2")
+            
+            st.markdown("""
+            <div style='background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin-top: 10px;'>
+                <small style='color: #aaa;'>🛰️ <b>NASA POWER 기상 데이터 안내</b><br>
+                본 시뮬레이션은 NASA의 위성 기반 기후 데이터(해상도 약 50km~111km 그리드)를 사용합니다. 
+                개별 지점의 정밀 좌표를 기반으로 장기 기후 패턴을 분석하되, 실제 미세 지형에 따른 기후 차이가 존재할 수 있음을 참고하시기 바랍니다.</small>
+            </div>
+            """, unsafe_allow_html=True)
             
             if map_out and map_out.get("last_clicked"):
                 new_lat, new_lng = map_out["last_clicked"]["lat"], map_out["last_clicked"]["lng"]
@@ -338,30 +344,29 @@ if st.session_state.step == 'input':
                         geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v2")
                         rev = geolocator.reverse(f"{new_lat}, {new_lng}", timeout=5)
                         if rev: 
-                            # Extract raw country code for absolute reliability
                             c_code = rev.raw.get('address', {}).get('CountryCode', '')
                             st.session_state.country = f"{rev.address} ({c_code})" if c_code else rev.address
                     except: pass
-                    st.session_state.loc_confirmed = True # Auto-confirm on map click
                     st.rerun()
             
         with col2:
             if not st.session_state.loc_confirmed:
                 st.subheader("🏁 위치 및 국가 정보 확정")
-                st.info("선정된 위치를 기반으로 전력 수요 벤치마크 데이터를 연동합니다.")
+                st.warning("🎯 **지도에서 분석하고자 하는 정확한 지점을 클릭하여 핀을 고정해주세요.**")
+                st.info("선정된 위치의 위경도 좌표를 기준으로 NASA 기상 DB와 IEA 국가 통계를 자동으로 매칭합니다.")
                 
                 st.markdown(f"""
                 <div style='background: #111; padding: 20px; border-radius: 10px; border-left: 5px solid #ffd700; margin-bottom: 20px;'>
-                    <div style='color: #888; font-size: 13px;'>검색된 주소 / 지명</div>
+                    <div style='color: #888; font-size: 13px;'>현재 지정된 분석 포인트 (Precise Point)</div>
                     <div style='color: #fff; font-size: 16px; font-weight: bold; margin-bottom: 15px;'>{st.session_state.country if st.session_state.country else "미지정 (지도를 클릭하세요)"}</div>
                     <div style='display: flex; gap: 20px;'>
-                        <div><div style='color: #888; font-size: 11px;'>위도</div><div style='color: #00d4ff;'>{st.session_state.lat:.4f}</div></div>
-                        <div><div style='color: #888; font-size: 11px;'>경도</div><div style='color: #00d4ff;'>{st.session_state.lon:.4f}</div></div>
+                        <div><div style='color: #888; font-size: 11px;'>위도 (Lat)</div><div style='color: #00d4ff;'>{st.session_state.lat:.6f}</div></div>
+                        <div><div style='color: #888; font-size: 11px;'>경도 (Lon)</div><div style='color: #00d4ff;'>{st.session_state.lon:.6f}</div></div>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                if st.button("📍 이 위치로 확정 및 국가 데이터 연동", type="primary", use_container_width=True, help="선택한 위치의 일사량, 온도 데이터 및 해당 국가의 전력 통계를 불러옵니다."):
+                if st.button("📍 이 지점을 분석 기준점으로 확정", type="primary", use_container_width=True, help="선택한 위치의 정밀 좌표를 기반으로 분석을 시작합니다."):
                     st.session_state.loc_confirmed = True
                     st.rerun()
             else:
