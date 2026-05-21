@@ -352,10 +352,10 @@ if st.session_state.step == 'input':
             st.markdown("<small style='color: #888;'>지명을 검색하거나 지도에서 정확한 사업 지점을 클릭하여 분석 기준점을 확정하세요.</small>", unsafe_allow_html=True)
             
             with st.form("search_form"):
-                address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country, placeholder="e.g. Seoul, Bali, Nairobi...", help="분석하고자 하는 지역의 지명이나 주소를 입력하세요. IEA/NASA 데이터와 자동 연동됩니다.")
-                submitted = st.form_submit_button("검색 및 이동", use_container_width=True, help="입력한 주소의 위/경도 좌표를 찾아 지도를 이동합니다.")
+                address = st.text_input("지역 검색 (Geocoding)", value=st.session_state.country, placeholder="e.g. Seoul, Bali, Nairobi...", help="분석하고자 하는 지역의 지명이나 주소를 입력하세요. IEA/NASA 데이터와 자동 연동됩니다.", disabled=st.session_state.loc_confirmed)
+                submitted = st.form_submit_button("검색 및 이동", use_container_width=True, help="입력한 주소의 위/경도 좌표를 찾아 지도를 이동합니다.", disabled=st.session_state.loc_confirmed)
                 
-            if submitted:
+            if not st.session_state.loc_confirmed and submitted:
                 try:
                     from geopy.geocoders import ArcGIS
                     geolocator = ArcGIS(user_agent="net_zero_simulator_sangwook_v2")
@@ -389,7 +389,7 @@ if st.session_state.step == 'input':
             </div>
             """, unsafe_allow_html=True)
             
-            if map_out and map_out.get("last_clicked"):
+            if not st.session_state.loc_confirmed and map_out and map_out.get("last_clicked"):
                 new_lat, new_lng = map_out["last_clicked"]["lat"], map_out["last_clicked"]["lng"]
                 if abs(new_lat - st.session_state.lat) > 0.0001:
                     st.session_state.lat, st.session_state.lon = new_lat, new_lng
@@ -406,19 +406,52 @@ if st.session_state.step == 'input':
         with col2:
             if not st.session_state.loc_confirmed:
                 st.subheader("🏁 위치 및 국가 정보 확정")
-                st.warning("🎯 **지도에서 분석하고자 하는 정확한 지점을 클릭하여 핀을 고정해주세요.**")
+                st.warning("🎯 **지도에서 분석하고자 하는 정확한 지점을 클릭하거나 아래에서 정보를 직접 확인/조정해주세요.**")
                 st.info("선정된 위치의 위경도 좌표를 기준으로 NASA 기상 DB와 IEA 국가 통계를 자동으로 매칭합니다.")
                 
-                st.markdown(f"""
-                <div style='background: #111; padding: 20px; border-radius: 10px; border-left: 5px solid #ffd700; margin-bottom: 20px;'>
-                    <div style='color: #888; font-size: 13px;'>현재 지정된 분석 포인트 (Precise Point)</div>
-                    <div style='color: #fff; font-size: 16px; font-weight: bold; margin-bottom: 15px;'>{st.session_state.country if st.session_state.country else "미지정 (지도를 클릭하세요)"}</div>
-                    <div style='display: flex; gap: 20px;'>
-                        <div><div style='color: #888; font-size: 11px;'>위도 (Lat)</div><div style='color: #00d4ff;'>{st.session_state.lat:.6f}</div></div>
-                        <div><div style='color: #888; font-size: 11px;'>경도 (Lon)</div><div style='color: #00d4ff;'>{st.session_state.lon:.6f}</div></div>
+                # Interactive verification form
+                with st.container():
+                    st.markdown("""
+                    <div style='background: rgba(255, 255, 255, 0.02); padding: 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 12px;'>
+                        <div style='color: #888; font-size: 13px; font-weight: bold; text-transform: uppercase;'>📍 분석 기준점 조정 (Reference Point Verification)</div>
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
+                    
+                    edit_country = st.text_input(
+                        "🌍 국가명 및 지명 (Country / Address)", 
+                        value=st.session_state.country, 
+                        placeholder="지도를 클릭하거나 지명을 입력하세요",
+                        help="기상 데이터 및 국가 벤치마크 매칭에 사용될 주소/국가명입니다."
+                    )
+                    
+                    c_lat, c_lon = st.columns(2)
+                    edit_lat = c_lat.number_input(
+                        "위도 (Latitude)", 
+                        value=float(st.session_state.lat), 
+                        format="%.6f", 
+                        step=0.0001,
+                        min_value=-90.0,
+                        max_value=90.0,
+                        help="분석 지점의 위도입니다."
+                    )
+                    edit_lon = c_lon.number_input(
+                        "경도 (Longitude)", 
+                        value=float(st.session_state.lon), 
+                        format="%.6f", 
+                        step=0.0001,
+                        min_value=-180.0,
+                        max_value=180.0,
+                        help="분석 지점의 경도입니다."
+                    )
+                    
+                    # Update session state if user edited the inputs directly
+                    if (edit_country != st.session_state.country or 
+                        abs(edit_lat - st.session_state.lat) > 1e-6 or 
+                        abs(edit_lon - st.session_state.lon) > 1e-6):
+                        st.session_state.country = edit_country
+                        st.session_state.lat = edit_lat
+                        st.session_state.lon = edit_lon
+                        st.rerun()
                 
                 st.markdown("---")
                 # --- Diesel LCOE Estimation ---
@@ -467,10 +500,20 @@ if st.session_state.step == 'input':
                 </div>
                 """, unsafe_allow_html=True)
                 
-                if st.button("📍 이 지점을 분석 기준점으로 확정", type="primary", use_container_width=True, help="선택한 위치의 정밀 좌표를 기반으로 분석을 시작합니다."):
+                loc_verified = st.checkbox("✅ 위 국가명 및 위/경도 좌표가 분석하려는 지점과 일치함을 확인했습니다.", value=False, help="이 확인란을 선택해야 기준점을 확정할 수 있습니다.")
+                
+                if st.button("📍 이 지점을 분석 기준점으로 확정", type="primary", use_container_width=True, disabled=not loc_verified, help="선택한 위치의 정밀 좌표를 기반으로 분석을 시작합니다."):
                     st.session_state.loc_confirmed = True
                     st.rerun()
             else:
+                # Locked Reference Point Banner
+                st.markdown(f"""
+                <div style='background: rgba(0, 212, 255, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(0, 212, 255, 0.3); margin-bottom: 20px;'>
+                    <span style='color: #00d4ff; font-weight: bold;'>🔒 분석 기준점 확정 및 잠금 완료</span><br/>
+                    <small style='color: #ccc;'>기준점: <b>{st.session_state.country}</b><br/>좌표: 위도 {st.session_state.lat:.6f}, 경도 {st.session_state.lon:.6f}</small>
+                </div>
+                """, unsafe_allow_html=True)
+                
                 # --- Market Intelligence Context ---
                 country_key = find_country_match(st.session_state.country)
                 report = get_market_report(country_key)
