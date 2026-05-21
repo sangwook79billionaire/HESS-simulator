@@ -68,6 +68,60 @@ COUNTRY_BENCHMARKS = {
     "Zimbabwe": {"demand": 1.8, "rate": 0.13}
 }
 
+DIESEL_PRICES = {
+    "Afghanistan": 0.95,
+    "Argentina": 1.05,
+    "Bangladesh": 0.98,
+    "Bhutan": 1.10,
+    "Brazil": 1.15,
+    "Cambodia": 1.05,
+    "Canada": 1.25,
+    "Chile": 1.20,
+    "Colombia": 0.95,
+    "Egypt": 0.35,
+    "Ecuador": 0.65,
+    "Ethiopia": 0.80,
+    "Fiji": 1.15,
+    "France": 1.85,
+    "Germany": 1.80,
+    "Ghana": 1.10,
+    "Global Average": 1.20,
+    "Guatemala": 1.00,
+    "India": 1.10,
+    "Indonesia": 0.90,
+    "Iraq": 0.60,
+    "Japan": 1.15,
+    "Jordan": 1.05,
+    "Kenya": 1.25,
+    "Laos": 1.00,
+    "Lebanon": 0.90,
+    "Malaysia": 0.55,
+    "Mexico": 1.18,
+    "Morocco": 1.25,
+    "Myanmar": 0.90,
+    "Nepal": 1.15,
+    "Nigeria": 0.95,
+    "Norway": 1.95,
+    "Pakistan": 1.00,
+    "Papua New Guinea": 1.30,
+    "Peru": 1.15,
+    "Philippines": 1.08,
+    "Rwanda": 1.35,
+    "South Africa": 1.12,
+    "South Korea": 1.35,
+    "Sri Lanka": 1.05,
+    "Tanzania": 1.15,
+    "Thailand": 0.95,
+    "Uganda": 1.30,
+    "United Kingdom": 1.85,
+    "United States": 1.02,
+    "Vietnam": 0.85,
+    "Yemen": 0.80,
+    "Zambia": 1.25,
+    "Zimbabwe": 1.35
+}
+
+
 # Load Patterns (A: Night/Residential, B: Day/Commercial)
 PATTERN_A = [0.4, 0.3, 0.3, 0.3, 0.4, 0.5, 0.7, 0.8, 0.9, 0.8, 0.7, 0.6, 0.6, 0.7, 0.8, 1.2, 1.8, 2.5, 3.2, 2.8, 1.8, 1.2, 0.8, 0.5]
 PATTERN_B = [0.2, 0.2, 0.2, 0.2, 0.3, 0.6, 1.2, 2.0, 2.8, 3.2, 3.0, 2.8, 2.5, 2.5, 2.5, 2.0, 1.5, 1.0, 0.8, 0.6, 0.4, 0.3, 0.2, 0.2]
@@ -362,6 +416,53 @@ if st.session_state.step == 'input':
                     <div style='display: flex; gap: 20px;'>
                         <div><div style='color: #888; font-size: 11px;'>위도 (Lat)</div><div style='color: #00d4ff;'>{st.session_state.lat:.6f}</div></div>
                         <div><div style='color: #888; font-size: 11px;'>경도 (Lon)</div><div style='color: #00d4ff;'>{st.session_state.lon:.6f}</div></div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.markdown("---")
+                # --- Diesel LCOE Estimation ---
+                matched_country = find_country_match(st.session_state.country)
+                base_diesel = DIESEL_PRICES.get(matched_country, 1.20)
+                
+                st.markdown("##### ⛽ 디젤 발전 추정 LCOE (Diesel LCOE Estimate)")
+                st.markdown(f"<small style='color: #888;'>선택된 국가(<b>{matched_country}</b>)의 디젤 유가 및 운송 여건을 고려한 발전 비용 추정치입니다.</small>", unsafe_allow_html=True)
+                
+                with st.expander("⚙️ 디젤 발전 단가 세부 설정 (LCOE Parameters)", expanded=False):
+                    d_c1, d_c2 = st.columns(2)
+                    retail_price = d_c1.number_input("현지 디젤 소매가 ($/L)", 0.1, 3.0, base_diesel, step=0.05, help="해당 국가의 평균 디젤 소매 가격입니다. 지도에서 위치 선택 시 자동 연동됩니다.", key=f"diesel_retail_{matched_country}")
+                    premium_price = d_c2.number_input("격오지 물류/운송 할증 ($/L)", 0.0, 2.0, 0.50, step=0.05, help="발전소 현지까지의 디젤 운반 및 저장에 따른 추가 비용입니다.", key=f"diesel_premium_{matched_country}")
+                    
+                    d_c3, d_c4 = st.columns(2)
+                    efficiency_p1 = d_c3.number_input("발전 효율 (kWh/L)", 1.0, 5.0, 3.3, step=0.1, help="디젤 발전기 1리터당 생산 가능한 전력량입니다. 통상 3.0~3.5 사이입니다.", key=f"diesel_eff_{matched_country}")
+                    maint_p1 = d_c4.slider("운영 및 시공 할증 ($/kWh)", 0.01, 0.30, 0.06, step=0.01, help="유지보수비 및 감가상각 비용을 전력량으로 환산한 값입니다.", key=f"diesel_maint_{matched_country}")
+                
+                # Recalculate
+                landed_price = retail_price + premium_price
+                est_lcoe = (landed_price / efficiency_p1) + maint_p1
+                
+                # Save to session state so Phase 5 inherits these values
+                st.session_state.fuel_p = landed_price
+                st.session_state.d_eff_val = efficiency_p1
+                st.session_state.d_maint = maint_p1
+                
+                # Display Card
+                st.markdown(f"""
+                <div style='background: #1e1510; padding: 20px; border-radius: 12px; border-left: 5px solid #ff9f43; border: 1px solid rgba(255, 159, 67, 0.2); margin-top: 10px; margin-bottom: 20px;'>
+                    <div style='color: #ff9f43; font-size: 13px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px;'>⚡ Estimated Diesel LCOE ({matched_country})</div>
+                    <div style='display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;'>
+                        <span style='color: #fff; font-size: 28px; font-weight: 800;'>${est_lcoe:.3f}<span style='font-size: 14px; font-weight: 400; color: #aaa;'> /kWh</span></span>
+                        <span style='color: #ff9f43; font-size: 12px; font-weight: 500; background: rgba(255, 159, 67, 0.1); padding: 2px 8px; border-radius: 4px;'>인프라 할증 포함</span>
+                    </div>
+                    <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; border-top: 1px solid rgba(255, 159, 67, 0.15); padding-top: 12px;'>
+                        <div>
+                            <span style='color: #888;'>추정 인도 단가 (Landed)</span><br/>
+                            <span style='color: #fff; font-weight: bold;'>${landed_price:.2f} / L</span>
+                        </div>
+                        <div>
+                            <span style='color: #888;'>발전기 효율</span><br/>
+                            <span style='color: #fff; font-weight: bold;'>{efficiency_p1:.1f} kWh / L</span>
+                        </div>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -1692,9 +1793,21 @@ elif st.session_state.step == 'result':
             
             with st.popover(" 디젤 발전 원가 산출 상세 설정"):
                 d_c1, d_c2 = st.columns(2)
-                fuel_p = d_c1.number_input("현지 디젤 가격 ($/L)", 0.5, 3.0, 1.85, help="해당 지역의 실제 디젤 구매 가격을 입력하세요. 물류비가 포함된 가격이 권장됩니다.")
-                d_eff_val = d_c2.number_input("발전 효율 (kWh/L)", 1.0, 5.0, 3.3, help="디젤 발전기 1리터당 생산 가능한 전력량입니다. 통상 3.0~3.5 사이입니다.")
-                d_maint = st.slider("운영 및 시공 할증 ($/kWh)", 0.05, 0.30, 0.06, help="디젤 발전기 유지보수비 및 인프라 구축 비용을 전력량 단위로 환산한 가산금입니다.")
+                
+                # Fetch default values from session state if available
+                default_fuel_p = st.session_state.get('fuel_p', 1.85)
+                default_d_eff = st.session_state.get('d_eff_val', 3.3)
+                default_d_maint = st.session_state.get('d_maint', 0.06)
+                
+                fuel_p = d_c1.number_input("현지 디젤 가격 ($/L)", 0.5, 3.0, default_fuel_p, help="해당 지역의 실제 디젤 구매 가격을 입력하세요. 물류비가 포함된 가격이 권장됩니다.", key="diesel_fuel_price_p5")
+                d_eff_val = d_c2.number_input("발전 효율 (kWh/L)", 1.0, 5.0, default_d_eff, help="디젤 발전기 1리터당 생산 가능한 전력량입니다. 통상 3.0~3.5 사이입니다.", key="diesel_eff_p5")
+                d_maint = st.slider("운영 및 시공 할증 ($/kWh)", 0.01, 0.30, default_d_maint, help="디젤 발전기 유지보수비 및 인프라 구축 비용을 전력량 단위로 환산한 가산금입니다.", key="diesel_maint_p5")
+                
+                # Update session state
+                st.session_state.fuel_p = fuel_p
+                st.session_state.d_eff_val = d_eff_val
+                st.session_state.d_maint = d_maint
+                
                 diesel_ref = (fuel_p / d_eff_val) + d_maint
                 
                 st.markdown(f"""
