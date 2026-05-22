@@ -12,7 +12,7 @@ import numpy as np
 import io
 
 # --- Page Config ---
-st.set_page_config(page_title="Net-Zero Optimizer Pro", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="BESS+HESS 사업성 간이 평가 시뮬레이터", page_icon="⚡", layout="wide")
 
 # --- Constants & Benchmarks ---
 COUNTRY_BENCHMARKS = {
@@ -252,7 +252,7 @@ def calc_edcf_payment(amount, years=40, grace=15, rate=0.0001):
     return (grace_pay * grace + annuity_pay * n) / years
 
 if st.session_state.step == 'input':
-    st.title("🌍 Universal Net-Zero Microgrid Optimizer")
+    st.title("🌍 BESS+HESS 사업성 간이 평가 시뮬레이터")
     st.markdown("전 세계 격오지 재생에너지 전환을 위한 하이브리드 시스템 설계 솔루션")
     with st.expander("📖 시뮬레이터 상세 사용 매뉴얼 (User Guide)", expanded=False):
         st.markdown("""
