@@ -504,6 +504,7 @@ if st.session_state.step == 'input':
                 
                 if st.button("📍 이 지점을 분석 기준점으로 확정", type="primary", use_container_width=True, disabled=not loc_verified, help="선택한 위치의 정밀 좌표를 기반으로 분석을 시작합니다."):
                     st.session_state.loc_confirmed = True
+                    st.session_state.selected_benchmark = find_country_match(st.session_state.country)
                     st.rerun()
             else:
                 # Locked Reference Point Banner
@@ -515,7 +516,7 @@ if st.session_state.step == 'input':
                 """, unsafe_allow_html=True)
                 
                 # --- Market Intelligence Context ---
-                country_key = find_country_match(st.session_state.country)
+                country_key = st.session_state.get('selected_benchmark', find_country_match(st.session_state.country))
                 report = get_market_report(country_key)
                 
                 with st.expander(f"🔍 {country_key} Market Intelligence Report", expanded=True):
@@ -606,6 +607,8 @@ if st.session_state.step == 'input':
                 
                 if st.button("⬅ 위치 재설정", use_container_width=True):
                     st.session_state.loc_confirmed = False
+                    if 'selected_benchmark' in st.session_state:
+                        del st.session_state.selected_benchmark
                     st.rerun()
 
     with main_tabs[1]:
@@ -724,7 +727,8 @@ if st.session_state.step == 'input':
                                     'loc': loc, 'df_h': b_df_h, 'res': {
                                         'pv_a': b_pv_ideal, 'bess_a': b_bess_a, 'capex_a': b_capex_a,
                                         'pv_b': b_pv_hybrid, 'bess_b': b_bess_b, 'h2_max': b_h2_max, 'capex_b': b_capex_b,
-                                        'soc_trace': b_soc_trace, 'h2_trace': b_h2_trace, 'country_match': matched_country, 'demand': avg_kwh
+                                        'soc_trace': b_soc_trace, 'h2_trace': b_h2_trace, 'country_match': matched_country, 'demand': avg_kwh,
+                                        'total_d': b_total_d
                                     }
                                 })
                         except Exception as e:
@@ -743,6 +747,8 @@ if st.session_state.step == 'input':
                 with st.expander(f"📍 {loc['name']} ({loc['country']}) - 분석 결과 확인", expanded=False):
                     m1, m2 = st.columns([1, 2])
                     with m1:
+                        b_total_d_val = res.get('total_d', batch_hh * res['demand'])
+                        b_h2_days = (res['h2_max'] * H2_FC_EFF * 33.33) / b_total_d_val if b_total_d_val > 0 else 0
                         st.markdown(f"**적용 데이터:** {res['country_match']} (가구당 {res['demand']}kWh/d)")
                         st.markdown(f"""
                         <div style='background:#111; padding:15px; border-radius:10px; border-left:4px solid #00d4ff;'>
@@ -750,7 +756,7 @@ if st.session_state.step == 'input':
                             <ul style='font-size:13px; color:#eee; margin-top:10px;'>
                                 <li>태양광: <b>{res['pv_b']:,.0f} kWp</b></li>
                                 <li>배터리: <b>{res['bess_b']:,.0f} kWh</b></li>
-                                <li>수소탱크: <b>{res['h2_max']:,.1f} kg</b></li>
+                                <li>수소탱크: <b>{res['h2_max']:,.1f} kg ({b_h2_days:,.1f}일분)</b></li>
                             </ul>
                         </div>
                         """, unsafe_allow_html=True)
@@ -1306,28 +1312,28 @@ elif st.session_state.step == 'result':
                     <tr style='border-bottom: 1px solid #1e293b;'>
                         <td style='padding: 12px; color: #38bdf8; font-weight: bold;'>Option A (표준 보수)</td>
                         <td style='text-align: right; padding: 12px; font-weight: 700;'>__PV_A__</td>
-                        <td style='text-align: right; padding: 12px; font-weight: 700;'>BESS __BESS_A__ kWh</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>BESS __BESS_A__ kWh (__AUTONOMY_DAYS__일분)</td>
                         <td style='text-align: right; padding: 12px; font-weight: 700;'>__AREA_A__</td>
                         <td style='text-align: right; padding: 12px; font-weight: 700;'>$ __CAPEX_A__</td>
                     </tr>
                     <tr style='border-bottom: 1px solid #1e293b;'>
                         <td style='padding: 12px; color: #ff4b4b; font-weight: bold;'>Option B (극한 보수)</td>
                         <td style='text-align: right; padding: 12px; font-weight: 700;'>__PV_B__</td>
-                        <td style='text-align: right; padding: 12px; font-weight: 700;'>BESS __BESS_B__ kWh</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>BESS __BESS_B__ kWh (__AUTONOMY_DAYS__일분)</td>
                         <td style='text-align: right; padding: 12px; font-weight: 700;'>__AREA_B__</td>
                         <td style='text-align: right; padding: 12px; font-weight: 700;'>$ __CAPEX_B__</td>
                     </tr>
                     <tr style='border-bottom: 1px solid #1e293b; background: rgba(0,255,136,0.05);'>
                         <td style='padding: 12px; color: #00ff88; font-weight: bold;'>Scenario A (최적화 & 장기 BESS)</td>
                         <td style='text-align: right; padding: 12px; font-weight: 700;'>__PV_S1__</td>
-                        <td style='text-align: right; padding: 12px; font-weight: 700;'>BESS __BESS_S1__ kWh</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>BESS __BESS_S1__ kWh (__BESS_DAYS_S1__일분)</td>
                         <td style='text-align: right; padding: 12px; font-weight: 700;'>__AREA_S1__</td>
                         <td style='text-align: right; padding: 12px; font-weight: 700;'>$ __CAPEX_S1__</td>
                     </tr>
                     <tr style='background: rgba(0,212,255,0.05);'>
                         <td style='padding: 12px; color: #00d4ff; font-weight: bold;'>Scenario B (수소 하이브리드)</td>
                         <td style='text-align: right; padding: 12px; font-weight: 700;'>__PV_S2__</td>
-                        <td style='text-align: right; padding: 12px; font-weight: 700;'>H2 __H2_S2__ kg + BESS (1.5d)</td>
+                        <td style='text-align: right; padding: 12px; font-weight: 700;'>H2 __H2_S2__ kg (__H2_DAYS_S2__일분) + BESS 1.5일분</td>
                         <td style='text-align: right; padding: 12px; font-weight: 700;'>__AREA_S2__</td>
                         <td style='text-align: right; padding: 12px; font-weight: 700;'>$ __CAPEX_S2__</td>
                     </tr>
@@ -1335,9 +1341,12 @@ elif st.session_state.step == 'result':
             </table>
         </div>
         """
+        h2_days_s2 = (h2_cap_comp * H2_FC_EFF * 33.33) / total_d if total_d > 0 else 0
+        bess_days_s1 = bess_a / total_d if total_d > 0 else 0
         st.markdown(tpl_master
             .replace("__PV_A__", f"{pv_for_worst:,.1f}")
             .replace("__BESS_A__", f"{bess_cap_autonomy:,.0f}")
+            .replace("__AUTONOMY_DAYS__", f"{autonomy_days:,.1f}")
             .replace("__AREA_A__", f"{pv_for_worst * 7:,.0f}")
             .replace("__CAPEX_A__", f"{capex_q2:,.0f}")
             .replace("__PV_B__", f"{pv_for_abs_worst:,.1f}")
@@ -1346,10 +1355,12 @@ elif st.session_state.step == 'result':
             .replace("__CAPEX_B__", f"{capex_extreme:,.0f}")
             .replace("__PV_S1__", f"{pv_ideal:,.1f}")
             .replace("__BESS_S1__", f"{bess_a:,.0f}")
+            .replace("__BESS_DAYS_S1__", f"{bess_days_s1:,.1f}")
             .replace("__AREA_S1__", f"{pv_ideal * 7:,.0f}")
             .replace("__CAPEX_S1__", f"{capex_a:,.0f}")
             .replace("__PV_S2__", f"{pv_hybrid_final:,.1f}")
             .replace("__H2_S2__", f"{h2_cap_comp:,.0f}")
+            .replace("__H2_DAYS_S2__", f"{h2_days_s2:,.1f}")
             .replace("__AREA_S2__", f"{pv_hybrid_final * 7:,.0f}")
             .replace("__CAPEX_S2__", f"{capex_b_final:,.0f}"), unsafe_allow_html=True)
 
@@ -1445,18 +1456,20 @@ elif st.session_state.step == 'result':
     <hr style='border-color: #334155; margin: 20px 0;'>
     <ul style='list-style: none; padding: 0;'>
         <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>제안 PV 용량: <b style='color: #fff;'>__PV_ID__ kWp</b></li>
-        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>필요 BESS 용량: <b style='color: #fff;'>__BESS_A__ kWh</b></li>
+        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>필요 BESS 용량: <b style='color: #fff;'>__BESS_A__ kWh (__BESS_DAYS__일분)</b></li>
         <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>필요 부지 면적: <b style='color: #fff;'>__AREA__ m^2</b></li>
         <li style='margin-top: 30px; font-size: 22px; text-align: center; color: #fff;'><b>Total CAPEX: $ __CAPEX__</b></li>
     </ul>
 </div>
 """
+                bess_days_s1 = bess_a / total_d if total_d > 0 else 0
                 st.markdown(tpl_s1
                     .replace("__PV_DELTA__", f"{pv_delta:,.1f}")
                     .replace("__BESS_DELTA__", f"{bess_delta:,.1f}")
                     .replace("__SAVINGS__", f"{savings_a_ext:,.0f}")
                     .replace("__PV_ID__", f"{pv_ideal:,.1f}")
                     .replace("__BESS_A__", f"{bess_a:,.1f}")
+                    .replace("__BESS_DAYS__", f"{bess_days_s1:,.1f}")
                     .replace("__AREA__", f"{pv_ideal * 7:,.0f}")
                     .replace("__CAPEX__", f"{capex_a:,.0f}"), unsafe_allow_html=True)
 
@@ -1470,6 +1483,7 @@ elif st.session_state.step == 'result':
                 
                 pv_delta_b = pv_for_abs_worst - pv_hybrid_final
                 h2_cap = max(h2_stock)
+                h2_days = (h2_cap * H2_FC_EFF * 33.33) / total_d if total_d > 0 else 0
                 savings_b_ext = capex_extreme - capex_b_final
                 
                 tpl_s2 = """
@@ -1483,7 +1497,7 @@ elif st.session_state.step == 'result':
         </div>
         <div style='display: flex; justify-content: space-between; margin-bottom: 10px;'>
             <span style='color: #aaa; font-size: 13px;'>수소 장기 저장</span>
-            <b style='color: #00d4ff; font-size: 15px;'>+ __H2_CAP__ kg</b>
+            <b style='color: #00d4ff; font-size: 15px;'>+ __H2_CAP__ kg (__H2_DAYS__일분)</b>
         </div>
         <div style='margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; text-align: right;'>
             <small style='color: #aaa;'>vs 극한 보수 대비 절감: </small>
@@ -1496,7 +1510,7 @@ elif st.session_state.step == 'result':
     <hr style='border-color: #334155; margin: 20px 0;'>
     <ul style='list-style: none; padding: 0;'>
         <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>제안 PV 용량: <b style='color: #fff;'>__PV_HY__ kWp</b></li>
-        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>배터리 용량: <b style='color: #fff;'>__BESS_B__ kWh (1.5일)</b></li>
+        <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>배터리 용량: <b style='color: #fff;'>__BESS_B__ kWh (1.5일분)</b></li>
         <li style='margin-bottom: 12px; font-size: 14px; color: #94a3b8;'>필요 부지 면적: <b style='color: #fff;'>__AREA__ m^2</b></li>
         <li style='margin-top: 30px; font-size: 22px; text-align: center; color: #fff;'><b>Total CAPEX: $ __CAPEX__</b></li>
     </ul>
@@ -1505,6 +1519,7 @@ elif st.session_state.step == 'result':
                 st.markdown(tpl_s2
                     .replace("__PV_DELTA__", f"{pv_delta_b:,.1f}")
                     .replace("__H2_CAP__", f"{h2_cap:,.1f}")
+                    .replace("__H2_DAYS__", f"{h2_days:,.1f}")
                     .replace("__SAVINGS__", f"{savings_b_ext:,.0f}")
                     .replace("__PV_HY__", f"{pv_hybrid_final:,.1f}")
                     .replace("__BESS_B__", f"{bess_b_fixed:,.1f}")
@@ -1668,8 +1683,8 @@ elif st.session_state.step == 'result':
                     "Solar PV System ($/kWp)", "BESS (Battery) ($/kWh)", "Electrolyzer (EL) ($/kW)", "Fuel Cell (FC) ($/kW)", 
                     "H2 Storage Tank ($/kg)", "H2 기자재/물류 ($/job)", "EMS & Control ($/set)", "물류 및 시공 (Logistics) ($/job)", "인프라 (Distribution) ($/hh)"
                 ],
-                "단가 ($)": [1000, 300, 550, 700, 650, 15000, 30000, 100000, 1500],
-                "수량": [int(pv_hybrid), int(bess_b), int(el_kw), int(fc_kw), int(max(h2_stock)), 1, 1, 1, int(hh)],
+                "단가 ($)": [int(PRICE_PV), int(PRICE_BESS), int(PRICE_EL), int(PRICE_FC), 500, 15000, 30000, 100000, 1500],
+                "수량": [int(pv_hybrid_final), int(bess_b_fixed), int(el_kw), int(fc_kw), int(h2_cap_comp), 0, 0, 0, int(hh)],
                 "총 금액 ($)": [0] * 9
             }
             
@@ -1694,6 +1709,15 @@ elif st.session_state.step == 'result':
             total_capex_fs = int(edited_capex["총 금액 ($)"].sum())
             st.markdown(f"<div style='text-align: right; font-size: 18px; color: #00d4ff; font-weight: bold;'>💰 Total CAPEX: ${total_capex_fs:,.0f}</div>", unsafe_allow_html=True)
             
+            # Extract quantities and unit prices dynamically from editor for replacement calculations
+            bess_unit_p = edited_capex.loc[edited_capex["세부 항목"].str.contains("BESS", na=False), "단가 ($)"].values[0]
+            el_unit_p = edited_capex.loc[edited_capex["세부 항목"].str.contains("Electrolyzer", na=False), "단가 ($)"].values[0]
+            fc_unit_p = edited_capex.loc[edited_capex["세부 항목"].str.contains("Fuel Cell", na=False), "단가 ($)"].values[0]
+            
+            bess_qty = edited_capex.loc[edited_capex["세부 항목"].str.contains("BESS", na=False), "수량"].values[0]
+            el_qty = edited_capex.loc[edited_capex["세부 항목"].str.contains("Electrolyzer", na=False), "수량"].values[0]
+            fc_qty = edited_capex.loc[edited_capex["세부 항목"].str.contains("Fuel Cell", na=False), "수량"].values[0]
+
             st.divider()
 
             # Revenue & OPEX Editor
@@ -1702,8 +1726,8 @@ elif st.session_state.step == 'result':
             ref_rate = st.session_state.get('fs_rate', 0.15)
             matched_name = st.session_state.get('selected_benchmark', 'Global Average')
             st.caption(f"ℹ️ 현재 적용된 기준 국가: **{matched_name}** (기본 요금: ${ref_rate:.2f}/kWh)")
-            bess_replace_annual = (bess_b * 300 * 0.7) / 10
-            stack_replace_annual = ((el_kw * 550 + fc_kw * 700) * 0.5) / 8
+            bess_replace_annual = (bess_qty * bess_unit_p * 0.7) / 10
+            stack_replace_annual = ((el_qty * el_unit_p + fc_qty * fc_unit_p) * 0.5) / 8
             
             subsidy_val = 0.0
             rev_opex_items = {
@@ -1748,8 +1772,8 @@ elif st.session_state.step == 'result':
             loan_amt = total_capex_fs * 0.4 if use_edcf else 0
             rev_annual = (annual_demand * rev_vals[0]) + rev_vals[1] + rev_vals[2]
             fixed_opex_annual = rev_vals[3] + rev_vals[4]
-            bess_replace_cost = bess_b * 300 * 0.7 
-            stack_replace_cost = (el_kw * 550 + fc_kw * 700) * 0.5 
+            bess_replace_cost = bess_qty * bess_unit_p * 0.7 
+            stack_replace_cost = (el_qty * el_unit_p + fc_qty * fc_unit_p) * 0.5 
             
             years = list(range(int(p_life) + 1))
             rev_in = [0] + [rev_annual] * int(p_life)
