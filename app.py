@@ -1675,6 +1675,20 @@ elif st.session_state.step == 'result':
             st.markdown("##### 🏗️ 1~2. 투자비 및 운영 수익 상세 (CAPEX / OPEX / Revenue)")
             inc_desal = st.toggle("💧 해수 담수화 시스템 포함 (Desalination Unit)", value=False, help="식수 공급을 위해 태양광 에너지를 사용하는 해수 담수화 설비를 투자비에 추가합니다.")
             
+            # Calculate default base CAPEX to pre-populate the EDCF grant row as 40% of total equipment CAPEX
+            default_base_capex = (
+                int(pv_hybrid_final) * int(PRICE_PV) +
+                int(bess_b_fixed) * int(PRICE_BESS) +
+                int(el_kw) * int(PRICE_EL) +
+                int(fc_kw) * int(PRICE_FC) +
+                int(h2_cap_comp) * 500 +
+                0 * 15000 +
+                0 * 30000 +
+                0 * 100000 +
+                int(hh) * 1500
+            )
+            default_edcf_grant = -int(default_base_capex * 0.40)
+
             # CAPEX Breakdown Editor
             st.markdown("<small style='color: #888;'>투자비 항목별 단가와 수량을 수정할 수 있습니다.</small>", unsafe_allow_html=True)
             capex_items = {
@@ -1691,7 +1705,7 @@ elif st.session_state.step == 'result':
             if use_edcf:
                 capex_items["구분"].append("금융지원")
                 capex_items["세부 항목"].append("EDCF 설비 보조금 (Grant Component)")
-                capex_items["단가 ($)"].append(-150000) # Example Grant amount
+                capex_items["단가 ($)"].append(default_edcf_grant)
                 capex_items["수량"].append(1)
                 capex_items["총 금액 ($)"].append(0)
 
@@ -1701,11 +1715,22 @@ elif st.session_state.step == 'result':
             edited_capex = st.data_editor(
                 df_capex, use_container_width=True, num_rows="fixed", key="capex_editor_v6",
                 column_config={
-                    "단가 ($)": st.column_config.NumberColumn(format="$%,d"),
+                    "단가 ($)": st.column_config.NumberColumn(format="$%d"),
                     "수량": st.column_config.NumberColumn(format="%,d"),
                     "총 금액 ($)": st.column_config.NumberColumn(format="$%,d", disabled=True)
                 }
             )
+            
+            # Calculate actual base CAPEX from the edited rows (excluding the EDCF grant row itself)
+            base_rows = edited_capex[edited_capex["세부 항목"] != "EDCF 설비 보조금 (Grant Component)"]
+            total_base_capex = int(base_rows["총 금액 ($)"].sum())
+            
+            if use_edcf:
+                # Dynamically calculate the EDCF grant component as exactly 40% of the total base CAPEX (sum of all equipment items)
+                edcf_grant = -int(total_base_capex * 0.40)
+                edited_capex.loc[edited_capex["세부 항목"] == "EDCF 설비 보조금 (Grant Component)", "단가 ($)"] = edcf_grant
+                edited_capex.loc[edited_capex["세부 항목"] == "EDCF 설비 보조금 (Grant Component)", "총 금액 ($)"] = edcf_grant
+            
             total_capex_fs = int(edited_capex["총 금액 ($)"].sum())
             st.markdown(f"<div style='text-align: right; font-size: 18px; color: #00d4ff; font-weight: bold;'>💰 Total CAPEX: ${total_capex_fs:,.0f}</div>", unsafe_allow_html=True)
             
@@ -1769,7 +1794,7 @@ elif st.session_state.step == 'result':
             st.caption(f"※ 설정된 금융 조건: {p_life}년 운영, 할인율 {p_disc:.1f}%, EDCF {'활용' if use_edcf else '미활용'}")
             
             # Financial Calculations
-            loan_amt = total_capex_fs * 0.4 if use_edcf else 0
+            loan_amt = total_base_capex * 0.4 if use_edcf else 0
             rev_annual = (annual_demand * rev_vals[0]) + rev_vals[1] + rev_vals[2]
             fixed_opex_annual = rev_vals[3] + rev_vals[4]
             bess_replace_cost = bess_qty * bess_unit_p * 0.7 
